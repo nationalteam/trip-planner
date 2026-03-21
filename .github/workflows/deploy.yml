@@ -1,0 +1,35 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Prepare environment file
+        run: |
+          {
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+            echo "OPENAI_MODEL=${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}"
+            echo "DATABASE_URL=file:/app/data/prod.db"
+          } > .env
+
+      - name: Deploy with Docker Compose
+        run: |
+          docker compose down --remove-orphans
+          docker compose up -d --build

@@ -11,7 +11,6 @@ jest.mock('@/lib/prisma', () => ({
     itineraryItem: {
       findMany: jest.fn(),
       create: jest.fn(),
-      findUnique: jest.fn(),
     },
   },
 }));

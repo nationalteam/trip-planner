@@ -31,11 +31,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
 
   const allPreferences = await prisma.preference.findMany();
-  const approved = await prisma.proposal.findMany({
-    where: { tripId: id, status: 'approved' },
+  const existingProposals = await prisma.proposal.findMany({
+    where: { tripId: id },
   });
 
-  const generated: GeneratedProposal[] = await generateProposals(allPreferences, city, approved);
+  const generated: GeneratedProposal[] = await generateProposals(allPreferences, city, existingProposals);
 
   const proposals = await prisma.$transaction(
     generated.map((p) =>

@@ -1,0 +1,262 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import ProposalCard from '@/components/ProposalCard';
+import ItineraryView from '@/components/ItineraryView';
+
+const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+
+interface Trip {
+  id: string;
+  name: string;
+  cities: string;
+  createdAt: string;
+}
+
+interface Proposal {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  reason: string;
+  lat: number;
+  lng: number;
+  city: string;
+  suggestedTime: string;
+  durationMinutes: number | null;
+  status: string;
+}
+
+interface ItineraryItem {
+  id: string;
+  day: number;
+  timeBlock: string;
+  proposal: Proposal;
+}
+
+type Tab = 'proposals' | 'itinerary' | 'map';
+
+export default function TripDetailPage() {
+  const params = useParams();
+  const tripId = params.id as string;
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('proposals');
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (tripId) {
+      fetchAll();
+    }
+  }, [tripId]);
+
+  async function fetchAll() {
+    try {
+      const [tripRes, proposalsRes, itineraryRes] = await Promise.all([
+        fetch(`/api/trips/${tripId}`),
+        fetch(`/api/trips/${tripId}/proposals`),
+        fetch(`/api/trips/${tripId}/itinerary`),
+      ]);
+      const [tripData, proposalsData, itineraryData] = await Promise.all([
+        tripRes.json(),
+        proposalsRes.json(),
+        itineraryRes.json(),
+      ]);
+      setTrip(tripData);
+      setProposals(proposalsData);
+      setItinerary(itineraryData);
+      if (tripData?.cities) {
+        const cities = JSON.parse(tripData.cities);
+        if (cities.length > 0) setSelectedCity(cities[0]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGenerate() {
+    if (!selectedCity) return;
+    setGenerating(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/proposals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: selectedCity }),
+      });
+      if (res.ok) {
+        const newProposals = await res.json();
+        setProposals(prev => [...newProposals, ...prev]);
+      }
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleApprove(proposalId: string) {
+    const res = await fetch(`/api/proposals/${proposalId}/approve`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'approved' } : p));
+      if (data.itineraryItem) {
+        setItinerary(prev => [...prev, data.itineraryItem]);
+      }
+    }
+  }
+
+  async function handleReject(proposalId: string) {
+    const res = await fetch(`/api/proposals/${proposalId}/reject`, { method: 'POST' });
+    if (res.ok) {
+      setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'rejected' } : p));
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <p className="text-gray-500 text-lg">Trip not found</p>
+        <Link href="/" className="text-blue-600 hover:underline mt-4 inline-block">← Back to trips</Link>
+      </div>
+    );
+  }
+
+  const cities: string[] = JSON.parse(trip.cities);
+  const filteredProposals = filterStatus === 'all' ? proposals : proposals.filter(p => p.status === filterStatus);
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <Link href="/" className="text-sm text-blue-600 hover:underline mb-3 inline-block">← All Trips</Link>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{trip.name}</h1>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {cities.map(city => (
+                <span key={city} className="bg-blue-50 text-blue-700 text-sm font-medium px-3 py-1 rounded-full">
+                  📍 {city}
+                </span>
+              ))}
+            </div>
+          </div>
+          <Link
+            href={`/trips/${tripId}/preferences`}
+            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
+          >
+            ⚙️ Preferences
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
+        {(['proposals', 'itinerary', 'map'] as Tab[]).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-5 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+              activeTab === tab
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            {tab === 'proposals' ? '💡 Proposals' : tab === 'itinerary' ? '📋 Itinerary' : '🗺️ Map'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'proposals' && (
+        <div>
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <select
+              value={selectedCity}
+              onChange={e => setSelectedCity(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {cities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {generating ? '⏳ Generating...' : '✨ Generate Proposals'}
+            </button>
+            <div className="flex gap-1 ml-auto">
+              {['all', 'pending', 'approved', 'rejected'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
+                    filterStatus === status
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filteredProposals.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-5xl mb-3">💡</div>
+              <p className="text-gray-500 text-lg">No proposals yet</p>
+              <p className="text-gray-400 text-sm mt-1">Generate AI proposals for your trip</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredProposals.map(proposal => (
+                <ProposalCard
+                  key={proposal.id}
+                  proposal={proposal}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'itinerary' && (
+        <ItineraryView items={itinerary} />
+      )}
+
+      {activeTab === 'map' && (
+        <div>
+          <p className="text-sm text-gray-500 mb-4">
+            {proposals.filter(p => p.status === 'approved').length > 0
+              ? 'Showing approved proposals on the map'
+              : 'Showing all proposals (approve some to highlight them)'}
+          </p>
+          {proposals.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
+              <div className="text-5xl mb-3">🗺️</div>
+              <p className="text-gray-500">Generate proposals to see them on the map</p>
+            </div>
+          ) : (
+            <MapView proposals={proposals} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,36 @@
+{
+  "name": "trip-planner",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.5.0",
+    "@prisma/client": "^7.5.0",
+    "better-sqlite3": "^12.8.0",
+    "leaflet": "^1.9.4",
+    "next": "15.5.14",
+    "openai": "^6.32.0",
+    "prisma": "^7.5.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-leaflet": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "dotenv": "^17.3.1",
+    "eslint": "^8",
+    "eslint-config-next": "15.5.14",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}

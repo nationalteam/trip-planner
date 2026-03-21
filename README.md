@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# trip-planner
+
+An AI-powered collaborative trip planner. Generate restaurant and place proposals via LLM, let users vote on them, and automatically build a day-by-day itinerary with a map view.
+
+## Features
+
+- **AI Proposal Generation** – Hit "Generate Proposals" to get personalized restaurant/place suggestions powered by GPT-4o-mini
+- **Approve / Reject** – Each traveler can thumbs-up or thumbs-down every proposal
+- **Auto Itinerary** – Approved proposals are automatically scheduled into a day-by-day itinerary grouped by time block (morning / afternoon / evening)
+- **Interactive Map** – Approved proposals appear as markers on an OpenStreetMap map
+- **Multi-traveller Preferences** – Each traveller can record their likes, dislikes, and budget so the AI can tailor suggestions
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router, TypeScript) |
+| Styling | Tailwind CSS |
+| Database | SQLite via Prisma ORM |
+| LLM | OpenAI `gpt-4o-mini` |
+| Map | Leaflet / OpenStreetMap |
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+Copy the example env file and add your OpenAI API key:
+
+```bash
+cp .env.example .env
+# Edit .env and set OPENAI_API_KEY=sk-...
+```
+
+### 3. Set up the database
+
+```bash
+npx prisma migrate dev
+```
+
+### 4. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+  app/
+    page.tsx                      # Home – list & create trips
+    trips/[id]/page.tsx           # Trip detail (Proposals / Itinerary / Map tabs)
+    trips/[id]/preferences/       # Per-traveller preference management
+    api/                          # REST API routes
+      trips/                      # CRUD for trips
+      proposals/[id]/approve|reject
+      users/                      # CRUD for users & preferences
+  components/
+    ProposalCard.tsx              # Proposal with approve/reject buttons
+    ItineraryView.tsx             # Day-by-day itinerary grouped by time block
+    MapView.tsx                   # Leaflet map (client-only)
+    TripCard.tsx                  # Trip summary card
+  lib/
+    prisma.ts                     # Prisma client singleton
+    llm.ts                        # OpenAI proposal generation
+prisma/
+  schema.prisma                   # Data model
+```
 
-## Learn More
+## Data Model
 
-To learn more about Next.js, take a look at the following resources:
+| Entity | Key fields |
+|---|---|
+| `Trip` | name, cities (JSON array) |
+| `User` | name |
+| `Preference` | userId, likes, dislikes, budget |
+| `Proposal` | tripId, type, title, description, reason, lat/lng, suggestedTime, status |
+| `ItineraryItem` | tripId, proposalId, day, timeBlock |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev      # Start development server
+npm run build    # Production build
+npm run start    # Start production server
+npm run lint     # ESLint
+```

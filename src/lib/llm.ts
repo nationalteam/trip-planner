@@ -18,7 +18,7 @@ function normalizeBifrostBaseURL(baseURL: string): string {
   if (/\/openai\/v\d+$/i.test(normalized)) return normalized;
   if (/\/openai$/i.test(normalized)) return `${normalized}/v1`;
   if (/\/v\d+$/i.test(normalized)) {
-    return `${normalized.replace(/\/v\d+$/i, '')}/openai/v1`;
+    return normalized;
   }
   return `${normalized}/openai/v1`;
 }

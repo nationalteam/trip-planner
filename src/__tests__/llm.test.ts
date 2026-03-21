@@ -180,7 +180,7 @@ describe('generateProposals', () => {
   it('throws a clear message for Bifrost auth errors', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_API_KEY = 'invalid';
-    process.env.BIFROST_BASE_URL = 'http://192.168.1.200:8080';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
     mockCreate.mockRejectedValue({
       status: 401,
       message: 'unauthorized',

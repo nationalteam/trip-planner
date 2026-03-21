@@ -1,8 +1,20 @@
-import OpenAI from 'openai';
+import OpenAI, { AzureOpenAI } from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function createClient(): OpenAI {
+  if (process.env.AZURE_OPENAI_API_KEY) {
+    return new AzureOpenAI({
+      apiKey: process.env.AZURE_OPENAI_API_KEY,
+      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+      apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? '2025-01-01-preview',
+      deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+    });
+  }
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
+
+const openai = createClient();
 
 interface ProposalLike {
   title?: string;
@@ -34,8 +46,12 @@ Types can be "food" or "place".
 suggestedTime can be "lunch", "dinner", "morning", "afternoon", or "night".
 Return ONLY valid JSON, no markdown.`;
 
+  const model = process.env.AZURE_OPENAI_API_KEY
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-4o-mini')
+    : (process.env.OPENAI_MODEL ?? 'gpt-4o-mini');
+
   const response = await openai.chat.completions.create({
-    model: 'gpt-5-mini',
+    model,
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.7,
   });

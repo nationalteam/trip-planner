@@ -28,6 +28,10 @@ describe('generateProposals', () => {
     (OpenAI as unknown as jest.Mock).mockClear();
   });
 
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
   it('returns parsed proposals from the LLM response', async () => {
     const fakeProposals = [
       {
@@ -123,6 +127,20 @@ describe('generateProposals', () => {
     expect(callArgs.model).toBe('gpt-5-mini');
   });
 
+  it('uses gpt-5-mini as the default Bifrost model when BIFROST_MODEL is not set', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    process.env.BIFROST_BASE_URL = 'http://192.168.1.200:8080';
+    delete process.env.BIFROST_MODEL;
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    expect(mockCreate.mock.calls[0][0].model).toBe('gpt-5-mini');
+  });
+
   it('uses Bifrost OpenAI-compatible endpoint when LLM_PROVIDER is bifrost', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_API_KEY = 'bf-key';
@@ -145,12 +163,21 @@ describe('generateProposals', () => {
   it('throws a clear message for Bifrost auth errors', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_API_KEY = 'invalid';
+    process.env.BIFROST_BASE_URL = 'http://192.168.1.200:8080';
     mockCreate.mockRejectedValue({
       status: 401,
       message: 'unauthorized',
     });
 
     await expect(generateProposals([], 'Paris')).rejects.toThrow('Bifrost authentication failed. Check BIFROST_API_KEY.');
+  });
+
+  it('throws when BIFROST_BASE_URL is missing for bifrost provider', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    delete process.env.BIFROST_BASE_URL;
+
+    await expect(generateProposals([], 'Paris')).rejects.toThrow('BIFROST_BASE_URL is required when LLM_PROVIDER is "bifrost".');
   });
 
   it('throws when LLM_PROVIDER is unsupported', async () => {

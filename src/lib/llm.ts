@@ -28,9 +28,12 @@ function createClient(provider: Provider): OpenAI {
     if (!process.env.BIFROST_API_KEY) {
       throw new Error('BIFROST_API_KEY is required when LLM_PROVIDER is "bifrost".');
     }
+    if (!process.env.BIFROST_BASE_URL) {
+      throw new Error('BIFROST_BASE_URL is required when LLM_PROVIDER is "bifrost".');
+    }
     return new OpenAI({
       apiKey: process.env.BIFROST_API_KEY,
-      baseURL: process.env.BIFROST_BASE_URL ?? 'http://192.168.1.200:8080',
+      baseURL: process.env.BIFROST_BASE_URL,
     });
   }
   return new OpenAI({
@@ -99,7 +102,7 @@ Return ONLY valid JSON, no markdown.`;
   const model = provider === 'azure'
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-5-mini')
     : provider === 'bifrost'
-      ? (process.env.BIFROST_MODEL ?? process.env.OPENAI_MODEL ?? 'gpt-5-mini')
+      ? (process.env.BIFROST_MODEL ?? 'gpt-5-mini')
       : (process.env.OPENAI_MODEL ?? 'gpt-5-mini');
 
   let response;

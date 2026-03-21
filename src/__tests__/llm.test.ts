@@ -85,14 +85,14 @@ describe('generateProposals', () => {
     expect(result).toEqual([]);
   });
 
-  it('includes already-approved proposal titles in the prompt context', async () => {
-    const existingApproved = [{ title: 'Eiffel Tower' }];
+  it('includes existing proposal titles in the prompt context to avoid duplicates', async () => {
+    const existingProposals = [{ title: 'Eiffel Tower' }];
 
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris', existingApproved);
+    await generateProposals([], 'Paris', existingProposals);
 
     const callArgs = mockCreate.mock.calls[0][0];
     const promptContent = callArgs.messages[0].content as string;

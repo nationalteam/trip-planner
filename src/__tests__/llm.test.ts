@@ -129,7 +129,6 @@ describe('generateProposals', () => {
 
   it('uses gpt-5-mini as the default Bifrost model when BIFROST_MODEL is not set', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
-    process.env.BIFROST_API_KEY = 'bf-key';
     process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
     delete process.env.BIFROST_MODEL;
     mockCreate.mockResolvedValue({
@@ -155,7 +154,7 @@ describe('generateProposals', () => {
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
       apiKey: 'bf-key',
-      baseURL: 'http://127.0.0.1:8080',
+      baseURL: 'http://127.0.0.1:8080/openai/v1',
     });
     expect(mockCreate.mock.calls[0][0].model).toBe('gpt-4.1-mini');
   });
@@ -173,7 +172,24 @@ describe('generateProposals', () => {
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
       apiKey: 'bf-key',
-      baseURL: 'http://127.0.0.1:8080',
+      baseURL: 'http://127.0.0.1:8080/openai/v1',
+    });
+  });
+
+  it('uses empty API key when LLM_PROVIDER is bifrost and BIFROST_API_KEY is missing', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    delete process.env.BIFROST_API_KEY;
+    process.env.BIFROST_BASE_URL = 'http://192.168.1.200:8080';
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    expect(openAIMock).toHaveBeenCalledWith({
+      apiKey: '',
+      baseURL: 'http://192.168.1.200:8080/openai/v1',
     });
   });
 
@@ -187,6 +203,25 @@ describe('generateProposals', () => {
     });
 
     await expect(generateProposals([], 'Paris')).rejects.toThrow('Bifrost authentication failed. Check BIFROST_API_KEY.');
+  });
+
+  it('uses OpenAI first when LLM_PROVIDER is unset and multiple provider envs are present', async () => {
+    delete process.env.LLM_PROVIDER;
+    process.env.OPENAI_API_KEY = 'openai-key';
+    process.env.AZURE_OPENAI_API_KEY = 'azure-key';
+    process.env.AZURE_OPENAI_ENDPOINT = 'https://example-resource.openai.azure.com/openai/v1';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    expect(openAIMock).toHaveBeenCalledWith({
+      apiKey: 'openai-key',
+    });
   });
 
   it('throws when LLM_PROVIDER is unsupported', async () => {

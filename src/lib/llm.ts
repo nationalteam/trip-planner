@@ -7,6 +7,14 @@ function normalizeAzureEndpoint(endpoint: string): string {
   return trimmed.replace(/\/openai(?:\/v\d+)?$/i, '');
 }
 
+function normalizeBifrostBaseURL(baseURL: string): string {
+  const trimmed = baseURL.trim().replace(/\/+$/, '');
+  if (/\/openai\/v\d+$/i.test(trimmed)) return trimmed;
+  if (/\/openai$/i.test(trimmed)) return `${trimmed}/v1`;
+  if (/\/v\d+$/i.test(trimmed)) return `${trimmed.replace(/\/v\d+$/i, '')}/openai/v1`;
+  return `${trimmed}/openai/v1`;
+}
+
 function resolveProvider(): Provider {
   const configured = process.env.LLM_PROVIDER?.toLowerCase();
   if (configured === 'openai' || configured === 'azure' || configured === 'bifrost') {
@@ -15,8 +23,9 @@ function resolveProvider(): Provider {
   if (configured) {
     throw new Error(`Unsupported LLM_PROVIDER: ${process.env.LLM_PROVIDER}`);
   }
+  if (process.env.OPENAI_API_KEY) return 'openai';
   if (process.env.AZURE_OPENAI_API_KEY) return 'azure';
-  if (process.env.BIFROST_API_KEY) return 'bifrost';
+  if (process.env.BIFROST_BASE_URL || process.env.BIFROST_API_KEY) return 'bifrost';
   return 'openai';
 }
 
@@ -42,12 +51,9 @@ function createClient(provider: Provider): OpenAI {
     });
   }
   if (provider === 'bifrost') {
-    if (!process.env.BIFROST_API_KEY) {
-      throw new Error('BIFROST_API_KEY is required when LLM_PROVIDER is "bifrost".');
-    }
     return new OpenAI({
-      apiKey: process.env.BIFROST_API_KEY,
-      baseURL: process.env.BIFROST_BASE_URL ?? 'http://127.0.0.1:8080',
+      apiKey: process.env.BIFROST_API_KEY ?? '',
+      baseURL: normalizeBifrostBaseURL(process.env.BIFROST_BASE_URL ?? 'http://127.0.0.1:8080'),
     });
   }
   return new OpenAI({

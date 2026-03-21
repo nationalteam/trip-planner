@@ -17,7 +17,7 @@ AI-powered collaborative trip planning with proposal voting, auto itinerary sche
 | Framework | Next.js 15 (App Router, TypeScript) |
 | Styling | Tailwind CSS |
 | Database | SQLite via Prisma ORM + `better-sqlite3` adapter |
-| LLM | OpenAI `gpt-5-mini` (default), Azure OpenAI optional |
+| LLM | OpenAI `gpt-5-mini` (default), Azure OpenAI / Bifrost optional |
 | Map | Leaflet / react-leaflet / OpenStreetMap |
 | Testing | Jest + Testing Library |
 
@@ -51,10 +51,28 @@ AZURE_OPENAI_DEPLOYMENT=your-deployment-name
 AZURE_OPENAI_API_VERSION=2025-01-01-preview
 ```
 
+Optional: use Bifrost OpenAI-compatible API provider.
+
+```env
+LLM_PROVIDER=bifrost
+BIFROST_API_KEY=your-bifrost-api-key
+BIFROST_BASE_URL=http://127.0.0.1:8080
+BIFROST_MODEL=gpt-5-mini
+```
+
 Behavior:
 
-- If `AZURE_OPENAI_API_KEY` is set, Azure OpenAI is used.
-- Otherwise, standard OpenAI (`OPENAI_API_KEY`) is used.
+- If `LLM_PROVIDER` is set (`openai`, `azure`, `bifrost`), that provider is used.
+- Without `LLM_PROVIDER`, provider auto-detection is used in this order: Azure (`AZURE_OPENAI_API_KEY`) → Bifrost (`BIFROST_API_KEY`) → OpenAI (`OPENAI_API_KEY`).
+- Bifrost uses OpenAI-compatible API calls via `BIFROST_BASE_URL` and `BIFROST_API_KEY`.
+- If `BIFROST_BASE_URL` is not set, default is `http://127.0.0.1:8080`.
+- Bifrost model selection uses `BIFROST_MODEL` (default `gpt-5-mini`).
+
+Provider-specific error handling:
+
+- Bifrost auth errors (`401/403`) return a clear `BIFROST_API_KEY` message.
+- Bifrost endpoint errors (`404`, connection failures) return a clear `BIFROST_BASE_URL`/network message.
+- Bifrost rate-limit and server errors (`429`, `5xx`) return retry-oriented messages.
 
 ### 3. Set up database
 

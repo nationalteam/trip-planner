@@ -22,14 +22,22 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Prepare environment file
+        env:
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          DATABASE_URL: ${{ vars.DATABASE_URL }}
         run: |
+          install -m 600 /dev/null .env
           {
             echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
-            echo "OPENAI_MODEL=${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}"
-            echo "DATABASE_URL=file:/app/data/prod.db"
-          } > .env
+            echo "OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}"
+            echo "DATABASE_URL=${DATABASE_URL:-file:/app/data/prod.db}"
+          } >> .env
 
       - name: Deploy with Docker Compose
         run: |
           docker compose down --remove-orphans
           docker compose up -d --build
+
+      - name: Remove environment file
+        if: always()
+        run: rm -f .env

@@ -28,7 +28,7 @@ jobs:
         run: |
           install -m 600 /dev/null .env
           {
-            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+            echo "BIFROST_BASE_URL=${{ secrets.BIFROST_BASE_URL }}"
             echo "OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-mini}"
             echo "DATABASE_URL=${DATABASE_URL:-file:/app/data/prod.db}"
           } >> .env

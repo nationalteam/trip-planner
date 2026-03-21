@@ -85,6 +85,17 @@ prisma/
 | `Proposal` | tripId, type, title, description, reason, lat/lng, suggestedTime, status |
 | `ItineraryItem` | tripId, proposalId, day, timeBlock |
 
+## Running with Docker
+
+```bash
+cp .env.example .env
+# Edit .env and set OPENAI_API_KEY=sk-...
+
+docker compose up --build
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
 ## Scripts
 
 ```bash

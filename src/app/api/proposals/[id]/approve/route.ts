@@ -34,7 +34,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     let day = 1;
     while (true) {
       const taken = existingItems.some(
-        item => item.day === day && item.timeBlock === timeBlock
+        (item: { day: number; timeBlock: string }) => item.day === day && item.timeBlock === timeBlock
       );
       if (!taken) break;
       day++;

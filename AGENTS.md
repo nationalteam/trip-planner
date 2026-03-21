@@ -135,6 +135,13 @@ just ci          # Run CI-equivalent checks locally
 
 ## Code Quality Checks
 
+Install `prek`:
+
+```bash
+# Using uv (recommended)
+uv tool install prek
+```
+
 - If `.pre-commit-config.yaml` exists and the task changes code or configuration files, all changes MUST pass `prek run -a` before completion.
 - If `prek` is unavailable, `pre-commit run -a` MUST be used instead.
 - If checks fail, the failure MUST be reported explicitly.

@@ -159,6 +159,56 @@ describe('POST /api/trips/[id]/itinerary', () => {
     const data = await res.json();
 
     expect(res.status).toBe(500);
+    expect(data.error).toBe('LLM returned incomplete or invalid itinerary mapping');
+  });
+
+  it('returns 500 when LLM returns unknown id or invalid timeBlock', async () => {
+    const existingItems = [
+      {
+        id: 'ii-1',
+        tripId: 'trip-1',
+        proposalId: 'p-1',
+        day: 1,
+        timeBlock: 'morning',
+        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+      },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+    mockOrganizeItinerary.mockResolvedValue([{ id: 'unknown-id', day: 1, timeBlock: 'evening' }]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', { method: 'POST' });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(data.error).toBe('LLM returned incomplete or invalid itinerary mapping');
+  });
+
+  it('returns 500 when organizeItinerary throws', async () => {
+    const existingItems = [
+      {
+        id: 'ii-1',
+        tripId: 'trip-1',
+        proposalId: 'p-1',
+        day: 1,
+        timeBlock: 'morning',
+        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+      },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+    mockOrganizeItinerary.mockRejectedValue(new Error('llm unavailable'));
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', { method: 'POST' });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
     expect(data.error).toBe('Failed to organize itinerary');
   });
 });

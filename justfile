@@ -33,6 +33,25 @@ start:
 lint:
     npm run lint
 
+# Run unit tests
+test:
+    npm run test
+
+# Run CI tests with coverage
+test-ci:
+    npm run test:ci
+
+# Install dependencies with lockfile (CI style)
+ci-install:
+    npm ci
+
+# Build with placeholder OpenAI key (CI style)
+ci-build:
+    OPENAI_API_KEY=sk-placeholder npm run build
+
+# Run the same checks as .github/workflows/ci.yml
+ci: ci-install lint test-ci ci-build
+
 # Full setup from scratch: install deps, copy env, and migrate the database
 setup: install env db-migrate
 

@@ -58,8 +58,7 @@ describe('POST /api/proposals/[id]/approve', () => {
     const fullItineraryItem = { ...newItineraryItem, proposal: updatedProposal };
 
     (mockPrisma.proposal.findUnique as jest.Mock)
-      .mockResolvedValueOnce(baseProposal)   // first call (initial lookup)
-    ;
+      .mockResolvedValueOnce(baseProposal);   // first call (initial lookup)
     (mockPrisma.proposal.update as jest.Mock).mockResolvedValue(updatedProposal);
     (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue([]);
     (mockPrisma.itineraryItem.create as jest.Mock).mockResolvedValue(newItineraryItem);

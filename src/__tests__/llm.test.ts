@@ -176,6 +176,56 @@ describe('generateProposals', () => {
     });
   });
 
+  it('normalizes Bifrost base URL that already ends with /openai', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080/openai';
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    expect(openAIMock).toHaveBeenCalledWith({
+      apiKey: 'bf-key',
+      baseURL: 'http://127.0.0.1:8080/openai/v1',
+    });
+  });
+
+  it('does not double-append when Bifrost base URL already ends with /openai/v1', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080/openai/v1';
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    expect(openAIMock).toHaveBeenCalledWith({
+      apiKey: 'bf-key',
+      baseURL: 'http://127.0.0.1:8080/openai/v1',
+    });
+  });
+
+  it('preserves Bifrost base URL that already ends with /v1', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080/v1';
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    expect(openAIMock).toHaveBeenCalledWith({
+      apiKey: 'bf-key',
+      baseURL: 'http://127.0.0.1:8080/v1',
+    });
+  });
   it('uses empty API key when LLM_PROVIDER is bifrost and BIFROST_API_KEY is missing', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     delete process.env.BIFROST_API_KEY;

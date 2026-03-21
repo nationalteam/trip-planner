@@ -119,14 +119,14 @@ export interface OrganizedItineraryItem {
   timeBlock: 'morning' | 'afternoon' | 'dinner';
 }
 
-export async function generateProposals(preferences: object[], city: string, existingApproved: ProposalLike[] = []) {
+export async function generateProposals(preferences: object[], city: string, existingProposals: ProposalLike[] = []) {
   const provider = resolveProvider();
   const openai = createClient(provider);
   const prompt = `You are a travel planner. Generate restaurant and place proposals for a trip.
 
 City: ${city}
 User Preferences: ${JSON.stringify(preferences, null, 2)}
-${existingApproved.length > 0 ? `Already approved: ${JSON.stringify(existingApproved.map(p => p.title))}` : ''}
+${existingProposals.length > 0 ? `Already proposed (do not repeat these): ${JSON.stringify(existingProposals.map(p => p.title))}` : ''}
 
 Return a JSON array of 5-8 proposals with this exact format:
 [

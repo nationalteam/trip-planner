@@ -97,4 +97,28 @@ describe('POST /api/trips/[id]/proposals', () => {
     expect(Array.isArray(data)).toBe(true);
     expect(mockGenerate).toHaveBeenCalledWith([], 'Paris', []);
   });
+
+  it('passes all existing proposals (including pending) to generateProposals to avoid duplicates', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
+    const existingProposals = [
+      { id: 'p-0', tripId: 'trip-1', title: 'Eiffel Tower', status: 'pending' },
+      { id: 'p-1', tripId: 'trip-1', title: 'Louvre', status: 'approved' },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue(existingProposals);
+    mockGenerate.mockResolvedValue([]);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({ city: 'Paris' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    await POST(req, context);
+
+    expect(mockGenerate).toHaveBeenCalledWith([], 'Paris', existingProposals);
+  });
 });

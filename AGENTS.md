@@ -42,3 +42,15 @@
 - Keep secrets in `.env`; never commit API keys.
 - Use `DATABASE_URL="file:./dev.db"` format for SQLite.
 - If using Azure OpenAI, `AZURE_OPENAI_ENDPOINT` is required when Azure key is set; deployment name can remain optional in local/dev.
+
+## Gotcha
+
+- Read `GOTCHA.md` (case-sensitive, project root) at session start; it MUST NOT be assumed to be auto-loaded.
+- Apply relevant entries explicitly in root-cause analysis, fix design, and prevention checks.
+- If the agent makes a mistake, add or update an entry in the same session; each entry MUST capture only a **non-obvious, experience-derived pitfall** with symptom, root cause, and prevention rule.
+
+## Taste
+
+- Read `TASTE.md` (case-sensitive, project root) at session start; it MUST NOT be assumed to be auto-loaded.
+- Apply relevant entries explicitly in recommendations, implementation choices, and tradeoff decisions.
+- If the user expresses a stable preference, add or update an entry in the same session; each entry MUST capture only a **concrete, reusable preference signal** that should affect future decisions.

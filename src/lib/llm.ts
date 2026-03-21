@@ -7,6 +7,22 @@ function normalizeAzureEndpoint(endpoint: string): string {
   return trimmed.replace(/\/openai(?:\/v\d+)?$/i, '');
 }
 
+function normalizeBifrostBaseURL(baseURL: string): string {
+  const trimmed = baseURL.trim();
+  if (!trimmed) {
+    throw new Error(
+      'BIFROST_BASE_URL is set but empty or whitespace-only. Either unset it to use the default http://127.0.0.1:8080 or provide a valid absolute URL.',
+    );
+  }
+  const normalized = trimmed.replace(/\/+$/, '');
+  if (/\/openai\/v\d+$/i.test(normalized)) return normalized;
+  if (/\/openai$/i.test(normalized)) return `${normalized}/v1`;
+  if (/\/v\d+$/i.test(normalized)) {
+    return normalized;
+  }
+  return `${normalized}/openai/v1`;
+}
+
 function resolveProvider(): Provider {
   const configured = process.env.LLM_PROVIDER?.toLowerCase();
   if (configured === 'openai' || configured === 'azure' || configured === 'bifrost') {
@@ -15,8 +31,9 @@ function resolveProvider(): Provider {
   if (configured) {
     throw new Error(`Unsupported LLM_PROVIDER: ${process.env.LLM_PROVIDER}`);
   }
+  if (process.env.OPENAI_API_KEY) return 'openai';
   if (process.env.AZURE_OPENAI_API_KEY) return 'azure';
-  if (process.env.BIFROST_API_KEY) return 'bifrost';
+  if (process.env.BIFROST_BASE_URL || process.env.BIFROST_API_KEY) return 'bifrost';
   return 'openai';
 }
 
@@ -42,12 +59,9 @@ function createClient(provider: Provider): OpenAI {
     });
   }
   if (provider === 'bifrost') {
-    if (!process.env.BIFROST_API_KEY) {
-      throw new Error('BIFROST_API_KEY is required when LLM_PROVIDER is "bifrost".');
-    }
     return new OpenAI({
-      apiKey: process.env.BIFROST_API_KEY,
-      baseURL: process.env.BIFROST_BASE_URL ?? 'http://127.0.0.1:8080',
+      apiKey: process.env.BIFROST_API_KEY ?? '',
+      baseURL: normalizeBifrostBaseURL(process.env.BIFROST_BASE_URL ?? 'http://127.0.0.1:8080'),
     });
   }
   return new OpenAI({
@@ -117,7 +131,7 @@ Return ONLY valid JSON, no markdown.`;
   const model = provider === 'azure'
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
     : provider === 'bifrost'
-      ? (process.env.BIFROST_MODEL ?? 'gpt-5-mini')
+      ? fallbackModel
       : fallbackModel;
 
   let response;

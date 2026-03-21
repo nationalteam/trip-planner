@@ -127,10 +127,10 @@ describe('generateProposals', () => {
     expect(callArgs.model).toBe('gpt-5-mini');
   });
 
-  it('uses gpt-5-mini as the default Bifrost model when BIFROST_MODEL is not set', async () => {
+  it('uses gpt-5-mini as the default Bifrost model when OPENAI_MODEL is not set', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
-    delete process.env.BIFROST_MODEL;
+    delete process.env.OPENAI_MODEL;
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
     });
@@ -144,7 +144,7 @@ describe('generateProposals', () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_API_KEY = 'bf-key';
     process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
-    process.env.BIFROST_MODEL = 'gpt-4.1-mini';
+    process.env.OPENAI_MODEL = 'gpt-4.1-mini';
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
     });

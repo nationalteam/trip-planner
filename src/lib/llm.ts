@@ -123,7 +123,7 @@ Return ONLY valid JSON, no markdown.`;
   const model = provider === 'azure'
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
     : provider === 'bifrost'
-      ? (process.env.BIFROST_MODEL ?? 'gpt-5-mini')
+      ? fallbackModel
       : fallbackModel;
 
   let response;

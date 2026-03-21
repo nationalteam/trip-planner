@@ -57,7 +57,6 @@ Optional: use Bifrost OpenAI-compatible API provider.
 LLM_PROVIDER=bifrost
 BIFROST_BASE_URL=http://127.0.0.1:8080
 # BIFROST_API_KEY=optional-api-key
-BIFROST_MODEL=gpt-5-mini
 ```
 
 Behavior:
@@ -68,7 +67,7 @@ Behavior:
 - `BIFROST_BASE_URL` accepts host-only values (for example `http://192.168.1.200:8080`) and is normalized to `/openai/v1`.
 - If `BIFROST_BASE_URL` is not set, default is `http://127.0.0.1:8080/openai/v1`.
 - `BIFROST_API_KEY` is optional and defaults to an empty string when unset.
-- Bifrost model selection uses `BIFROST_MODEL` (default `gpt-5-mini`).
+- Bifrost model selection uses `OPENAI_MODEL` (default `gpt-5-mini`).
 
 Provider-specific error handling:
 

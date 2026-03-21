@@ -24,7 +24,7 @@ db-migrate:
 # Validate DATABASE_URL for SQLite usage
 [group('database')]
 assert-db-url:
-    @bash -lc '[[ "${DATABASE_URL:-}" =~ ^file: ]] || { echo "ERROR: DATABASE_URL must start with file:, e.g. file:./dev.db"; exit 1; }'
+    @bash -lc 'url="${DATABASE_URL:-}"; if [[ ! "$url" =~ ^file: ]]; then echo "ERROR: DATABASE_URL must start with file:, e.g. file:./dev.db"; exit 1; fi; path="${url#file:}"; path_no_query="${path%%\?*}"; if [[ -z "$path_no_query" || "$path_no_query" =~ ^[[:space:]]*$ ]]; then echo "ERROR: DATABASE_URL must include a non-empty SQLite file path after file:, e.g. file:./dev.db"; exit 1; fi'
 
 # Generate Prisma client
 [group('database')]
@@ -38,7 +38,7 @@ db-prepare: assert-db-url db-migrate db-generate
 # Ensure critical tables are present in the target DB file
 [group('database')]
 db-health:
-    node -e "const Database=require('better-sqlite3'); const db=new Database('dev.db'); const row=db.prepare(\"SELECT name FROM sqlite_master WHERE type='table' AND name='Trip'\").get(); if(!row){console.error('ERROR: Trip table missing in dev.db'); process.exit(1)}; console.log('DB OK: Trip table exists');"
+    node -e "const Database=require('better-sqlite3'); const url=process.env.DATABASE_URL||''; if(!url.startsWith('file:')){console.error('ERROR: DATABASE_URL must start with file:, e.g. file:./dev.db'); process.exit(1);} const filename=url.replace(/^file:/,'').replace(/\?.*$/,''); if(!filename.trim()){console.error('ERROR: DATABASE_URL must include a non-empty SQLite file path after file:'); process.exit(1);} const db=new Database(filename,{fileMustExist:true}); const row=db.prepare(\"SELECT name FROM sqlite_master WHERE type='table' AND name='Trip'\").get(); if(!row){console.error('ERROR: Trip table missing in '+filename); process.exit(1);} console.log('DB OK: Trip table exists in '+filename);"
 
 # Start the development server
 [group('dev')]

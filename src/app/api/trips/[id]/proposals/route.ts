@@ -14,23 +14,25 @@ interface GeneratedProposal {
   durationMinutes?: number | null;
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const proposals = await prisma.proposal.findMany({
-    where: { tripId: params.id },
+    where: { tripId: id },
     orderBy: { createdAt: 'desc' },
   });
   return NextResponse.json(proposals);
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { city } = await req.json();
 
-  const trip = await prisma.trip.findUnique({ where: { id: params.id } });
+  const trip = await prisma.trip.findUnique({ where: { id } });
   if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
 
   const allPreferences = await prisma.preference.findMany();
   const approved = await prisma.proposal.findMany({
-    where: { tripId: params.id, status: 'approved' },
+    where: { tripId: id, status: 'approved' },
   });
 
   const generated: GeneratedProposal[] = await generateProposals(allPreferences, city, approved);
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     generated.map((p) =>
       prisma.proposal.create({
         data: {
-          tripId: params.id,
+          tripId: id,
           type: p.type || 'place',
           title: p.title,
           description: p.description,

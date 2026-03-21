@@ -124,4 +124,24 @@ describe('ProposalCard', () => {
     render(<ProposalCard proposal={proposal} onApprove={onApprove} onReject={onReject} />);
     expect(screen.getByText('🏛️')).toBeInTheDocument();
   });
+
+  it('does not render a delete button when onDelete is not provided', () => {
+    render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} />);
+    expect(screen.queryByRole('button', { name: /delete proposal/i })).not.toBeInTheDocument();
+  });
+
+  it('renders a delete button when onDelete is provided', () => {
+    const onDelete = jest.fn();
+    render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} onDelete={onDelete} />);
+    expect(screen.getByRole('button', { name: /delete proposal/i })).toBeInTheDocument();
+  });
+
+  it('calls onDelete with the proposal id when delete button is clicked', async () => {
+    const user = userEvent.setup();
+    const onDelete = jest.fn();
+    render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} onDelete={onDelete} />);
+    await user.click(screen.getByRole('button', { name: /delete proposal/i }));
+    expect(onDelete).toHaveBeenCalledWith('proposal-1');
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
 });

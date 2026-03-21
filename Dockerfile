@@ -16,7 +16,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN npx prisma generate
-RUN npm run build
+RUN mkdir -p public
+# Build needs a non-empty key because API route modules are evaluated at build time.
+# This value is build-only and not persisted into the final runtime image.
+RUN OPENAI_API_KEY=build-time-placeholder npm run build
 
 # Stage 3: Production image
 FROM node:20-alpine AS runner

@@ -55,16 +55,6 @@ export default function Home() {
     }
   }
 
-  async function handleDeleteTrip(tripId: string) {
-    if (!confirm('Delete this trip? All proposals and itinerary items will be permanently removed.')) return;
-    const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setTrips(prev => prev.filter(t => t.id !== tripId));
-    } else {
-      alert('Failed to delete trip. Please try again.');
-    }
-  }
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-8">
@@ -145,7 +135,7 @@ export default function Home() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trips.map(trip => (
-            <TripCard key={trip.id} trip={trip} onDelete={handleDeleteTrip} />
+            <TripCard key={trip.id} trip={trip} />
           ))}
         </div>
       )}

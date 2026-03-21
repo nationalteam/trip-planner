@@ -117,7 +117,7 @@ npx prisma migrate dev
 # Generate Prisma client
 npx prisma generate
 
-# Start development server (http://localhost:3000)
+# Start development server (http://localhost:9527)
 npm run dev
 ```
 

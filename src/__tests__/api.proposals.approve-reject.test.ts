@@ -11,6 +11,7 @@ jest.mock('@/lib/prisma', () => ({
     itineraryItem: {
       findMany: jest.fn(),
       create: jest.fn(),
+      findUnique: jest.fn(),
     },
   },
 }));
@@ -37,7 +38,7 @@ const baseProposal = {
 };
 
 describe('POST /api/proposals/[id]/approve', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => jest.resetAllMocks());
 
   it('returns 404 when proposal does not exist', async () => {
     (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(null);
@@ -122,7 +123,7 @@ describe('POST /api/proposals/[id]/approve', () => {
 });
 
 describe('POST /api/proposals/[id]/reject', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => jest.resetAllMocks());
 
   it('returns 404 when proposal does not exist', async () => {
     (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(null);

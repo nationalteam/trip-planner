@@ -24,7 +24,7 @@ const makeItem = (overrides: Partial<{
     description: overrides.proposalDescription ?? 'Iconic landmark',
     type: overrides.proposalType ?? 'place',
     city: overrides.proposalCity ?? 'Paris',
-    durationMinutes: 'proposalDuration' in overrides ? overrides.proposalDuration : 60,
+    durationMinutes: overrides.proposalDuration === undefined ? 60 : overrides.proposalDuration,
     suggestedTime: 'morning',
   },
 });

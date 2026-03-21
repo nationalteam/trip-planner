@@ -17,7 +17,8 @@ describe('generateProposals', () => {
 
   beforeAll(() => {
     // llm.ts creates `new OpenAI(...)` at module load time; capture its create fn
-    const instance = (OpenAI as jest.Mock).mock.results[0].value as {
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    const instance = openAIMock.mock.results[0].value as {
       chat: { completions: { create: jest.Mock } };
     };
     create = instance.chat.completions.create;

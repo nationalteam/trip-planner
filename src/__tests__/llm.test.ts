@@ -108,4 +108,32 @@ describe('generateProposals', () => {
     expect(promptContent).toContain('sushi');
     expect(promptContent).toContain('Tokyo');
   });
+
+  it('uses gpt-5-mini as the default OpenAI model when OPENAI_MODEL is not set', async () => {
+    create.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    const originalModel = process.env.OPENAI_MODEL;
+    const originalAzureKey = process.env.AZURE_OPENAI_API_KEY;
+    delete process.env.OPENAI_MODEL;
+    delete process.env.AZURE_OPENAI_API_KEY;
+
+    try {
+      await generateProposals([], 'Paris');
+      const callArgs = create.mock.calls[0][0];
+      expect(callArgs.model).toBe('gpt-5-mini');
+    } finally {
+      if (originalModel === undefined) {
+        delete process.env.OPENAI_MODEL;
+      } else {
+        process.env.OPENAI_MODEL = originalModel;
+      }
+      if (originalAzureKey === undefined) {
+        delete process.env.AZURE_OPENAI_API_KEY;
+      } else {
+        process.env.AZURE_OPENAI_API_KEY = originalAzureKey;
+      }
+    }
+  });
 });

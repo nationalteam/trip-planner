@@ -17,7 +17,7 @@ AI-powered collaborative trip planning with proposal voting, auto itinerary sche
 | Framework | Next.js 15 (App Router, TypeScript) |
 | Styling | Tailwind CSS |
 | Database | SQLite via Prisma ORM + `better-sqlite3` adapter |
-| LLM | OpenAI `gpt-4o-mini` (default), Azure OpenAI optional |
+| LLM | OpenAI `gpt-5-mini` (default), Azure OpenAI optional |
 | Map | Leaflet / react-leaflet / OpenStreetMap |
 | Testing | Jest + Testing Library |
 
@@ -39,7 +39,7 @@ cp .env.example .env
 Optional: override model for non-Azure OpenAI.
 
 ```env
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_MODEL=gpt-5-mini
 ```
 
 Optional: use Azure OpenAI instead of standard OpenAI.

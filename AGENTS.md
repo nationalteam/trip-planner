@@ -38,7 +38,7 @@ This file provides guidance for AI coding agents working in this repository.
 | Framework | Next.js 15 (App Router, TypeScript) |
 | Styling | Tailwind CSS |
 | Database | SQLite via Prisma ORM with `better-sqlite3` adapter |
-| LLM | OpenAI `gpt-4o-mini` by default (`src/lib/llm.ts`) |
+| LLM | OpenAI `gpt-5-mini` by default (`src/lib/llm.ts`) |
 | Map | Leaflet / react-leaflet / OpenStreetMap |
 | Testing | Jest + Testing Library |
 
@@ -91,7 +91,7 @@ Defined in `.env` (copy from `.env.example`):
 
 ```env
 OPENAI_API_KEY=sk-...                    # Required for standard OpenAI
-OPENAI_MODEL=gpt-4o-mini                 # Optional model override
+OPENAI_MODEL=gpt-5-mini                  # Optional model override
 DATABASE_URL="file:./dev.db"             # SQLite database path
 
 # Optional: Azure OpenAI mode (used when AZURE_OPENAI_API_KEY is present)

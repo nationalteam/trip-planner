@@ -4,7 +4,6 @@ This file provides guidance for AI coding agents working in this repository.
 
 ## Communication
 
-- User-facing communication MUST be written in Taiwan Traditional Chinese unless explicitly requested otherwise.
 - Documentation MUST be written in clear, standard language.
 - Ask at most one clarifying question at a time.
 - Do not ask a clarifying question when a reasonable assumption allows safe progress.
@@ -145,13 +144,6 @@ uv tool install prek
 - If `.pre-commit-config.yaml` exists and the task changes code or configuration files, all changes MUST pass `prek run -a` before completion.
 - If `prek` is unavailable, `pre-commit run -a` MUST be used instead.
 - If checks fail, the failure MUST be reported explicitly.
-
-## Python
-
-- Use `uv` for package management and script execution.
-- Use `ruff` for formatting and linting.
-- Use `ty` for type checking.
-- New Python dependencies MUST NOT be added without explicit justification.
 
 ## Architecture & Conventions
 

@@ -107,3 +107,24 @@ There are currently no automated tests in this project. When adding tests, use a
 - **Path alias**: `@/*` resolves to `./src/*` (configured in `tsconfig.json`).
 - **Database migrations**: Use `npx prisma migrate dev` during development and `npx prisma migrate deploy` for production schema changes. Never edit migration files directly.
 - **ESLint**: Run `npm run lint` before committing. The project follows Next.js core web vitals and TypeScript rules.
+
+## GOTCHA and TASTE Auto-Update Workflow
+Follow these rules every session:
+
+1. Session start checks:
+   - Check whether `GOTCHA.md` and `TASTE.md` exist in the project root.
+   - If present, read relevant entries before proposing fixes or recommendations.
+
+2. Auto-create `GOTCHA.md` on mistakes:
+   - If an implementation/debugging mistake happens and `GOTCHA.md` does not exist, create it immediately.
+   - Add a new entry in the same session describing only non-obvious, experience-derived pitfalls.
+   - Keep each entry actionable: symptom, root cause, and prevention rule.
+
+3. Auto-create or update `TASTE.md` on stable preferences:
+   - If the user expresses a reusable preference and `TASTE.md` does not exist, create it immediately.
+   - Add or update entries in the same session with concrete decision rules.
+   - Store only stable, repeatable preferences (not one-off requests).
+
+4. Scope and quality:
+   - Do not duplicate foundational rules already defined in `AGENTS.md`.
+   - Keep entries concise and enforceable.

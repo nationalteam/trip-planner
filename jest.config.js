@@ -15,6 +15,8 @@ const config = {
     '!src/**/*.d.ts',
     '!src/**/__tests__/**',
     '!src/**/*.test.{ts,tsx}',
+    '!src/**/__tests__/**',
+    '!src/**/*.test.{ts,tsx}',
     '!src/app/fonts/**',
     '!src/app/globals.css',
   ],

@@ -26,6 +26,11 @@ db-migrate:
 assert-db-url:
     @bash -lc '[[ "${DATABASE_URL:-}" =~ ^file: ]] || { echo "ERROR: DATABASE_URL must start with file:, e.g. file:./dev.db"; exit 1; }'
 
+# Validate OpenAI/Azure OpenAI env consistency
+[group('dev')]
+assert-llm-env:
+    @bash -lc 'if [[ -n "${AZURE_OPENAI_API_KEY:-}" ]]; then [[ -n "${AZURE_OPENAI_ENDPOINT:-}" ]] || { echo "ERROR: AZURE_OPENAI_ENDPOINT is required when AZURE_OPENAI_API_KEY is set."; exit 1; }; fi'
+
 # Generate Prisma client
 [group('database')]
 db-generate:
@@ -47,7 +52,7 @@ dev:
 
 # Start dev server after DB safety checks
 [group('dev')]
-dev-safe: db-prepare db-health
+dev-safe: assert-llm-env db-prepare db-health
     npm run dev
 
 # Build for production
@@ -91,7 +96,7 @@ ci: ci-install lint test-ci ci-build
 
 # Full setup from scratch: install deps, copy env, and migrate the database
 [group('dev')]
-setup: install env db-prepare db-health
+setup: install env assert-llm-env db-prepare db-health
 
 # Build and start via Docker Compose
 [group('docker')]

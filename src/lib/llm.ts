@@ -1,10 +1,25 @@
 import OpenAI, { AzureOpenAI } from 'openai';
 
+function normalizeAzureEndpoint(endpoint: string): string {
+  const trimmed = endpoint.trim().replace(/\/+$/, '');
+  return trimmed.replace(/\/openai(?:\/v\d+)?$/i, '');
+}
+
+function assertAzureConfig() {
+  if (!process.env.AZURE_OPENAI_API_KEY) return;
+
+  if (!process.env.AZURE_OPENAI_ENDPOINT) {
+    throw new Error('Missing AZURE_OPENAI_ENDPOINT. Example: https://<resource>.openai.azure.com');
+  }
+}
+
 function createClient(): OpenAI {
+  assertAzureConfig();
+
   if (process.env.AZURE_OPENAI_API_KEY) {
     return new AzureOpenAI({
       apiKey: process.env.AZURE_OPENAI_API_KEY,
-      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+      endpoint: normalizeAzureEndpoint(process.env.AZURE_OPENAI_ENDPOINT!),
       apiVersion: process.env.AZURE_OPENAI_API_VERSION ?? '2025-01-01-preview',
       deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
     });
@@ -46,9 +61,10 @@ Types can be "food" or "place".
 suggestedTime can be "lunch", "dinner", "morning", "afternoon", or "night".
 Return ONLY valid JSON, no markdown.`;
 
+  const fallbackModel = process.env.OPENAI_MODEL ?? 'gpt-5-mini';
   const model = process.env.AZURE_OPENAI_API_KEY
-    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-5-mini')
-    : (process.env.OPENAI_MODEL ?? 'gpt-5-mini');
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
+    : fallbackModel;
 
   const response = await openai.chat.completions.create({
     model,

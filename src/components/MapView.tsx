@@ -17,15 +17,28 @@ interface MapViewProps {
   proposals: Proposal[];
 }
 
+function hasValidCoords(p: Proposal): boolean {
+  return isFinite(p.lat) && isFinite(p.lng);
+}
+
 export default function MapView({ proposals }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current) return;
+
+    let cancelled = false;
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
+
+      if (cancelled || !mapRef.current) return;
+
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
 
       const iconPrototype = L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: unknown };
       delete iconPrototype._getIconUrl;
@@ -35,7 +48,8 @@ export default function MapView({ proposals }: MapViewProps) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const approvedProposals = proposals.filter(p => p.status === 'approved');
+      const validProposals = proposals.filter(hasValidCoords);
+      const approvedProposals = validProposals.filter(p => p.status === 'approved');
 
       let centerLat = 48.8566;
       let centerLng = 2.3522;
@@ -43,19 +57,25 @@ export default function MapView({ proposals }: MapViewProps) {
       if (approvedProposals.length > 0) {
         centerLat = approvedProposals.reduce((sum, p) => sum + p.lat, 0) / approvedProposals.length;
         centerLng = approvedProposals.reduce((sum, p) => sum + p.lng, 0) / approvedProposals.length;
-      } else if (proposals.length > 0) {
-        centerLat = proposals.reduce((sum, p) => sum + p.lat, 0) / proposals.length;
-        centerLng = proposals.reduce((sum, p) => sum + p.lng, 0) / proposals.length;
+      } else if (validProposals.length > 0) {
+        centerLat = validProposals.reduce((sum, p) => sum + p.lat, 0) / validProposals.length;
+        centerLng = validProposals.reduce((sum, p) => sum + p.lng, 0) / validProposals.length;
       }
 
-      const map = L.map(mapRef.current!).setView([centerLat, centerLng], 12);
+      const map = L.map(mapRef.current).setView([centerLat, centerLng], 12);
+
+      if (cancelled) {
+        map.remove();
+        return;
+      }
+
       mapInstanceRef.current = map;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
 
-      const toShow = approvedProposals.length > 0 ? approvedProposals : proposals;
+      const toShow = approvedProposals.length > 0 ? approvedProposals : validProposals;
 
       toShow.forEach(proposal => {
         const icon = L.divIcon({
@@ -84,6 +104,7 @@ export default function MapView({ proposals }: MapViewProps) {
     initMap();
 
     return () => {
+      cancelled = true;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;

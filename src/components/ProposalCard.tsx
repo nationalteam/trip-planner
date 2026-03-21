@@ -18,6 +18,7 @@ interface ProposalCardProps {
   proposal: Proposal;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const timeIcons: Record<string, string> = {
@@ -39,7 +40,7 @@ const statusColors: Record<string, string> = {
   rejected: 'bg-red-50 border-red-200',
 };
 
-export default function ProposalCard({ proposal, onApprove, onReject }: ProposalCardProps) {
+export default function ProposalCard({ proposal, onApprove, onReject, onDelete }: ProposalCardProps) {
   return (
     <div className={`rounded-xl border p-5 transition-all ${statusColors[proposal.status] || 'bg-white border-gray-200'}`}>
       <div className="flex items-start justify-between mb-3">
@@ -50,13 +51,24 @@ export default function ProposalCard({ proposal, onApprove, onReject }: Proposal
             <span className="text-xs text-gray-500">{proposal.city} · {timeIcons[proposal.suggestedTime]} {proposal.suggestedTime}</span>
           </div>
         </div>
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${
-          proposal.status === 'approved' ? 'bg-green-100 text-green-700' :
-          proposal.status === 'rejected' ? 'bg-red-100 text-red-700' :
-          'bg-yellow-100 text-yellow-700'
-        }`}>
-          {proposal.status}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${
+            proposal.status === 'approved' ? 'bg-green-100 text-green-700' :
+            proposal.status === 'rejected' ? 'bg-red-100 text-red-700' :
+            'bg-yellow-100 text-yellow-700'
+          }`}>
+            {proposal.status}
+          </span>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(proposal.id)}
+              aria-label="Delete proposal"
+              className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="text-sm text-gray-700 mb-2">{proposal.description}</p>

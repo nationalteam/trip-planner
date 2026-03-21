@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import ProposalCard from '@/components/ProposalCard';
@@ -41,6 +41,7 @@ type Tab = 'proposals' | 'itinerary' | 'map';
 
 export default function TripDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const tripId = params.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -132,6 +133,26 @@ export default function TripDetailPage() {
     }
   }
 
+  async function handleDeleteTrip() {
+    if (!confirm('Delete this trip? All proposals and itinerary items will be permanently removed.')) return;
+    const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
+    if (res.ok) {
+      router.push('/');
+    } else {
+      alert('Failed to delete trip. Please try again.');
+    }
+  }
+
+  async function handleDeleteProposal(proposalId: string) {
+    const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' });
+    if (res.ok) {
+      setProposals(prev => prev.filter(p => p.id !== proposalId));
+      setItinerary(prev => prev.filter(item => item.proposal.id !== proposalId));
+    } else {
+      alert('Failed to delete proposal. Please try again.');
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -167,12 +188,20 @@ export default function TripDetailPage() {
               ))}
             </div>
           </div>
-          <Link
-            href={`/trips/${tripId}/preferences`}
-            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
-          >
-            ⚙️ Preferences
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href={`/trips/${tripId}/preferences`}
+              className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              ⚙️ Preferences
+            </Link>
+            <button
+              onClick={handleDeleteTrip}
+              className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              🗑️ Delete Trip
+            </button>
+          </div>
         </div>
       </div>
 
@@ -242,6 +271,7 @@ export default function TripDetailPage() {
                   proposal={proposal}
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  onDelete={handleDeleteProposal}
                 />
               ))}
             </div>

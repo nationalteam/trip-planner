@@ -144,6 +144,7 @@ export default function TripDetailPage() {
   }
 
   async function handleDeleteProposal(proposalId: string) {
+    if (!confirm('Delete this proposal? This action cannot be undone.')) return;
     const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' });
     if (res.ok) {
       setProposals(prev => prev.filter(p => p.id !== proposalId));

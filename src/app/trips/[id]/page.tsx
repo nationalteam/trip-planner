@@ -49,6 +49,7 @@ export default function TripDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>('proposals');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [organizing, setOrganizing] = useState(false);
   const [selectedCity, setSelectedCity] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
@@ -115,6 +116,19 @@ export default function TripDetailPage() {
     const res = await fetch(`/api/proposals/${proposalId}/reject`, { method: 'POST' });
     if (res.ok) {
       setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'rejected' } : p));
+    }
+  }
+
+  async function handleOrganizeItinerary() {
+    setOrganizing(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/itinerary`, { method: 'POST' });
+      if (res.ok) {
+        const organized = await res.json();
+        setItinerary(organized);
+      }
+    } finally {
+      setOrganizing(false);
     }
   }
 
@@ -236,7 +250,18 @@ export default function TripDetailPage() {
       )}
 
       {activeTab === 'itinerary' && (
-        <ItineraryView items={itinerary} />
+        <div>
+          <div className="mb-4">
+            <button
+              onClick={handleOrganizeItinerary}
+              disabled={organizing || itinerary.length === 0}
+              className="bg-purple-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+            >
+              {organizing ? '⏳ Organizing...' : '🤖 Organize with AI'}
+            </button>
+          </div>
+          <ItineraryView items={itinerary} />
+        </div>
       )}
 
       {activeTab === 'map' && (

@@ -99,6 +99,26 @@ interface ProposalLike {
   title?: string;
 }
 
+export interface ItineraryItemForLLM {
+  id: string;
+  day: number;
+  timeBlock: string;
+  proposal: {
+    title: string;
+    description: string;
+    type: string;
+    city: string;
+    suggestedTime: string;
+    durationMinutes: number | null;
+  };
+}
+
+export interface OrganizedItineraryItem {
+  id: string;
+  day: number;
+  timeBlock: 'morning' | 'afternoon' | 'dinner';
+}
+
 export async function generateProposals(preferences: object[], city: string, existingProposals: ProposalLike[] = []) {
   const provider = resolveProvider();
   const openai = createClient(provider);
@@ -133,6 +153,56 @@ Return ONLY valid JSON, no markdown.`;
     : provider === 'bifrost'
       ? fallbackModel
       : fallbackModel;
+
+  let response;
+  try {
+    response = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } catch (error) {
+    mapProviderError(provider, error);
+  }
+
+  const content = response.choices[0].message.content || '[]';
+  try {
+    return JSON.parse(content);
+  } catch {
+    try {
+      const match = content.match(/\[[\s\S]*\]/);
+      return match ? JSON.parse(match[0]) : [];
+    } catch {
+      return [];
+    }
+  }
+}
+
+export async function organizeItinerary(items: ItineraryItemForLLM[]): Promise<OrganizedItineraryItem[]> {
+  const provider = resolveProvider();
+  const openai = createClient(provider);
+  const fallbackModel = process.env.OPENAI_MODEL ?? 'gpt-5-mini';
+  const model = provider === 'azure'
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
+    : fallbackModel;
+
+  const prompt = `You are a travel planner assistant. Reorganize an itinerary to make each day flow naturally.
+
+Input itinerary items:
+${JSON.stringify(items, null, 2)}
+
+Return a JSON array with the exact same ids, each appearing exactly once, in this format:
+[
+  {
+    "id": "item-id",
+    "day": 1,
+    "timeBlock": "morning"
+  }
+]
+
+Rules:
+- day must be an integer >= 1
+- timeBlock must be one of "morning", "afternoon", "dinner"
+- return ONLY valid JSON (no markdown, no extra text).`;
 
   let response;
   try {

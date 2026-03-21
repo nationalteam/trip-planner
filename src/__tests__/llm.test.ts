@@ -16,7 +16,7 @@ jest.mock('openai', () => {
   };
 });
 
-import { generateProposals } from '@/lib/llm';
+import { generateProposals, organizeItinerary } from '@/lib/llm';
 import OpenAI from 'openai';
 
 describe('generateProposals', () => {
@@ -277,5 +277,46 @@ describe('generateProposals', () => {
   it('throws when LLM_PROVIDER is unsupported', async () => {
     process.env.LLM_PROVIDER = 'invalid-provider';
     await expect(generateProposals([], 'Paris')).rejects.toThrow('Unsupported LLM_PROVIDER: invalid-provider');
+  });
+});
+
+describe('organizeItinerary', () => {
+  beforeEach(() => {
+    mockCreate.mockReset();
+    (OpenAI as unknown as jest.Mock).mockClear();
+  });
+
+  it('returns parsed organized itinerary from LLM response', async () => {
+    const fakeOrganized = [{ id: 'ii-1', day: 2, timeBlock: 'afternoon' }];
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(fakeOrganized) } }],
+    });
+
+    const result = await organizeItinerary([
+      {
+        id: 'ii-1',
+        day: 1,
+        timeBlock: 'morning',
+        proposal: {
+          title: 'Louvre',
+          description: 'Museum',
+          type: 'place',
+          city: 'Paris',
+          suggestedTime: 'morning',
+          durationMinutes: 120,
+        },
+      },
+    ]);
+
+    expect(result).toEqual(fakeOrganized);
+  });
+
+  it('returns an empty array when organize response cannot be parsed', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: 'not-json' } }],
+    });
+
+    const result = await organizeItinerary([]);
+    expect(result).toEqual([]);
   });
 });

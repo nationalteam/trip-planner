@@ -44,9 +44,9 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 USER nextjs
 
-EXPOSE 3000
+EXPOSE 9527
 
 # The nextjs user has write access to /app/data (chown above), which is the
 # only location prisma migrate deploy writes to (the SQLite database file).
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["node_modules/.bin/next", "start"]
+CMD ["node_modules/.bin/next", "start", "-p", "9527"]

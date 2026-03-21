@@ -69,7 +69,7 @@ npx prisma generate
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:9527](http://localhost:9527).
 
 ## Scripts
 
@@ -148,4 +148,4 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:9527](http://localhost:9527).

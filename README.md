@@ -98,6 +98,14 @@ prisma/
 | `Proposal` | tripId, type, title, description, reason, lat/lng, suggestedTime, status |
 | `ItineraryItem` | tripId, proposalId, day, timeBlock |
 
+
+## Demo Site (GitHub Pages)
+
+A demo preview page is automatically deployed to GitHub Pages on every push to `main` via `.github/workflows/deploy-pages.yml`.
+
+- Preview URL: https://nationalteam.github.io/trip-planner/
+- Manual deploy: run the **Deploy demo site to GitHub Pages** workflow from the Actions tab
+
 ## Running with Docker
 
 ```bash

@@ -1,7 +1,22 @@
 import OpenAI, { AzureOpenAI } from 'openai';
 
-function createClient(): OpenAI {
-  if (process.env.AZURE_OPENAI_API_KEY) {
+type Provider = 'openai' | 'azure' | 'bifrost';
+
+function resolveProvider(): Provider {
+  const configured = process.env.LLM_PROVIDER?.toLowerCase();
+  if (configured === 'openai' || configured === 'azure' || configured === 'bifrost') {
+    return configured;
+  }
+  if (configured) {
+    throw new Error(`Unsupported LLM_PROVIDER: ${process.env.LLM_PROVIDER}`);
+  }
+  if (process.env.AZURE_OPENAI_API_KEY) return 'azure';
+  if (process.env.BIFROST_API_KEY) return 'bifrost';
+  return 'openai';
+}
+
+function createClient(provider: Provider): OpenAI {
+  if (provider === 'azure') {
     return new AzureOpenAI({
       apiKey: process.env.AZURE_OPENAI_API_KEY,
       endpoint: process.env.AZURE_OPENAI_ENDPOINT,
@@ -9,18 +24,53 @@ function createClient(): OpenAI {
       deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
     });
   }
+  if (provider === 'bifrost') {
+    if (!process.env.BIFROST_API_KEY) {
+      throw new Error('BIFROST_API_KEY is required when LLM_PROVIDER is "bifrost".');
+    }
+    return new OpenAI({
+      apiKey: process.env.BIFROST_API_KEY,
+      baseURL: process.env.BIFROST_BASE_URL ?? 'http://192.168.1.200:8080',
+    });
+  }
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 }
 
-const openai = createClient();
+function mapProviderError(provider: Provider, error: unknown): never {
+  const message = error instanceof Error ? error.message : String(error);
+  const maybeError = error as { status?: number } | null;
+  const status = typeof maybeError?.status === 'number' ? maybeError.status : undefined;
+
+  if (provider === 'bifrost') {
+    if (status === 401 || status === 403) {
+      throw new Error('Bifrost authentication failed. Check BIFROST_API_KEY.');
+    }
+    if (status === 404) {
+      throw new Error('Bifrost endpoint not found. Check BIFROST_BASE_URL.');
+    }
+    if (status === 429) {
+      throw new Error('Bifrost rate limit exceeded. Please retry later.');
+    }
+    if (status && status >= 500) {
+      throw new Error('Bifrost API is currently unavailable. Please retry later.');
+    }
+    if (message.includes('ECONNREFUSED') || message.includes('ENOTFOUND') || message.includes('fetch failed')) {
+      throw new Error('Cannot reach Bifrost endpoint. Check BIFROST_BASE_URL and network connectivity.');
+    }
+  }
+
+  throw error instanceof Error ? error : new Error(message);
+}
 
 interface ProposalLike {
   title?: string;
 }
 
 export async function generateProposals(preferences: object[], city: string, existingApproved: ProposalLike[] = []) {
+  const provider = resolveProvider();
+  const openai = createClient(provider);
   const prompt = `You are a travel planner. Generate restaurant and place proposals for a trip.
 
 City: ${city}
@@ -46,20 +96,31 @@ Types can be "food" or "place".
 suggestedTime can be "lunch", "dinner", "morning", "afternoon", or "night".
 Return ONLY valid JSON, no markdown.`;
 
-  const model = process.env.AZURE_OPENAI_API_KEY
+  const model = provider === 'azure'
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-5-mini')
-    : (process.env.OPENAI_MODEL ?? 'gpt-5-mini');
+    : provider === 'bifrost'
+      ? (process.env.BIFROST_MODEL ?? process.env.OPENAI_MODEL ?? 'gpt-5-mini')
+      : (process.env.OPENAI_MODEL ?? 'gpt-5-mini');
 
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  let response;
+  try {
+    response = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } catch (error) {
+    mapProviderError(provider, error);
+  }
 
   const content = response.choices[0].message.content || '[]';
   try {
     return JSON.parse(content);
   } catch {
-    const match = content.match(/\[[\s\S]*\]/);
-    return match ? JSON.parse(match[0]) : [];
+    try {
+      const match = content.match(/\[[\s\S]*\]/);
+      return match ? JSON.parse(match[0]) : [];
+    } catch {
+      return [];
+    }
   }
 }

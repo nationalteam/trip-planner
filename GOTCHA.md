@@ -29,3 +29,16 @@
   Remove the explicit `temperature` parameter for this call.
 - Preventive rule:
   For GPT-5-series models, do not set `temperature` unless model docs explicitly confirm non-default values are supported.
+
+## SQLite `DATABASE_URL` format and path base mismatch can silently create wrong DB target
+
+- Context:
+  API runtime uses `@prisma/adapter-better-sqlite3` while schema/migrations use `prisma.config.ts`.
+- Symptom:
+  `POST /api/trips` fails with `P2021` (`main.Trip` does not exist) even though migrations exist.
+- Root cause:
+  `DATABASE_URL` was set to plain `./dev.db` (invalid for Prisma CLI), and path handling between runtime/CLI can diverge if `file:` URLs are not normalized consistently.
+- Fix:
+  Use a valid SQLite URL (`DATABASE_URL="file:./dev.db"`), run `npx prisma migrate dev`, and normalize runtime adapter path from `DATABASE_URL` before creating `PrismaClient`.
+- Preventive rule:
+  Always keep `DATABASE_URL` in Prisma URL form (`file:...`) and verify runtime + migration commands point to the same physical DB file.

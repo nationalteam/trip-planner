@@ -37,6 +37,19 @@ cp .env.example .env
 # Edit .env and set OPENAI_API_KEY=sk-...
 ```
 
+#### Using Azure OpenAI (optional)
+
+To use Azure OpenAI instead of the standard OpenAI API, set the following variables in `.env` (and leave `OPENAI_API_KEY` unset or empty):
+
+```env
+AZURE_OPENAI_API_KEY=your-azure-key-here
+AZURE_OPENAI_ENDPOINT=https://<resource-name>.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=your-deployment-name
+AZURE_OPENAI_API_VERSION=2025-01-01-preview   # optional, defaults to 2025-01-01-preview
+```
+
+When `AZURE_OPENAI_API_KEY` is present the application automatically uses the Azure OpenAI endpoint; otherwise it falls back to the standard OpenAI API with `OPENAI_API_KEY`.
+
 ### 3. Set up the database
 
 ```bash
@@ -90,6 +103,7 @@ prisma/
 ```bash
 cp .env.example .env
 # Edit .env and set OPENAI_API_KEY=sk-...
+# Or set AZURE_OPENAI_* variables to use Azure OpenAI (see "Configure environment" above)
 
 docker compose up --build
 ```

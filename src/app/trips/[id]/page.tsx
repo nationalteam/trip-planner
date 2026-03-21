@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -52,14 +52,7 @@ export default function TripDetailPage() {
   const [selectedCity, setSelectedCity] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (tripId) {
-      fetchAll();
-    }
-  }, [tripId]);
-
-  async function fetchAll() {
+  const fetchAll = useCallback(async () => {
     try {
       const [tripRes, proposalsRes, itineraryRes] = await Promise.all([
         fetch(`/api/trips/${tripId}`),
@@ -81,7 +74,13 @@ export default function TripDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [tripId]);
+
+  useEffect(() => {
+    if (tripId) {
+      fetchAll();
+    }
+  }, [tripId, fetchAll]);
 
   async function handleGenerate() {
     if (!selectedCity) return;

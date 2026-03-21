@@ -14,7 +14,7 @@ interface GeneratedProposal {
   durationMinutes?: number | null;
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const proposals = await prisma.proposal.findMany({
     where: { tripId: params.id },
     orderBy: { createdAt: 'desc' },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const proposal = await prisma.proposal.findUnique({ where: { id: params.id } });
   if (!proposal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

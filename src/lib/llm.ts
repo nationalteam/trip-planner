@@ -53,7 +53,6 @@ Return ONLY valid JSON, no markdown.`;
   const response = await openai.chat.completions.create({
     model,
     messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
   });
 
   const content = response.choices[0].message.content || '[]';

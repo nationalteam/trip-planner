@@ -8,11 +8,19 @@ function normalizeAzureEndpoint(endpoint: string): string {
 }
 
 function normalizeBifrostBaseURL(baseURL: string): string {
-  const trimmed = baseURL.trim().replace(/\/+$/, '');
-  if (/\/openai\/v\d+$/i.test(trimmed)) return trimmed;
-  if (/\/openai$/i.test(trimmed)) return `${trimmed}/v1`;
-  if (/\/v\d+$/i.test(trimmed)) return `${trimmed.replace(/\/v\d+$/i, '')}/openai/v1`;
-  return `${trimmed}/openai/v1`;
+  const trimmed = baseURL.trim();
+  if (!trimmed) {
+    throw new Error(
+      'BIFROST_BASE_URL is set but empty or whitespace-only. Either unset it to use the default http://127.0.0.1:8080 or provide a valid absolute URL.',
+    );
+  }
+  const normalized = trimmed.replace(/\/+$/, '');
+  if (/\/openai\/v\d+$/i.test(normalized)) return normalized;
+  if (/\/openai$/i.test(normalized)) return `${normalized}/v1`;
+  if (/\/v\d+$/i.test(normalized)) {
+    return `${normalized.replace(/\/v\d+$/i, '')}/openai/v1`;
+  }
+  return `${normalized}/openai/v1`;
 }
 
 function resolveProvider(): Provider {

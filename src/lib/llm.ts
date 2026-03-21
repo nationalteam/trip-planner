@@ -47,8 +47,8 @@ suggestedTime can be "lunch", "dinner", "morning", "afternoon", or "night".
 Return ONLY valid JSON, no markdown.`;
 
   const model = process.env.AZURE_OPENAI_API_KEY
-    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-4o-mini')
-    : (process.env.OPENAI_MODEL ?? 'gpt-4o-mini');
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-5-mini')
+    : (process.env.OPENAI_MODEL ?? 'gpt-5-mini');
 
   const response = await openai.chat.completions.create({
     model,

@@ -130,7 +130,7 @@ describe('generateProposals', () => {
   it('uses gpt-5-mini as the default Bifrost model when BIFROST_MODEL is not set', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_API_KEY = 'bf-key';
-    process.env.BIFROST_BASE_URL = 'http://192.168.1.200:8080';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
     delete process.env.BIFROST_MODEL;
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
@@ -144,7 +144,7 @@ describe('generateProposals', () => {
   it('uses Bifrost OpenAI-compatible endpoint when LLM_PROVIDER is bifrost', async () => {
     process.env.LLM_PROVIDER = 'bifrost';
     process.env.BIFROST_API_KEY = 'bf-key';
-    process.env.BIFROST_BASE_URL = 'http://192.168.1.200:8080';
+    process.env.BIFROST_BASE_URL = 'http://127.0.0.1:8080';
     process.env.BIFROST_MODEL = 'gpt-4.1-mini';
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
@@ -155,9 +155,26 @@ describe('generateProposals', () => {
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
       apiKey: 'bf-key',
-      baseURL: 'http://192.168.1.200:8080',
+      baseURL: 'http://127.0.0.1:8080',
     });
     expect(mockCreate.mock.calls[0][0].model).toBe('gpt-4.1-mini');
+  });
+
+  it('uses default Bifrost base URL when BIFROST_BASE_URL is not set', async () => {
+    process.env.LLM_PROVIDER = 'bifrost';
+    process.env.BIFROST_API_KEY = 'bf-key';
+    delete process.env.BIFROST_BASE_URL;
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const openAIMock = OpenAI as unknown as jest.Mock;
+    expect(openAIMock).toHaveBeenCalledWith({
+      apiKey: 'bf-key',
+      baseURL: 'http://127.0.0.1:8080',
+    });
   });
 
   it('throws a clear message for Bifrost auth errors', async () => {
@@ -170,14 +187,6 @@ describe('generateProposals', () => {
     });
 
     await expect(generateProposals([], 'Paris')).rejects.toThrow('Bifrost authentication failed. Check BIFROST_API_KEY.');
-  });
-
-  it('throws when BIFROST_BASE_URL is missing for bifrost provider', async () => {
-    process.env.LLM_PROVIDER = 'bifrost';
-    process.env.BIFROST_API_KEY = 'bf-key';
-    delete process.env.BIFROST_BASE_URL;
-
-    await expect(generateProposals([], 'Paris')).rejects.toThrow('BIFROST_BASE_URL is required when LLM_PROVIDER is "bifrost".');
   });
 
   it('throws when LLM_PROVIDER is unsupported', async () => {

@@ -28,12 +28,9 @@ function createClient(provider: Provider): OpenAI {
     if (!process.env.BIFROST_API_KEY) {
       throw new Error('BIFROST_API_KEY is required when LLM_PROVIDER is "bifrost".');
     }
-    if (!process.env.BIFROST_BASE_URL) {
-      throw new Error('BIFROST_BASE_URL is required when LLM_PROVIDER is "bifrost".');
-    }
     return new OpenAI({
       apiKey: process.env.BIFROST_API_KEY,
-      baseURL: process.env.BIFROST_BASE_URL,
+      baseURL: process.env.BIFROST_BASE_URL ?? 'http://127.0.0.1:8080',
     });
   }
   return new OpenAI({

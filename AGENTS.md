@@ -57,5 +57,5 @@
 
 ## TDD
 
-- Read `TDD.md` at session start; it MUST NOT be assumed to be auto-loaded.
+- Read `TDD_POLICY.md` at session start; it MUST NOT be assumed to be auto-loaded.
 - Apply rules strictly during implementation and code changes.

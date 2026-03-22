@@ -42,3 +42,16 @@
   Use a valid SQLite URL (`DATABASE_URL="file:./dev.db"`), run `npx prisma migrate dev`, and normalize runtime adapter path from `DATABASE_URL` before creating `PrismaClient`.
 - Preventive rule:
   Always keep `DATABASE_URL` in Prisma URL form (`file:...`) and verify runtime + migration commands point to the same physical DB file.
+
+## Lat/Lng swap can remain undetected when both values are still in valid ranges
+
+- Context:
+  Map marker placement and proposal persistence previously normalized coordinates only when one orientation was out of range.
+- Symptom:
+  Some places still appear in the wrong region even after "swap obvious lat/lng" handling, especially for cities where both `(lat, lng)` and `(lng, lat)` are numerically valid (for example around Europe/North America).
+- Root cause:
+  Validation based only on coordinate range cannot detect ambiguous swaps; both orders can pass bounds checks.
+- Fix:
+  Add batch normalization with anchor/reference centroid heuristics on API writes, using existing trip proposals as anchors for ambiguous points. Note that ambiguous swaps without such contextual anchors will not be corrected at render time.
+- Preventive rule:
+  Coordinate normalization must handle three cases explicitly: invalid numbers, obvious swaps, and ambiguous swaps that require contextual anchors.

@@ -45,6 +45,10 @@ describe('GET /api/trips/[id]/proposals', () => {
 });
 
 describe('POST /api/trips/[id]/proposals', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('returns 404 when trip does not exist', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(null);
 
@@ -120,5 +124,104 @@ describe('POST /api/trips/[id]/proposals', () => {
     await POST(req, context);
 
     expect(mockGenerate).toHaveBeenCalledWith([], 'Paris', existingProposals);
+  });
+
+  it('normalizes obviously swapped latitude/longitude before saving proposals', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
+    const fakeGenerated = [
+      {
+        type: 'place',
+        title: 'Louvre',
+        description: 'Famous museum',
+        reason: 'Art lover',
+        lat: 136.7253,
+        lng: 34.4548,
+        city: 'Paris',
+        suggestedTime: 'morning',
+        durationMinutes: 120,
+      },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+    mockGenerate.mockResolvedValue(fakeGenerated);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({ city: 'Paris' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    await POST(req, context);
+
+    expect(mockPrisma.proposal.create).toHaveBeenCalledTimes(1);
+    const createArg = (mockPrisma.proposal.create as jest.Mock).mock.calls[0][0];
+    expect(createArg.data.lat).toBe(34.4548);
+    expect(createArg.data.lng).toBe(136.7253);
+  });
+
+  it('normalizes ambiguously swapped coordinates using existing proposal reference centroid', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
+    const existingProposals = [
+      {
+        id: 'existing-1',
+        tripId: 'trip-1',
+        type: 'place',
+        title: 'Paris Center',
+        description: 'Anchor',
+        reason: '',
+        lat: 48.8566,
+        lng: 2.3522,
+        city: 'Paris',
+        suggestedTime: 'morning',
+        durationMinutes: null,
+        status: 'approved',
+      },
+    ];
+    const fakeGenerated = [
+      {
+        type: 'place',
+        title: 'Louvre',
+        description: 'Famous museum',
+        reason: 'Art lover',
+        lat: 48.8606,
+        lng: 2.3376,
+        city: 'Paris',
+        suggestedTime: 'morning',
+        durationMinutes: 120,
+      },
+      {
+        type: 'place',
+        title: 'Eiffel Tower',
+        description: 'Iconic tower',
+        reason: 'Landmark',
+        lat: 2.2945,
+        lng: 48.8584,
+        city: 'Paris',
+        suggestedTime: 'afternoon',
+        durationMinutes: 90,
+      },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue(existingProposals);
+    mockGenerate.mockResolvedValue(fakeGenerated);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({ city: 'Paris' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    await POST(req, context);
+
+    expect(mockPrisma.proposal.create).toHaveBeenCalledTimes(2);
+    const secondCreateArg = (mockPrisma.proposal.create as jest.Mock).mock.calls[1][0];
+    expect(secondCreateArg.data.lat).toBe(48.8584);
+    expect(secondCreateArg.data.lng).toBe(2.2945);
   });
 });

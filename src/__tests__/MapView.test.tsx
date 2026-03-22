@@ -103,6 +103,36 @@ describe('MapView', () => {
     expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
   });
 
+  it('normalizes obviously swapped latitude/longitude before rendering marker', async () => {
+    const proposals = [
+      { ...baseProposal, id: 'p-swapped', lat: 136.7253, lng: 34.4548 },
+    ];
+
+    await act(async () => {
+      render(<MapView proposals={proposals} />);
+    });
+
+    expect(mockMarker).toHaveBeenCalledTimes(1);
+    expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
+  });
+
+  it('normalizes ambiguously swapped coordinates using unambiguous batch anchors', async () => {
+    // p-anchor has lng=-100 (|lng|>90) so its swapped form lat=-100 is invalid → unambiguous anchor
+    // p-ambiguous-swapped has both values in [-90,90] → ambiguous; resolved via anchor centroid
+    const proposals = [
+      { ...baseProposal, id: 'p-anchor', lat: 50, lng: -100 },
+      { ...baseProposal, id: 'p-ambiguous-swapped', lat: -40, lng: 50 },
+    ];
+
+    await act(async () => {
+      render(<MapView proposals={proposals} />);
+    });
+
+    expect(mockMarker).toHaveBeenCalledTimes(2);
+    expect(mockMarker).toHaveBeenNthCalledWith(1, [50, -100], expect.anything());
+    expect(mockMarker).toHaveBeenNthCalledWith(2, [50, -40], expect.anything());
+  });
+
   it('shows only approved proposals when some are approved', async () => {
     const proposals = [
       { ...baseProposal, id: 'p-approved', status: 'approved' },

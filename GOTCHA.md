@@ -43,6 +43,31 @@
 - Preventive rule:
   Always keep `DATABASE_URL` in Prisma URL form (`file:...`) and verify runtime + migration commands point to the same physical DB file.
 
+## Using Paris as a universal coordinate-normalization reference breaks non-Paris trips
+
+- Context:
+  `MapView` called `normalizeCoordinateBatch(proposals, { reference: defaultCenter })` with
+  a hardcoded Paris centre (`{ lat: 48.8566, lng: 2.3522 }`) for every trip.
+- Symptom:
+  Markers for cities like Mumbai, Bangkok, or Jakarta appear in the wrong country.
+  For example, Mumbai (lat≈19, lng≈73) was shown in Norway because the swapped form
+  (lat≈73, lng≈19) is closer to Paris and was therefore preferred by the distance heuristic.
+- Root cause:
+  When all proposals in a batch have both orientations in the valid lat/lng range (ambiguous),
+  the algorithm resolves ties by distance to the reference point. Using Paris as the reference
+  for every trip is correct only for Paris; for other cities it can actively invert correct coordinates.
+- Fix:
+  1. `MapView`: removed the Paris `defaultCenter` from `normalizeCoordinateBatch`.
+     `DEFAULT_CENTER` is now only used for the initial map-viewport fallback.
+     The batch algorithm's own unambiguous-anchor heuristic handles swaps internally.
+  2. `proposals/route.ts`: added a `getCityCenter(city)` city-lookup table in
+     `src/lib/coordinates.ts`; it is used as a fallback reference when no existing
+     proposals exist, so first-batch ambiguous swaps are corrected at write time.
+- Preventive rule:
+  Never use a hardcoded single-city reference for coordinate normalization across trips.
+  Derive the reference from existing proposals for the same city, fall back to a
+  city-centre lookup, and only use it as a normalization *hint*, never as a map fallback.
+
 ## Lat/Lng swap can remain undetected when both values are still in valid ranges
 
 - Context:

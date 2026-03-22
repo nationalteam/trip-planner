@@ -18,10 +18,11 @@ interface MapViewProps {
   proposals: Proposal[];
 }
 
+const DEFAULT_CENTER = { lat: 48.8566, lng: 2.3522 };
+
 export default function MapView({ proposals }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const defaultCenter = { lat: 48.8566, lng: 2.3522 };
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -46,11 +47,11 @@ export default function MapView({ proposals }: MapViewProps) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const validProposals = normalizeCoordinateBatch(proposals, { reference: defaultCenter });
+      const validProposals = normalizeCoordinateBatch(proposals);
       const approvedProposals = validProposals.filter(p => p.status === 'approved');
 
-      let centerLat = defaultCenter.lat;
-      let centerLng = defaultCenter.lng;
+      let centerLat = DEFAULT_CENTER.lat;
+      let centerLng = DEFAULT_CENTER.lng;
 
       if (approvedProposals.length > 0) {
         centerLat = approvedProposals.reduce((sum, p) => sum + p.lat, 0) / approvedProposals.length;

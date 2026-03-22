@@ -224,4 +224,46 @@ describe('POST /api/trips/[id]/proposals', () => {
     expect(secondCreateArg.data.lat).toBe(48.8584);
     expect(secondCreateArg.data.lng).toBe(2.2945);
   });
+
+  it('uses city-center reference to normalize ambiguous coordinates when no existing proposals', async () => {
+    // Mumbai: lat=19.07, lng=72.88 – both valid in any orientation (ambiguous).
+    // Without a reference the algorithm cannot detect the swap. With the city-center
+    // lookup for "Mumbai" the correct orientation is preserved.
+    const fakeTrip = { id: 'trip-1', name: 'Mumbai Trip', cities: '["Mumbai"]' };
+    // LLM returns coordinates in WRONG order: lat=72.8347, lng=18.9220 (swapped)
+    const fakeGenerated = [
+      {
+        type: 'place',
+        title: 'Gateway of India',
+        description: 'Historic monument',
+        reason: 'Landmark',
+        lat: 72.8347,
+        lng: 18.9220,
+        city: 'Mumbai',
+        suggestedTime: 'morning',
+        durationMinutes: 60,
+      },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+    mockGenerate.mockResolvedValue(fakeGenerated);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({ city: 'Mumbai' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    await POST(req, context);
+
+    expect(mockPrisma.proposal.create).toHaveBeenCalledTimes(1);
+    const createArg = (mockPrisma.proposal.create as jest.Mock).mock.calls[0][0];
+    // After normalization using Mumbai city-center reference the swap must be corrected:
+    // stored as lat=18.9220, lng=72.8347 (correct Mumbai orientation)
+    expect(createArg.data.lat).toBe(18.9220);
+    expect(createArg.data.lng).toBe(72.8347);
+  });
 });

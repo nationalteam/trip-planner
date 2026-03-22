@@ -116,6 +116,24 @@ describe('MapView', () => {
     expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
   });
 
+  it('does not incorrectly swap correct coordinates for a city far from Paris', async () => {
+    // Mumbai: lat=19.0760, lng=72.8777 – both values are in [-90,90] so both orientations
+    // are valid (ambiguous). With the old hardcoded Paris reference the algorithm would
+    // prefer the swapped form (72.88, 19.07) because it is closer to Paris, placing the
+    // marker in Norway instead of India.
+    const proposals = [
+      { ...baseProposal, id: 'p-mumbai', lat: 19.0760, lng: 72.8777, city: 'Mumbai', status: 'approved' },
+    ];
+
+    await act(async () => {
+      render(<MapView proposals={proposals} />);
+    });
+
+    expect(mockMarker).toHaveBeenCalledTimes(1);
+    // Must stay at Mumbai (lat≈19, lng≈72), NOT be swapped to Norway (lat≈72, lng≈19)
+    expect(mockMarker).toHaveBeenCalledWith([19.0760, 72.8777], expect.anything());
+  });
+
   it('normalizes ambiguously swapped coordinates using unambiguous batch anchors', async () => {
     // p-anchor has lng=-100 (|lng|>90) so its swapped form lat=-100 is invalid → unambiguous anchor
     // p-ambiguous-swapped has both values in [-90,90] → ambiguous; resolved via anchor centroid

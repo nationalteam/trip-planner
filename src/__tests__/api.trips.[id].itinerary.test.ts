@@ -1,4 +1,4 @@
-import { GET, POST } from '@/app/api/trips/[id]/itinerary/route';
+import { GET, POST, PATCH } from '@/app/api/trips/[id]/itinerary/route';
 import { NextRequest } from 'next/server';
 
 jest.mock('@/lib/prisma', () => ({
@@ -210,5 +210,140 @@ describe('POST /api/trips/[id]/itinerary', () => {
 
     expect(res.status).toBe(500);
     expect(data.error).toBe('Failed to organize itinerary');
+  });
+});
+
+describe('PATCH /api/trips/[id]/itinerary', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  const existingItems = [
+    { id: 'ii-1', tripId: 'trip-1', proposalId: 'p-1', day: 1, timeBlock: 'morning', order: 0 },
+    { id: 'ii-2', tripId: 'trip-1', proposalId: 'p-2', day: 1, timeBlock: 'morning', order: 1 },
+  ];
+
+  it('returns 400 when body is not an array', async () => {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: 'ii-1' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/invalid/i);
+  });
+
+  it('returns 400 when an item has an unknown id', async () => {
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+
+    const body = [{ id: 'unknown-id', day: 1, timeBlock: 'morning', order: 0 }];
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/invalid/i);
+  });
+
+  it('returns 400 when an item has an invalid timeBlock', async () => {
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+
+    const body = [{ id: 'ii-1', day: 1, timeBlock: 'night', order: 0 }];
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/invalid/i);
+  });
+
+  it('returns 400 when an item has an invalid day', async () => {
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+
+    const body = [{ id: 'ii-1', day: 0, timeBlock: 'morning', order: 0 }];
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/invalid/i);
+  });
+
+  it('updates itinerary items and returns them with proposals', async () => {
+    const updatedWithProposal = [
+      {
+        id: 'ii-1',
+        tripId: 'trip-1',
+        proposalId: 'p-1',
+        day: 1,
+        timeBlock: 'afternoon',
+        order: 0,
+        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+      },
+      {
+        id: 'ii-2',
+        tripId: 'trip-1',
+        proposalId: 'p-2',
+        day: 1,
+        timeBlock: 'morning',
+        order: 0,
+        proposal: { id: 'p-2', title: 'Louvre', description: 'Museum', type: 'place', city: 'Paris', durationMinutes: 90, suggestedTime: 'morning' },
+      },
+    ];
+
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(updatedWithProposal);
+
+    const body = [
+      { id: 'ii-1', day: 1, timeBlock: 'afternoon', order: 0 },
+      { id: 'ii-2', day: 1, timeBlock: 'morning', order: 0 },
+    ];
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual(updatedWithProposal);
+    expect(mockPrisma.$transaction).toHaveBeenCalled();
+  });
+
+  it('returns 500 on database error', async () => {
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
+    (mockPrisma.$transaction as jest.Mock).mockRejectedValue(new Error('db error'));
+
+    const body = [{ id: 'ii-1', day: 1, timeBlock: 'morning', order: 0 }];
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(data.error).toBe('Failed to update itinerary');
   });
 });

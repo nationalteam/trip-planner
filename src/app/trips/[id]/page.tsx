@@ -35,6 +35,7 @@ interface ItineraryItem {
   id: string;
   day: number;
   timeBlock: string;
+  order: number;
   proposal: Proposal;
 }
 
@@ -132,6 +133,32 @@ export default function TripDetailPage() {
       }
     } finally {
       setOrganizing(false);
+    }
+  }
+
+  async function handleReorderItinerary(updates: { id: string; day: number; timeBlock: string; order: number }[]) {
+    // Optimistically apply the reorder to the local state
+    const updatesById = new Map(updates.map(u => [u.id, u]));
+    const reordered = [...itinerary]
+      .map(item => {
+        const u = updatesById.get(item.id);
+        return u ? { ...item, day: u.day, timeBlock: u.timeBlock, order: u.order } : item;
+      })
+      .sort((a, b) => a.order - b.order);
+    setItinerary(reordered);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/itinerary`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        // Revert on API error
+        fetchAll();
+      }
+    } catch {
+      // Revert on network error
+      fetchAll();
     }
   }
 
@@ -303,7 +330,7 @@ export default function TripDetailPage() {
               {organizing ? '⏳ Organizing...' : '🤖 Organize with AI'}
             </button>
           </div>
-          <ItineraryView items={itinerary} />
+          <ItineraryView items={itinerary} onReorder={handleReorderItinerary} />
         </div>
       )}
 

@@ -162,7 +162,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     expect(createArg.data.lng).toBe(136.7253);
   });
 
-  it('normalizes ambiguously swapped coordinates using generated batch anchors', async () => {
+  it('normalizes ambiguously swapped coordinates using existing proposal reference centroid', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
     const existingProposals = [
       {

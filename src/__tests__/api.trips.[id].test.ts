@@ -13,14 +13,32 @@ jest.mock('@/lib/prisma', () => ({
     itineraryItem: {
       deleteMany: jest.fn(),
     },
+    tripMember: {
+      deleteMany: jest.fn(),
+    },
   },
 }));
 
+jest.mock('@/lib/auth', () => ({
+  requireAuth: jest.fn(),
+  requireTripRole: jest.fn(),
+  buildForbiddenResponse: jest.fn(() => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+}));
+
 import { prisma } from '@/lib/prisma';
+import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockRequireAuth = requireAuth as jest.Mock;
+const mockRequireTripRole = requireTripRole as jest.Mock;
 
 describe('GET /api/trips/[id]', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
+
   it('returns the trip when found', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Adventure', cities: '["Paris"]', createdAt: new Date() };
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
@@ -32,6 +50,7 @@ describe('GET /api/trips/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.name).toBe('Paris Adventure');
+    expect(data.currentRole).toBe('owner');
   });
 
   it('returns 404 when trip is not found', async () => {
@@ -50,6 +69,8 @@ describe('GET /api/trips/[id]', () => {
 describe('DELETE /api/trips/[id]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
   });
 
   it('deletes the trip and returns 204 when found', async () => {
@@ -66,6 +87,7 @@ describe('DELETE /api/trips/[id]', () => {
     expect(res.status).toBe(204);
     expect(mockPrisma.itineraryItem.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.proposal.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
+    expect(mockPrisma.tripMember.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.trip.delete).toHaveBeenCalledWith({ where: { id: 'trip-1' } });
   });
 

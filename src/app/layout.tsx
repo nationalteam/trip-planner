@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AuthNav from '@/components/AuthNav';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
             <div className="flex gap-4 text-sm">
               <Link href="/" className="hover:text-blue-200 transition-colors">My Trips</Link>
             </div>
+            <AuthNav />
           </div>
         </nav>
         <main className="min-h-screen bg-gray-50">

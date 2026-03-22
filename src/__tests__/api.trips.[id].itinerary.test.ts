@@ -18,14 +18,27 @@ jest.mock('@/lib/llm', () => ({
   organizeItinerary: jest.fn(),
 }));
 
+jest.mock('@/lib/auth', () => ({
+  requireAuth: jest.fn(),
+  requireTripRole: jest.fn(),
+  buildForbiddenResponse: jest.fn(() => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+}));
+
 import { prisma } from '@/lib/prisma';
 import { organizeItinerary } from '@/lib/llm';
+import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockOrganizeItinerary = organizeItinerary as jest.Mock;
+const mockRequireAuth = requireAuth as jest.Mock;
+const mockRequireTripRole = requireTripRole as jest.Mock;
 
 describe('GET /api/trips/[id]/itinerary', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
 
   it('returns itinerary items for a trip', async () => {
     const fakeItems = [
@@ -66,7 +79,11 @@ describe('GET /api/trips/[id]/itinerary', () => {
 });
 
 describe('POST /api/trips/[id]/itinerary', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
 
   it('returns 404 when trip does not exist', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(null);
@@ -214,7 +231,11 @@ describe('POST /api/trips/[id]/itinerary', () => {
 });
 
 describe('PATCH /api/trips/[id]/itinerary', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
 
   const existingItems = [
     { id: 'ii-1', tripId: 'trip-1', proposalId: 'p-1', day: 1, timeBlock: 'morning', order: 0 },

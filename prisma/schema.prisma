@@ -13,12 +13,17 @@ model Trip {
   createdAt DateTime @default(now())
   proposals Proposal[]
   itineraryItems ItineraryItem[]
+  members   TripMember[]
 }
 
 model User {
   id          String       @id @default(cuid())
+  email       String       @unique
+  passwordHash String
   name        String
   preferences Preference[]
+  sessions    Session[]
+  tripMembers TripMember[]
 }
 
 model Preference {
@@ -28,6 +33,27 @@ model Preference {
   likes    String
   dislikes String
   budget   String?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model TripMember {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  role      String
+  createdAt DateTime @default(now())
+  trip      Trip     @relation(fields: [tripId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([tripId, userId])
 }
 
 model Proposal {

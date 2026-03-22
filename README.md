@@ -4,6 +4,8 @@ AI-powered collaborative trip planning with proposal voting, auto itinerary sche
 
 ## Features
 
+- Email/password authentication with secure cookie sessions
+- Per-trip access control (owner/viewer) with sharing by email
 - AI proposal generation for places and food based on traveler preferences
 - Approve/reject flow for collaborative decision making
 - Automatic day-by-day itinerary construction from approved proposals
@@ -96,6 +98,18 @@ npm run dev
 ```
 
 Open [http://localhost:9527](http://localhost:9527).
+
+## Authentication (v1)
+
+- Register/login at `/auth`
+- All pages and APIs require authentication except `/auth` and `/api/auth/*`
+- Trip sharing supports `owner -> viewer` by email:
+  - `owner`: full read/write + delete/share
+  - `viewer`: read-only
+- Legacy endpoints are deprecated:
+  - `/api/users`
+  - `/api/users/[id]/preferences`
+  - Use `/api/me` and `/api/me/preferences` instead
 
 ## Scripts
 

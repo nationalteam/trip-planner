@@ -19,6 +19,7 @@ interface ProposalCardProps {
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onDelete?: (id: string) => void;
+  canEdit?: boolean;
 }
 
 const timeIcons: Record<string, string> = {
@@ -40,7 +41,7 @@ const statusColors: Record<string, string> = {
   rejected: 'bg-red-50 border-red-200',
 };
 
-export default function ProposalCard({ proposal, onApprove, onReject, onDelete }: ProposalCardProps) {
+export default function ProposalCard({ proposal, onApprove, onReject, onDelete, canEdit = true }: ProposalCardProps) {
   return (
     <div className={`rounded-xl border p-5 transition-all ${statusColors[proposal.status] || 'bg-white border-gray-200'}`}>
       <div className="flex items-start justify-between mb-3">
@@ -59,7 +60,7 @@ export default function ProposalCard({ proposal, onApprove, onReject, onDelete }
           }`}>
             {proposal.status}
           </span>
-          {onDelete && (
+          {onDelete && canEdit && (
             <button
               onClick={() => onDelete(proposal.id)}
               aria-label="Delete proposal"
@@ -78,7 +79,7 @@ export default function ProposalCard({ proposal, onApprove, onReject, onDelete }
         <p className="text-xs text-gray-500 mb-4">⏱ ~{proposal.durationMinutes} minutes</p>
       )}
 
-      {proposal.status === 'pending' && (
+      {proposal.status === 'pending' && canEdit && (
         <div className="flex gap-2">
           <button
             onClick={() => onApprove(proposal.id)}

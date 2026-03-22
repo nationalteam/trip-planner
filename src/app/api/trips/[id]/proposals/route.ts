@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return geocoded ? { ...proposal, ...geocoded } : null;
   }));
   const normalizedGenerated = normalizeCoordinateBatch(
-    withCoordinates.filter((proposal): proposal is GeneratedProposal => proposal !== null),
+    withCoordinates.filter((proposal): proposal is Exclude<typeof withCoordinates[number], null> => proposal !== null),
     { reference: existingCenter ?? undefined }
   );
 

@@ -6,7 +6,7 @@
 - 採用 DB Session + HttpOnly Cookie 管理登入狀態。
 - 全站（頁面與 API）改為需登入。
 - Trip owner 可分享給其他使用者，v1 權限僅 Owner + Viewer。
-- 舊的 /api/users 改為移除，改提供 /api/me。
+- 舊的 /api/users 改為 deprecated（回 410），並提供 /api/me。
 
 ## 介面與資料變更
 
@@ -64,14 +64,14 @@
 - 僅 owner 可呼叫
 - 入參：{ email }（被分享者需已註冊）
 - 行為：建立 TripMember(role=viewer)，已存在則回 200（idempotent）
-- 失敗：403（非 owner）、404（trip 或 user 不存在）
+- 失敗：403（非 owner 或無權限）、404（user 不存在）
 - 權限規則（套用到既有 trips/proposals/itinerary/users-preferences API）
 
 1. 未登入一律 401
 2. Trip 相關資源需 TripMember 存在才可讀
 3. 只有 owner 可做：刪 trip、分享 trip
 4. Viewer 可做：讀 trip、讀 proposals/itinerary/map（v1 不允許寫入）
-5. /api/users、/api/users/[id]/preferences 舊路由移除或改為拒絕；改走 /api/me 與 /api/me/preferences
+5. /api/users、/api/users/[id]/preferences 舊路由改為 deprecated（410）；改走 /api/me 與 /api/me/preferences
 
 ## 實作步驟（依 TDD）
 

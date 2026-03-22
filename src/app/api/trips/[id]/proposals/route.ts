@@ -18,6 +18,8 @@ interface GeneratedProposal {
 }
 
 type ResolvedProposal = GeneratedProposal & { lat: number; lng: number };
+type ProposalSortField = 'createdAt' | 'title' | 'city' | 'status';
+type SortOrder = 'asc' | 'desc';
 
 function hasResolvedCoordinates(proposal: ResolvedProposal | null): proposal is ResolvedProposal {
   return proposal !== null;
@@ -31,9 +33,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const access = await requireTripRole(id, auth.id, ['owner', 'viewer']);
   if (!access.ok) return buildForbiddenResponse();
 
+  const sortBy = req.nextUrl.searchParams.get('sortBy');
+  const order = req.nextUrl.searchParams.get('order');
+  const supportedSortBy: ProposalSortField[] = ['createdAt', 'title', 'city', 'status'];
+  const resolvedSortBy: ProposalSortField = supportedSortBy.includes(sortBy as ProposalSortField)
+    ? (sortBy as ProposalSortField)
+    : 'createdAt';
+  const resolvedOrder: SortOrder = order === 'asc' ? 'asc' : 'desc';
+
   const proposals = await prisma.proposal.findMany({
     where: { tripId: id },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { [resolvedSortBy]: resolvedOrder },
   });
   return NextResponse.json(proposals);
 }
@@ -46,10 +56,60 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const access = await requireTripRole(id, auth.id, ['owner']);
   if (!access.ok) return buildForbiddenResponse();
 
-  const { city } = await req.json();
+  const body = await req.json();
 
   const trip = await prisma.trip.findUnique({ where: { id } });
   if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
+
+  if (body?.mode === 'manual') {
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
+    const city = typeof body.city === 'string' ? body.city.trim() : '';
+
+    if (!title || !description || !city) {
+      return NextResponse.json(
+        { error: 'Manual proposal requires non-empty title, description, and city' },
+        { status: 400 }
+      );
+    }
+
+    const parsedLat = Number(body.lat);
+    const parsedLng = Number(body.lng);
+    const hasManualCoordinates = Number.isFinite(parsedLat) && Number.isFinite(parsedLng);
+    const resolvedCoordinates = hasManualCoordinates
+      ? { lat: parsedLat, lng: parsedLng }
+      : await geocodeWithGoogleMaps(`${title}, ${city}`);
+    if (!resolvedCoordinates) {
+      return NextResponse.json(
+        { error: 'Failed to resolve coordinates for this proposal. Please provide lat/lng manually.' },
+        { status: 400 }
+      );
+    }
+
+    const normalized = normalizeCoordinateBatch([resolvedCoordinates])[0];
+    const proposal = await prisma.proposal.create({
+      data: {
+        tripId: id,
+        type: body.type || 'place',
+        title,
+        description,
+        reason: '',
+        lat: normalized.lat,
+        lng: normalized.lng,
+        city,
+        suggestedTime: body.suggestedTime || 'afternoon',
+        durationMinutes: body.durationMinutes || null,
+        status: 'pending',
+      },
+    });
+
+    return NextResponse.json(proposal, { status: 201 });
+  }
+
+  const city = body?.city;
+  if (!city) {
+    return NextResponse.json({ error: 'City is required' }, { status: 400 });
+  }
 
   const members = await prisma.tripMember.findMany({
     where: { tripId: id },

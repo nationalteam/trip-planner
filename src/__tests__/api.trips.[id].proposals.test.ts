@@ -66,6 +66,20 @@ describe('GET /api/trips/[id]/proposals', () => {
     expect(res.status).toBe(200);
     expect(data).toEqual(fakeProposals);
   });
+
+  it('supports sorting proposals by a specific field and direction', async () => {
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals?sortBy=title&order=asc');
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await GET(req, context);
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.proposal.findMany).toHaveBeenCalledWith({
+      where: { tripId: 'trip-1' },
+      orderBy: { title: 'asc' },
+    });
+  });
 });
 
 describe('POST /api/trips/[id]/proposals', () => {
@@ -91,6 +105,90 @@ describe('POST /api/trips/[id]/proposals', () => {
 
     expect(res.status).toBe(404);
     expect(data.error).toBe('Trip not found');
+  });
+
+  it('creates a manual proposal without calling AI generation', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
+    const savedProposal = {
+      id: 'p-manual-1',
+      tripId: 'trip-1',
+      type: 'place',
+      title: 'Louvre Museum',
+      description: 'Want to visit manually',
+      reason: '',
+      lat: 48.8606,
+      lng: 2.3376,
+      city: 'Paris',
+      suggestedTime: 'afternoon',
+      durationMinutes: 120,
+      status: 'pending',
+    };
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+    mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 48.8606, lng: 2.3376 });
+    (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(savedProposal);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'manual',
+        title: 'Louvre Museum',
+        description: 'Want to visit manually',
+        city: 'Paris',
+        type: 'place',
+        suggestedTime: 'afternoon',
+        durationMinutes: 120,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(201);
+    expect(data).toEqual(savedProposal);
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(mockGeocodeWithGoogleMaps).toHaveBeenCalledWith('Louvre Museum, Paris');
+    expect(mockPrisma.proposal.create).toHaveBeenCalledWith({
+      data: {
+        tripId: 'trip-1',
+        type: 'place',
+        title: 'Louvre Museum',
+        description: 'Want to visit manually',
+        reason: '',
+        lat: 48.8606,
+        lng: 2.3376,
+        city: 'Paris',
+        suggestedTime: 'afternoon',
+        durationMinutes: 120,
+        status: 'pending',
+      },
+    });
+  });
+
+  it('returns 400 for invalid manual proposal payload', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'manual',
+        city: 'Paris',
+        description: 'Missing title',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain('title');
+    expect(mockPrisma.proposal.create).not.toHaveBeenCalled();
+    expect(mockGenerate).not.toHaveBeenCalled();
   });
 
   it('generates and saves proposals when trip exists', async () => {

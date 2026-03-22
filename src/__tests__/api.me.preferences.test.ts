@@ -44,12 +44,20 @@ describe('/api/me/preferences', () => {
     const req = new NextRequest('http://localhost/api/me/preferences', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ likes: ['x'], dislikes: [], budget: 'budget' }),
+      body: JSON.stringify({ likes: ['x'], dislikes: [], budget: 'budget', preferredLanguage: 'zh-TW' }),
     });
 
     const res = await POST(req);
     expect(res.status).toBe(201);
-    expect(mockPrisma.preference.create).toHaveBeenCalled();
+    expect(mockPrisma.preference.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'u-1',
+        likes: JSON.stringify(['x']),
+        dislikes: JSON.stringify([]),
+        budget: 'budget',
+        preferredLanguage: 'zh-TW',
+      },
+    });
   });
 
   it('PUT updates existing preference for current user', async () => {
@@ -59,12 +67,20 @@ describe('/api/me/preferences', () => {
     const req = new NextRequest('http://localhost/api/me/preferences', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ likes: [], dislikes: [], budget: null }),
+      body: JSON.stringify({ likes: [], dislikes: [], budget: null, preferredLanguage: 'ja-JP' }),
     });
 
     const res = await PUT(req);
     expect(res.status).toBe(200);
-    expect(mockPrisma.preference.update).toHaveBeenCalled();
+    expect(mockPrisma.preference.update).toHaveBeenCalledWith({
+      where: { id: 'p1' },
+      data: {
+        likes: JSON.stringify([]),
+        dislikes: JSON.stringify([]),
+        budget: null,
+        preferredLanguage: 'ja-JP',
+      },
+    });
   });
 
   it('returns 401 when unauthenticated', async () => {

@@ -111,7 +111,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     const savedProposals = [{ id: 'p-1', ...fakeGenerated[0], tripId: 'trip-1', status: 'pending' }];
 
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
-    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([{ preferredLanguage: 'zh-TW' }]);
     (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
     mockGenerate.mockResolvedValue(fakeGenerated);
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue(savedProposals);
@@ -127,7 +127,7 @@ describe('POST /api/trips/[id]/proposals', () => {
 
     expect(res.status).toBe(201);
     expect(Array.isArray(data)).toBe(true);
-    expect(mockGenerate).toHaveBeenCalledWith([], 'Paris', []);
+    expect(mockGenerate).toHaveBeenCalledWith([{ preferredLanguage: 'zh-TW' }], 'Paris', []);
   });
 
   it('passes all existing proposals (including pending) to generateProposals to avoid duplicates', async () => {

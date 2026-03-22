@@ -10,6 +10,7 @@ interface Preference {
   likes: string;
   dislikes: string;
   budget: string | null;
+  preferredLanguage: string | null;
 }
 
 interface Me {
@@ -27,6 +28,7 @@ export default function PreferencesPage() {
   const [likes, setLikes] = useState('');
   const [dislikes, setDislikes] = useState('');
   const [budget, setBudget] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -49,6 +51,7 @@ export default function PreferencesPage() {
         setLikes(JSON.parse(data.likes).join(', '));
         setDislikes(JSON.parse(data.dislikes).join(', '));
         setBudget(data.budget || '');
+        setPreferredLanguage(data.preferredLanguage || '');
       }
     }
   }
@@ -62,7 +65,7 @@ export default function PreferencesPage() {
       const res = await fetch('/api/me/preferences', {
         method: preferences ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ likes: likesArr, dislikes: dislikesArr, budget }),
+        body: JSON.stringify({ likes: likesArr, dislikes: dislikesArr, budget, preferredLanguage }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -113,6 +116,21 @@ export default function PreferencesPage() {
               placeholder="e.g. crowded tourist traps, fast food, clubs"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
+            <select
+              value={preferredLanguage}
+              onChange={(e) => setPreferredLanguage(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Not specified</option>
+              <option value="zh-TW">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>

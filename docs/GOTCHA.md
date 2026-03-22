@@ -55,3 +55,16 @@
   Add batch normalization with anchor/reference centroid heuristics on API writes, using existing trip proposals as anchors for ambiguous points. Note that ambiguous swaps without such contextual anchors will not be corrected at render time.
 - Preventive rule:
   Coordinate normalization must handle three cases explicitly: invalid numbers, obvious swaps, and ambiguous swaps that require contextual anchors.
+
+## Next dev server can keep stale Prisma Client after schema change
+
+- Context:
+  Added a new Prisma field and generated client while `next dev` was already running.
+- Symptom:
+  API returns 500 with Prisma validation error like `Unknown argument <newField>` even after `npx prisma generate`.
+- Root cause:
+  The running Next.js dev process may still use the previously loaded Prisma Client build.
+- Fix:
+  Restart `next dev` after schema + client generation changes.
+- Preventive rule:
+  Any time Prisma schema fields are added/removed, run `npx prisma generate` and restart the dev server before manual API/UI verification.

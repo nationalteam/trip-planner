@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
-  const { likes, dislikes, budget } = await req.json();
+  const { likes, dislikes, budget, preferredLanguage } = await req.json();
   const existing = await prisma.preference.findFirst({ where: { userId: auth.id } });
   if (existing) return NextResponse.json({ error: 'Preference already exists' }, { status: 409 });
 
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       likes: JSON.stringify(likes || []),
       dislikes: JSON.stringify(dislikes || []),
       budget: budget || null,
+      preferredLanguage: typeof preferredLanguage === 'string' ? preferredLanguage.trim() || null : null,
     },
   });
 
@@ -36,7 +37,7 @@ export async function PUT(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
-  const { likes, dislikes, budget } = await req.json();
+  const { likes, dislikes, budget, preferredLanguage } = await req.json();
   const existing = await prisma.preference.findFirst({ where: { userId: auth.id } });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -46,6 +47,7 @@ export async function PUT(req: NextRequest) {
       likes: JSON.stringify(likes || []),
       dislikes: JSON.stringify(dislikes || []),
       budget: budget || null,
+      preferredLanguage: typeof preferredLanguage === 'string' ? preferredLanguage.trim() || null : null,
     },
   });
   return NextResponse.json(pref);

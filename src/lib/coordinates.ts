@@ -86,7 +86,7 @@ function centroid(points: Coordinates[]): Coordinates {
 export function normalizeCoordinateBatch<T extends CoordinateBearing>(
   items: T[],
   options: NormalizeBatchOptions = {},
-): Array<T & Coordinates> {
+): Array<Omit<T, 'lat' | 'lng'> & Coordinates> {
   const parsed = items.map((item) => ({ item, candidate: toCandidate(item) }));
   const anchors: Coordinates[] = [];
 

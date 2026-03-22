@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { normalizeCoordinates } from '@/lib/coordinates';
 
 interface Proposal {
   id: string;
@@ -15,10 +16,6 @@ interface Proposal {
 
 interface MapViewProps {
   proposals: Proposal[];
-}
-
-function hasValidCoords(p: Proposal): boolean {
-  return isFinite(p.lat) && isFinite(p.lng);
 }
 
 export default function MapView({ proposals }: MapViewProps) {
@@ -48,7 +45,16 @@ export default function MapView({ proposals }: MapViewProps) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const validProposals = proposals.filter(hasValidCoords);
+      const validProposals = proposals
+        .map((proposal) => {
+          const coords = normalizeCoordinates(proposal.lat, proposal.lng);
+          if (!coords) return null;
+          return {
+            ...proposal,
+            ...coords,
+          };
+        })
+        .filter((proposal): proposal is Proposal => proposal !== null);
       const approvedProposals = validProposals.filter(p => p.status === 'approved');
 
       let centerLat = 48.8566;

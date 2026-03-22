@@ -103,6 +103,19 @@ describe('MapView', () => {
     expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
   });
 
+  it('normalizes obviously swapped latitude/longitude before rendering marker', async () => {
+    const proposals = [
+      { ...baseProposal, id: 'p-swapped', lat: 136.7253, lng: 34.4548 },
+    ];
+
+    await act(async () => {
+      render(<MapView proposals={proposals} />);
+    });
+
+    expect(mockMarker).toHaveBeenCalledTimes(1);
+    expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
+  });
+
   it('shows only approved proposals when some are approved', async () => {
     const proposals = [
       { ...baseProposal, id: 'p-approved', status: 'approved' },

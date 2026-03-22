@@ -39,8 +39,6 @@ describe('generateProposals', () => {
         title: 'Le Bistro',
         description: 'Great food',
         reason: 'You like French',
-        lat: 48.86,
-        lng: 2.33,
         city: 'Paris',
         suggestedTime: 'dinner',
         durationMinutes: 90,
@@ -111,6 +109,20 @@ describe('generateProposals', () => {
     const promptContent = callArgs.messages[0].content as string;
     expect(promptContent).toContain('sushi');
     expect(promptContent).toContain('Tokyo');
+  });
+
+  it('does not ask the LLM to generate lat/lng fields', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '[]' } }],
+    });
+
+    await generateProposals([], 'Paris');
+
+    const callArgs = mockCreate.mock.calls[0][0];
+    const promptContent = callArgs.messages[0].content as string;
+    expect(promptContent).not.toContain('"lat"');
+    expect(promptContent).not.toContain('"lng"');
+    expect(promptContent).toContain('"city"');
   });
 
   it('uses gpt-5-mini as the default OpenAI model when OPENAI_MODEL is not set', async () => {

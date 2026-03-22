@@ -2,17 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateProposals } from '@/lib/llm';
 import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
+import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 
 interface GeneratedProposal {
   type?: string;
   title: string;
   description: string;
   reason?: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   city?: string;
   suggestedTime?: string;
   durationMinutes?: number | null;
+}
+
+type ResolvedProposal = GeneratedProposal & { lat: number; lng: number };
+
+function hasResolvedCoordinates(proposal: ResolvedProposal | null): proposal is ResolvedProposal {
+  return proposal !== null;
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -40,7 +47,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   );
 
   const generated: GeneratedProposal[] = await generateProposals(allPreferences, city, existingProposals);
-  const normalizedGenerated = normalizeCoordinateBatch(generated, { reference: existingCenter ?? undefined });
+  const withCoordinates = await Promise.all(generated.map(async (proposal) => {
+    const geocoded = await geocodeWithGoogleMaps(`${proposal.title}, ${proposal.city || city}`);
+    return geocoded ? { ...proposal, ...geocoded } : null;
+  }));
+  const normalizedGenerated = normalizeCoordinateBatch(
+    withCoordinates.filter(hasResolvedCoordinates),
+    { reference: existingCenter ?? undefined }
+  );
 
   const proposals = await prisma.$transaction(
     normalizedGenerated.map((p) =>

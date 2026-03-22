@@ -135,8 +135,6 @@ Return a JSON array of 5-8 proposals with this exact format:
     "title": "Restaurant Name",
     "description": "Brief description",
     "reason": "Why this matches preferences",
-    "lat": 48.865,
-    "lng": 2.321,
     "city": "${city}",
     "suggestedTime": "dinner",
     "durationMinutes": 90

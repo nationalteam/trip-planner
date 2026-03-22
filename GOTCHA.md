@@ -52,7 +52,6 @@
 - Root cause:
   Validation based only on coordinate range cannot detect ambiguous swaps; both orders can pass bounds checks.
 - Fix:
-  Add batch normalization with anchor/reference centroid heuristics:
-  use existing trip proposals as anchor on API writes, and map default/known center as fallback when rendering.
+  Add batch normalization with anchor/reference centroid heuristics on API writes, using existing trip proposals as anchors for ambiguous points. Note that ambiguous swaps without such contextual anchors will not be corrected at render time.
 - Preventive rule:
   Coordinate normalization must handle three cases explicitly: invalid numbers, obvious swaps, and ambiguous swaps that require contextual anchors.

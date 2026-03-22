@@ -98,7 +98,7 @@ describe('generateProposals', () => {
   });
 
   it('passes preferences to the LLM prompt', async () => {
-    const preferences = [{ likes: 'sushi', dislikes: 'spicy', budget: 'medium' }];
+    const preferences = [{ likes: 'sushi', dislikes: 'spicy', budget: 'medium', preferredLanguage: 'ja' }];
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
     });
@@ -109,6 +109,8 @@ describe('generateProposals', () => {
     const promptContent = callArgs.messages[0].content as string;
     expect(promptContent).toContain('sushi');
     expect(promptContent).toContain('Tokyo');
+    expect(promptContent).toContain('preferredLanguage');
+    expect(promptContent).toContain('ja');
   });
 
   it('does not ask the LLM to generate lat/lng fields', async () => {

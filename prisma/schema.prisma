@@ -33,6 +33,7 @@ model Preference {
   likes    String
   dislikes String
   budget   String?
+  preferredLanguage String?
 }
 
 model Session {

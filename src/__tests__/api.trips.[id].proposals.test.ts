@@ -231,6 +231,8 @@ describe('POST /api/trips/[id]/proposals', () => {
     await POST(req, context);
 
     expect(mockPrisma.proposal.create).toHaveBeenCalledTimes(2);
+    expect(mockGeocodeWithGoogleMaps).toHaveBeenNthCalledWith(1, 'Louvre, Paris');
+    expect(mockGeocodeWithGoogleMaps).toHaveBeenNthCalledWith(2, 'Eiffel Tower, Paris');
     const secondCreateArg = (mockPrisma.proposal.create as jest.Mock).mock.calls[1][0];
     expect(secondCreateArg.data.lat).toBe(48.8584);
     expect(secondCreateArg.data.lng).toBe(2.2945);

@@ -16,6 +16,12 @@ interface GeneratedProposal {
   durationMinutes?: number | null;
 }
 
+type ResolvedProposal = GeneratedProposal & { lat: number; lng: number };
+
+function hasResolvedCoordinates(proposal: ResolvedProposal | null): proposal is ResolvedProposal {
+  return proposal !== null;
+}
+
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const proposals = await prisma.proposal.findMany({
@@ -46,7 +52,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return geocoded ? { ...proposal, ...geocoded } : null;
   }));
   const normalizedGenerated = normalizeCoordinateBatch(
-    withCoordinates.filter((proposal): proposal is Exclude<typeof withCoordinates[number], null> => proposal !== null),
+    withCoordinates.filter(hasResolvedCoordinates),
     { reference: existingCenter ?? undefined }
   );
 

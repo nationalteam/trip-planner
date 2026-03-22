@@ -20,14 +20,27 @@ export async function geocodeWithGoogleMaps(address: string): Promise<{ lat: num
   url.searchParams.set('address', address);
   url.searchParams.set('key', apiKey);
 
-  const response = await fetch(url.toString());
-  if (!response.ok) return null;
+  let response: Response;
+  try {
+    response = await fetch(url.toString());
+  } catch (error) {
+    console.error('Google Maps geocoding request failed', error);
+    return null;
+  }
+
+  if (!response.ok) {
+    console.error(`Google Maps geocoding request returned HTTP ${response.status}`);
+    return null;
+  }
 
   const data = await response.json() as GoogleGeocodeResponse;
-  if (data.status !== 'OK' || !data.results?.length) return null;
+  if (data.status !== 'OK' || !data.results?.length) {
+    console.error(`Google Maps geocoding failed with status: ${data.status ?? 'UNKNOWN'}`);
+    return null;
+  }
 
   const location = data.results[0].geometry?.location;
-  if (!location) return null;
+  if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') return null;
 
   return normalizeCoordinates(location.lat, location.lng);
 }

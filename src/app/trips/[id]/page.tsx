@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import ProposalCard from '@/components/ProposalCard';
 import ItineraryView from '@/components/ItineraryView';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
@@ -53,6 +54,7 @@ export default function TripDetailPage() {
   const [organizing, setOrganizing] = useState(false);
   const [selectedCity, setSelectedCity] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -134,24 +136,34 @@ export default function TripDetailPage() {
   }
 
   async function handleDeleteTrip() {
-    if (!confirm('Delete this trip? All proposals and itinerary items will be permanently removed.')) return;
-    const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
-    if (res.ok) {
-      router.push('/');
-    } else {
-      alert('Failed to delete trip. Please try again.');
-    }
+    setConfirmDialog({
+      message: 'Delete this trip? All proposals and itinerary items will be permanently removed.',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
+        if (res.ok) {
+          router.push('/');
+        } else {
+          alert('Failed to delete trip. Please try again.');
+        }
+      },
+    });
   }
 
   async function handleDeleteProposal(proposalId: string) {
-    if (!confirm('Delete this proposal? This action cannot be undone.')) return;
-    const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setProposals(prev => prev.filter(p => p.id !== proposalId));
-      setItinerary(prev => prev.filter(item => item.proposal.id !== proposalId));
-    } else {
-      alert('Failed to delete proposal. Please try again.');
-    }
+    setConfirmDialog({
+      message: 'Delete this proposal? This action cannot be undone.',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' });
+        if (res.ok) {
+          setProposals(prev => prev.filter(p => p.id !== proposalId));
+          setItinerary(prev => prev.filter(item => item.proposal.id !== proposalId));
+        } else {
+          alert('Failed to delete proposal. Please try again.');
+        }
+      },
+    });
   }
 
   if (loading) {
@@ -311,6 +323,15 @@ export default function TripDetailPage() {
             <MapView proposals={proposals} />
           )}
         </div>
+      )}
+
+      {confirmDialog && (
+        <ConfirmDialog
+          open={true}
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
+        />
       )}
     </div>
   );

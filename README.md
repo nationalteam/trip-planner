@@ -42,6 +42,12 @@ Optional: override model for non-Azure OpenAI.
 OPENAI_MODEL=gpt-5-mini
 ```
 
+Optional: use Google Maps Geocoding API for proposal coordinates.
+
+```env
+GOOGLE_MAPS_API_KEY=your-google-maps-key
+```
+
 Optional: use Azure OpenAI instead of standard OpenAI.
 
 ```env
@@ -68,6 +74,7 @@ Behavior:
 - If `BIFROST_BASE_URL` is not set, default is `http://127.0.0.1:8080/openai/v1`.
 - `BIFROST_API_KEY` is optional and defaults to an empty string when unset.
 - Bifrost model selection uses `OPENAI_MODEL` (default `gpt-5-mini`).
+- Proposal `lat/lng` are resolved via Google Maps Geocoding when `GOOGLE_MAPS_API_KEY` is set.
 
 Provider-specific error handling:
 

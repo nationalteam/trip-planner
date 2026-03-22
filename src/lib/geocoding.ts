@@ -22,7 +22,9 @@ export async function geocodeWithGoogleMaps(address: string): Promise<{ lat: num
 
   let response: Response;
   try {
-    response = await fetch(url.toString());
+    response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(5000),
+    });
   } catch (error) {
     console.error('Google Maps geocoding request failed', error);
     return null;

@@ -309,4 +309,48 @@ describe('POST /api/trips/[id]/proposals', () => {
     expect(createArg.data.lat).toBe(48.8606);
     expect(createArg.data.lng).toBe(2.3376);
   });
+
+  it('does not save proposals when geocoding fails, so unresolved places will not appear on map', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
+    const fakeGenerated = [
+      {
+        type: 'place',
+        title: 'Unknown Place',
+        description: 'No geocoding result',
+        reason: 'Edge case',
+        city: 'Paris',
+      },
+      {
+        type: 'place',
+        title: 'Louvre Museum',
+        description: 'Famous museum',
+        reason: 'Art lover',
+        city: 'Paris',
+      },
+    ];
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+    mockGenerate.mockResolvedValue(fakeGenerated);
+    mockGeocodeWithGoogleMaps
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ lat: 48.8606, lng: 2.3376 });
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({ city: 'Paris' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    await POST(req, context);
+
+    expect(mockGeocodeWithGoogleMaps).toHaveBeenCalledTimes(2);
+    expect(mockPrisma.proposal.create).toHaveBeenCalledTimes(1);
+    const createArg = (mockPrisma.proposal.create as jest.Mock).mock.calls[0][0];
+    expect(createArg.data.title).toBe('Louvre Museum');
+    expect(createArg.data.lat).toBe(48.8606);
+    expect(createArg.data.lng).toBe(2.3376);
+  });
 });

@@ -45,17 +45,17 @@
 
 ## Gotcha
 
-- Read `GOTCHA.md` (case-sensitive, project root) at session start; it MUST NOT be assumed to be auto-loaded.
+- Read `docs/GOTCHA.md` (case-sensitive, in docs/) at session start; it MUST NOT be assumed to be auto-loaded.
 - Apply relevant entries explicitly in root-cause analysis, fix design, and prevention checks.
 - If the agent makes a mistake, add or update an entry in the same session; each entry MUST capture only a **non-obvious, experience-derived pitfall** with symptom, root cause, and prevention rule.
 
 ## Taste
 
-- Read `TASTE.md` (case-sensitive, project root) at session start; it MUST NOT be assumed to be auto-loaded.
+- Read `docs/TASTE.md` (case-sensitive, in docs/) at session start; it MUST NOT be assumed to be auto-loaded.
 - Apply relevant entries explicitly in recommendations, implementation choices, and tradeoff decisions.
 - If the user expresses a stable preference, add or update an entry in the same session; each entry MUST capture only a **concrete, reusable preference signal** that should affect future decisions.
 
 ## TDD
 
-- Read `TDD_POLICY.md` at session start; it MUST NOT be assumed to be auto-loaded.
+- Read `docs/TDD_POLICY.md` at session start; it MUST NOT be assumed to be auto-loaded.
 - Apply rules strictly during implementation and code changes.

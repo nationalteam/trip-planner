@@ -46,7 +46,7 @@ export default function MapView({ proposals }: MapViewProps) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const validProposals = normalizeCoordinateBatch(proposals, { reference: defaultCenter });
+      const validProposals = normalizeCoordinateBatch(proposals);
       const approvedProposals = validProposals.filter(p => p.status === 'approved');
 
       let centerLat = defaultCenter.lat;

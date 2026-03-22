@@ -13,13 +13,24 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
+jest.mock('@/lib/auth', () => ({
+  requireAuth: jest.fn(),
+  requireTripRole: jest.fn(),
+  buildForbiddenResponse: jest.fn(() => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+}));
+
 import { prisma } from '@/lib/prisma';
+import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockRequireAuth = requireAuth as jest.Mock;
+const mockRequireTripRole = requireTripRole as jest.Mock;
 
 describe('DELETE /api/proposals/[id]', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
   });
 
   it('deletes the proposal and returns 204 when found', async () => {

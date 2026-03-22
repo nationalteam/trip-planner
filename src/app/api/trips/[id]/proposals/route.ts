@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { generateProposals } from '@/lib/llm';
 import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
+import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
 
 interface GeneratedProposal {
   type?: string;
@@ -22,8 +23,14 @@ function hasResolvedCoordinates(proposal: ResolvedProposal | null): proposal is 
   return proposal !== null;
 }
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
+  const access = await requireTripRole(id, auth.id, ['owner', 'viewer']);
+  if (!access.ok) return buildForbiddenResponse();
+
   const proposals = await prisma.proposal.findMany({
     where: { tripId: id },
     orderBy: { createdAt: 'desc' },
@@ -32,13 +39,29 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
+  const access = await requireTripRole(id, auth.id, ['owner']);
+  if (!access.ok) return buildForbiddenResponse();
+
   const { city } = await req.json();
 
   const trip = await prisma.trip.findUnique({ where: { id } });
   if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
 
-  const allPreferences = await prisma.preference.findMany();
+  const members = await prisma.tripMember.findMany({
+    where: { tripId: id },
+    select: { userId: true },
+  });
+  const allPreferences = await prisma.preference.findMany({
+    where: {
+      userId: {
+        in: members.map((member) => member.userId),
+      },
+    },
+  });
   const existingProposals = await prisma.proposal.findMany({
     where: { tripId: id },
   });

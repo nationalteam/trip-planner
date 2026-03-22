@@ -15,6 +15,7 @@ interface Trip {
   name: string;
   cities: string;
   createdAt: string;
+  currentRole?: 'owner' | 'viewer';
 }
 
 interface Proposal {
@@ -56,6 +57,9 @@ export default function TripDetailPage() {
   const [selectedCity, setSelectedCity] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const [shareEmail, setShareEmail] = useState('');
+  const [sharing, setSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
 
   const fetchAll = useCallback(async () => {
     try {
@@ -193,6 +197,28 @@ export default function TripDetailPage() {
     });
   }
 
+  async function handleShareTrip(e: React.FormEvent) {
+    e.preventDefault();
+    setSharing(true);
+    setShareMessage('');
+    try {
+      const res = await fetch(`/api/trips/${tripId}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: shareEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setShareMessage(`Shared with ${data.user?.email || shareEmail}`);
+        setShareEmail('');
+      } else {
+        setShareMessage(data.error || 'Failed to share trip');
+      }
+    } finally {
+      setSharing(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -211,6 +237,7 @@ export default function TripDetailPage() {
   }
 
   const cities: string[] = JSON.parse(trip.cities);
+  const canEdit = trip.currentRole === 'owner';
   const filteredProposals = filterStatus === 'all' ? proposals : proposals.filter(p => p.status === filterStatus);
 
   return (
@@ -235,15 +262,37 @@ export default function TripDetailPage() {
             >
               ⚙️ Preferences
             </Link>
-            <button
-              onClick={handleDeleteTrip}
-              className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium whitespace-nowrap"
-            >
-              🗑️ Delete Trip
-            </button>
+            {trip.currentRole === 'owner' && (
+              <button
+                onClick={handleDeleteTrip}
+                className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium whitespace-nowrap"
+              >
+                🗑️ Delete Trip
+              </button>
+            )}
           </div>
         </div>
       </div>
+      {trip.currentRole === 'owner' && (
+        <form onSubmit={handleShareTrip} className="mb-6 flex flex-col sm:flex-row gap-2 sm:items-center">
+          <input
+            type="email"
+            value={shareEmail}
+            onChange={(e) => setShareEmail(e.target.value)}
+            placeholder="Share with user email"
+            required
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1"
+          />
+          <button
+            type="submit"
+            disabled={sharing}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            {sharing ? 'Sharing...' : 'Share'}
+          </button>
+          {shareMessage && <span className="text-sm text-gray-500">{shareMessage}</span>}
+        </form>
+      )}
 
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
         {(['proposals', 'itinerary', 'map'] as Tab[]).map(tab => (
@@ -275,7 +324,7 @@ export default function TripDetailPage() {
             </select>
             <button
               onClick={handleGenerate}
-              disabled={generating}
+              disabled={generating || !canEdit}
               className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {generating ? '⏳ Generating...' : '✨ Generate Proposals'}
@@ -311,7 +360,8 @@ export default function TripDetailPage() {
                   proposal={proposal}
                   onApprove={handleApprove}
                   onReject={handleReject}
-                  onDelete={handleDeleteProposal}
+                  onDelete={canEdit ? handleDeleteProposal : undefined}
+                  canEdit={canEdit}
                 />
               ))}
             </div>
@@ -324,13 +374,13 @@ export default function TripDetailPage() {
           <div className="mb-4">
             <button
               onClick={handleOrganizeItinerary}
-              disabled={organizing || itinerary.length === 0}
+              disabled={organizing || itinerary.length === 0 || !canEdit}
               className="bg-purple-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
             >
               {organizing ? '⏳ Organizing...' : '🤖 Organize with AI'}
             </button>
           </div>
-          <ItineraryView items={itinerary} onReorder={handleReorderItinerary} />
+          <ItineraryView items={itinerary} onReorder={canEdit ? handleReorderItinerary : undefined} />
         </div>
       )}
 

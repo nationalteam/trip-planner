@@ -13,6 +13,9 @@ jest.mock('@/lib/prisma', () => ({
     preference: {
       findMany: jest.fn(),
     },
+    tripMember: {
+      findMany: jest.fn(),
+    },
     $transaction: jest.fn(),
   },
 }));
@@ -25,15 +28,30 @@ jest.mock('@/lib/geocoding', () => ({
   geocodeWithGoogleMaps: jest.fn(),
 }));
 
+jest.mock('@/lib/auth', () => ({
+  requireAuth: jest.fn(),
+  requireTripRole: jest.fn(),
+  buildForbiddenResponse: jest.fn(() => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+}));
+
 import { prisma } from '@/lib/prisma';
 import { generateProposals } from '@/lib/llm';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
+import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockGenerate = generateProposals as jest.Mock;
 const mockGeocodeWithGoogleMaps = geocodeWithGoogleMaps as jest.Mock;
+const mockRequireAuth = requireAuth as jest.Mock;
+const mockRequireTripRole = requireTripRole as jest.Mock;
 
 describe('GET /api/trips/[id]/proposals', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
+
   it('returns proposals for a trip', async () => {
     const fakeProposals = [
       { id: 'p-1', tripId: 'trip-1', title: 'Eiffel Tower', status: 'pending' },
@@ -54,6 +72,9 @@ describe('POST /api/trips/[id]/proposals', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGeocodeWithGoogleMaps.mockReset();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+    (mockPrisma.tripMember.findMany as jest.Mock).mockResolvedValue([{ userId: 'u-1' }]);
   });
 
   it('returns 404 when trip does not exist', async () => {

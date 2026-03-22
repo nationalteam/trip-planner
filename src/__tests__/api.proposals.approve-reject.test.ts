@@ -16,9 +16,18 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
+jest.mock('@/lib/auth', () => ({
+  requireAuth: jest.fn(),
+  requireTripRole: jest.fn(),
+  buildForbiddenResponse: jest.fn(() => new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+}));
+
 import { prisma } from '@/lib/prisma';
+import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockRequireAuth = requireAuth as jest.Mock;
+const mockRequireTripRole = requireTripRole as jest.Mock;
 
 const baseProposal = {
   id: 'p-1',
@@ -38,7 +47,11 @@ const baseProposal = {
 };
 
 describe('POST /api/proposals/[id]/approve', () => {
-  beforeEach(() => jest.resetAllMocks());
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
 
   it('returns 404 when proposal does not exist', async () => {
     (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(null);
@@ -123,7 +136,11 @@ describe('POST /api/proposals/[id]/approve', () => {
 });
 
 describe('POST /api/proposals/[id]/reject', () => {
-  beforeEach(() => jest.resetAllMocks());
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+  });
 
   it('returns 404 when proposal does not exist', async () => {
     (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(null);

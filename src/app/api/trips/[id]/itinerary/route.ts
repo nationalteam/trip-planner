@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { organizeItinerary, type OrganizedItineraryItem } from '@/lib/llm';
+import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
+  const access = await requireTripRole(id, auth.id, ['owner', 'viewer']);
+  if (!access.ok) return buildForbiddenResponse();
+
   const items = await prisma.itineraryItem.findMany({
     where: { tripId: id },
     include: { proposal: true },
@@ -12,8 +19,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json(items);
 }
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
+  const access = await requireTripRole(id, auth.id, ['owner']);
+  if (!access.ok) return buildForbiddenResponse();
+
   try {
     const trip = await prisma.trip.findUnique({ where: { id } });
     if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
@@ -66,7 +79,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
+  const access = await requireTripRole(id, auth.id, ['owner']);
+  if (!access.ok) return buildForbiddenResponse();
+
   try {
     const body = await req.json();
     if (!Array.isArray(body)) {

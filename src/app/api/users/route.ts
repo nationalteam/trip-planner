@@ -1,15 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const users = await prisma.user.findMany({
-    orderBy: { name: 'asc' },
-  });
-  return NextResponse.json(users);
+  return NextResponse.json({ error: 'Deprecated endpoint. Use /api/me.' }, { status: 410 });
 }
 
-export async function POST(req: NextRequest) {
-  const { name } = await req.json();
-  const user = await prisma.user.create({ data: { name } });
-  return NextResponse.json(user, { status: 201 });
+export async function POST() {
+  return NextResponse.json({ error: 'Deprecated endpoint. Use /api/auth/register.' }, { status: 410 });
 }

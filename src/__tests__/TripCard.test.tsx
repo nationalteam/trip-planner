@@ -3,7 +3,6 @@
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import TripCard from '@/components/TripCard';
 
 const baseTrip = {
@@ -58,23 +57,8 @@ describe('TripCard', () => {
     expect(screen.getByText('✈️')).toBeInTheDocument();
   });
 
-  it('does not render a delete button when onDelete is not provided', () => {
+  it('does not render a delete button', () => {
     render(<TripCard trip={baseTrip} />);
     expect(screen.queryByRole('button', { name: /delete trip/i })).not.toBeInTheDocument();
-  });
-
-  it('renders a delete button when onDelete is provided', () => {
-    const onDelete = jest.fn();
-    render(<TripCard trip={baseTrip} onDelete={onDelete} />);
-    expect(screen.getByRole('button', { name: /delete trip/i })).toBeInTheDocument();
-  });
-
-  it('calls onDelete with the trip id when delete button is clicked', async () => {
-    const user = userEvent.setup();
-    const onDelete = jest.fn();
-    render(<TripCard trip={baseTrip} onDelete={onDelete} />);
-    await user.click(screen.getByRole('button', { name: /delete trip/i }));
-    expect(onDelete).toHaveBeenCalledWith('trip-1');
-    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 });

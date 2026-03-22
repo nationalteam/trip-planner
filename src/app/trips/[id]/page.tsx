@@ -56,16 +56,27 @@ export default function TripDetailPage() {
   const [organizing, setOrganizing] = useState(false);
   const [selectedCity, setSelectedCity] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'createdAt' | 'title' | 'city' | 'status'>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [shareEmail, setShareEmail] = useState('');
   const [sharing, setSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualDescription, setManualDescription] = useState('');
+  const [manualCity, setManualCity] = useState('');
+  const [manualType, setManualType] = useState('place');
+  const [manualSuggestedTime, setManualSuggestedTime] = useState('afternoon');
+  const [manualDurationMinutes, setManualDurationMinutes] = useState('');
+  const [manualLat, setManualLat] = useState('');
+  const [manualLng, setManualLng] = useState('');
+  const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
       const [tripRes, proposalsRes, itineraryRes] = await Promise.all([
         fetch(`/api/trips/${tripId}`),
-        fetch(`/api/trips/${tripId}/proposals`),
+        fetch(`/api/trips/${tripId}/proposals?sortBy=${sortBy}&order=${sortOrder}`),
         fetch(`/api/trips/${tripId}/itinerary`),
       ]);
       const [tripData, proposalsData, itineraryData] = await Promise.all([
@@ -83,13 +94,19 @@ export default function TripDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [tripId]);
+  }, [tripId, sortBy, sortOrder]);
 
   useEffect(() => {
     if (tripId) {
       fetchAll();
     }
   }, [tripId, fetchAll]);
+
+  useEffect(() => {
+    if (!manualCity && selectedCity) {
+      setManualCity(selectedCity);
+    }
+  }, [selectedCity, manualCity]);
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -106,6 +123,42 @@ export default function TripDetailPage() {
       }
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleCreateManualProposal(e: React.FormEvent) {
+    e.preventDefault();
+    setCreatingManual(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/proposals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'manual',
+          title: manualTitle,
+          description: manualDescription,
+          city: manualCity || selectedCity,
+          type: manualType,
+          suggestedTime: manualSuggestedTime,
+          durationMinutes: manualDurationMinutes ? Number(manualDurationMinutes) : null,
+          lat: manualLat ? Number(manualLat) : null,
+          lng: manualLng ? Number(manualLng) : null,
+        }),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        setProposals(prev => [created, ...prev]);
+        setManualTitle('');
+        setManualDescription('');
+        setManualDurationMinutes('');
+        setManualLat('');
+        setManualLng('');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to create proposal. Please check the form and try again.');
+      }
+    } finally {
+      setCreatingManual(false);
     }
   }
 
@@ -330,6 +383,24 @@ export default function TripDetailPage() {
               {generating ? '⏳ Generating...' : '✨ Generate Proposals'}
             </button>
             <div className="flex gap-1 ml-auto">
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as 'createdAt' | 'title' | 'city' | 'status')}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="createdAt">Created time</option>
+                <option value="title">Title</option>
+                <option value="city">City</option>
+                <option value="status">Status</option>
+              </select>
+              <select
+                value={sortOrder}
+                onChange={e => setSortOrder(e.target.value as 'asc' | 'desc')}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="desc">Desc</option>
+                <option value="asc">Asc</option>
+              </select>
               {['all', 'pending', 'approved', 'rejected'].map(status => (
                 <button
                   key={status}
@@ -345,6 +416,86 @@ export default function TripDetailPage() {
               ))}
             </div>
           </div>
+
+          {canEdit && (
+            <form onSubmit={handleCreateManualProposal} className="mb-6 border border-gray-200 rounded-xl p-4 bg-gray-50">
+              <p className="text-sm font-semibold text-gray-700 mb-3">✍️ Add proposal manually</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  value={manualTitle}
+                  onChange={e => setManualTitle(e.target.value)}
+                  required
+                  placeholder="Title"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
+                <input
+                  value={manualCity}
+                  onChange={e => setManualCity(e.target.value)}
+                  required
+                  placeholder="City"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
+                <textarea
+                  value={manualDescription}
+                  onChange={e => setManualDescription(e.target.value)}
+                  required
+                  placeholder="Description"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2"
+                  rows={2}
+                />
+                <select
+                  value={manualType}
+                  onChange={e => setManualType(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="place">place</option>
+                  <option value="food">food</option>
+                </select>
+                <select
+                  value={manualSuggestedTime}
+                  onChange={e => setManualSuggestedTime(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="morning">morning</option>
+                  <option value="lunch">lunch</option>
+                  <option value="afternoon">afternoon</option>
+                  <option value="dinner">dinner</option>
+                  <option value="night">night</option>
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  value={manualDurationMinutes}
+                  onChange={e => setManualDurationMinutes(e.target.value)}
+                  placeholder="Duration (minutes, optional)"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
+                <input
+                  type="number"
+                  step="any"
+                  value={manualLat}
+                  onChange={e => setManualLat(e.target.value)}
+                  placeholder="Latitude (optional)"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
+                <input
+                  type="number"
+                  step="any"
+                  value={manualLng}
+                  onChange={e => setManualLng(e.target.value)}
+                  placeholder="Longitude (optional)"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={creatingManual}
+                className="mt-3 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50"
+              >
+                {creatingManual ? 'Saving...' : 'Add Manual Proposal'}
+              </button>
+            </form>
+          )}
 
           {filteredProposals.length === 0 ? (
             <div className="text-center py-16">

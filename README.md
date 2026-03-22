@@ -1,5 +1,7 @@
 # trip-planner
 
+[繁體中文](README.zh-TW.md)
+
 AI-powered collaborative trip planning with proposal voting, auto itinerary scheduling, and map visualization.
 
 ## Features

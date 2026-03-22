@@ -90,18 +90,23 @@ export default function TripDetailPage() {
       if (tripData?.cities) {
         const cities = JSON.parse(tripData.cities);
         if (cities.length > 0) setSelectedCity(cities[0]);
-        if (!manualCity && cities.length > 0) setManualCity(cities[0]);
       }
     } finally {
       setLoading(false);
     }
-  }, [tripId, sortBy, sortOrder, manualCity]);
+  }, [tripId, sortBy, sortOrder]);
 
   useEffect(() => {
     if (tripId) {
       fetchAll();
     }
   }, [tripId, fetchAll]);
+
+  useEffect(() => {
+    if (!manualCity && selectedCity) {
+      setManualCity(selectedCity);
+    }
+  }, [selectedCity, manualCity]);
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -149,7 +154,8 @@ export default function TripDetailPage() {
         setManualLat('');
         setManualLng('');
       } else {
-        alert('Failed to create proposal. Please check the form and try again.');
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to create proposal. Please check the form and try again.');
       }
     } finally {
       setCreatingManual(false);
@@ -478,7 +484,7 @@ export default function TripDetailPage() {
                   value={manualLng}
                   onChange={e => setManualLng(e.target.value)}
                   placeholder="Longitude (optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 />
               </div>
               <button

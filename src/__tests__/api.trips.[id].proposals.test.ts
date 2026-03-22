@@ -186,9 +186,57 @@ describe('POST /api/trips/[id]/proposals', () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toContain('title');
+    expect(data.error).toBe('Manual proposal requires non-empty title, description, and city');
     expect(mockPrisma.proposal.create).not.toHaveBeenCalled();
     expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('uses manual coordinates directly when lat/lng are provided', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
+    const savedProposal = {
+      id: 'p-manual-2',
+      tripId: 'trip-1',
+      type: 'place',
+      title: 'Skytree',
+      description: 'Manual with coordinates',
+      reason: '',
+      lat: 35.7101,
+      lng: 139.8107,
+      city: 'Tokyo',
+      suggestedTime: 'afternoon',
+      durationMinutes: null,
+      status: 'pending',
+    };
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(savedProposal);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'manual',
+        title: 'Skytree',
+        description: 'Manual with coordinates',
+        city: 'Tokyo',
+        lat: 35.7101,
+        lng: 139.8107,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(201);
+    expect(data).toEqual(savedProposal);
+    expect(mockGeocodeWithGoogleMaps).not.toHaveBeenCalled();
+    expect(mockPrisma.proposal.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        lat: 35.7101,
+        lng: 139.8107,
+      }),
+    });
   });
 
   it('generates and saves proposals when trip exists', async () => {

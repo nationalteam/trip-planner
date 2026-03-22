@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       : await geocodeWithGoogleMaps(`${title}, ${city}`);
     if (!resolvedCoordinates) {
       return NextResponse.json(
-        { error: 'Failed to resolve coordinates for this proposal. Please provide lat/lng manually.' },
+        { error: 'Failed to resolve coordinates for this proposal. Please try again or provide valid lat/lng.' },
         { status: 400 }
       );
     }

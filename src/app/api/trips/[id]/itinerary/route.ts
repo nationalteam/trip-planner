@@ -7,7 +7,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const items = await prisma.itineraryItem.findMany({
     where: { tripId: id },
     include: { proposal: true },
-    orderBy: [{ day: 'asc' }],
+    orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
   });
   return NextResponse.json(items);
 }
@@ -44,10 +44,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const updatedItems = await prisma.$transaction(
-      normalized.map(item =>
+      normalized.map((item, index) =>
         prisma.itineraryItem.update({
           where: { id: item.id },
-          data: { day: item.day, timeBlock: item.timeBlock },
+          data: { day: item.day, timeBlock: item.timeBlock, order: index },
         })
       )
     );
@@ -55,12 +55,56 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const updatedWithProposal = await prisma.itineraryItem.findMany({
       where: { id: { in: updatedItems.map(item => item.id) } },
       include: { proposal: true },
-      orderBy: [{ day: 'asc' }],
+      orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
     });
 
     return NextResponse.json(updatedWithProposal);
   } catch (error) {
     console.error(`Failed to organize itinerary for trip ${id}`, error);
     return NextResponse.json({ error: 'Failed to organize itinerary' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  try {
+    const body = await req.json();
+    if (!Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid request body: expected an array' }, { status: 400 });
+    }
+
+    const existingItems = await prisma.itineraryItem.findMany({ where: { tripId: id } });
+    const existingIds = new Set(existingItems.map(item => item.id));
+    const validTimeBlocks = new Set(['morning', 'afternoon', 'dinner']);
+
+    for (const item of body) {
+      if (typeof item.id !== 'string' || !existingIds.has(item.id)) {
+        return NextResponse.json({ error: 'Invalid item id' }, { status: 400 });
+      }
+      if (!Number.isInteger(item.day) || item.day < 1) {
+        return NextResponse.json({ error: 'Invalid day' }, { status: 400 });
+      }
+      if (!validTimeBlocks.has(item.timeBlock)) {
+        return NextResponse.json({ error: 'Invalid timeBlock' }, { status: 400 });
+      }
+      if (!Number.isInteger(item.order) || item.order < 0) {
+        return NextResponse.json({ error: 'Invalid order' }, { status: 400 });
+      }
+    }
+
+    const updatedItems = await prisma.$transaction(
+      body.map((item: { id: string; day: number; timeBlock: string; order: number }) =>
+        prisma.itineraryItem.update({
+          where: { id: item.id },
+          data: { day: item.day, timeBlock: item.timeBlock, order: item.order },
+          include: { proposal: true },
+        })
+      )
+    );
+
+    return NextResponse.json(updatedItems);
+  } catch (error) {
+    console.error(`Failed to update itinerary for trip ${id}`, error);
+    return NextResponse.json({ error: 'Failed to update itinerary' }, { status: 500 });
   }
 }

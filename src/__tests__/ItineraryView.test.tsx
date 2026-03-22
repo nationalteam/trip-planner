@@ -2,13 +2,14 @@
  * @jest-environment jsdom
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ItineraryView from '@/components/ItineraryView';
 
 const makeItem = (overrides: Partial<{
   id: string;
   day: number;
   timeBlock: string;
+  order: number;
   proposalType: string;
   proposalTitle: string;
   proposalDescription: string;
@@ -18,6 +19,7 @@ const makeItem = (overrides: Partial<{
   id: overrides.id ?? 'item-1',
   day: overrides.day ?? 1,
   timeBlock: overrides.timeBlock ?? 'morning',
+  order: overrides.order ?? 0,
   proposal: {
     id: 'proposal-1',
     title: overrides.proposalTitle ?? 'Eiffel Tower',
@@ -125,5 +127,64 @@ describe('ItineraryView', () => {
     expect(days[0]).toHaveTextContent('Day 1');
     expect(days[1]).toHaveTextContent('Day 2');
     expect(days[2]).toHaveTextContent('Day 3');
+  });
+});
+
+describe('ItineraryView drag-and-drop', () => {
+  const makeDndItems = () => [
+    makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', proposalTitle: 'Eiffel Tower' }),
+    makeItem({ id: 'item-2', day: 1, timeBlock: 'morning', proposalTitle: 'Louvre Museum' }),
+  ];
+
+  it('renders items with draggable attribute', () => {
+    render(<ItineraryView items={makeDndItems()} onReorder={jest.fn()} />);
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    expect(draggables.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('calls onReorder with reordered items when drag-and-drop occurs', () => {
+    const onReorder = jest.fn();
+    render(<ItineraryView items={makeDndItems()} onReorder={onReorder} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+    const target = draggables[1];
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(target, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
+    fireEvent.drop(target, { preventDefault: jest.fn() });
+
+    expect(onReorder).toHaveBeenCalledTimes(1);
+    const reordered = onReorder.mock.calls[0][0] as { id: string }[];
+    expect(reordered[0].id).toBe('item-2');
+    expect(reordered[1].id).toBe('item-1');
+  });
+
+  it('does not call onReorder when dropping on the same item', () => {
+    const onReorder = jest.fn();
+    render(<ItineraryView items={makeDndItems()} onReorder={onReorder} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(source, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
+    fireEvent.drop(source, { preventDefault: jest.fn() });
+
+    expect(onReorder).not.toHaveBeenCalled();
+  });
+
+  it('works without onReorder prop (no crash)', () => {
+    render(<ItineraryView items={makeDndItems()} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+    const target = draggables[1];
+
+    expect(() => {
+      fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+      fireEvent.dragOver(target, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
+      fireEvent.drop(target, { preventDefault: jest.fn() });
+    }).not.toThrow();
   });
 });

@@ -56,4 +56,5 @@ model ItineraryItem {
   proposal   Proposal @relation(fields: [proposalId], references: [id])
   day        Int
   timeBlock  String
+  order      Int      @default(0)
 }

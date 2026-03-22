@@ -116,6 +116,21 @@ describe('MapView', () => {
     expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
   });
 
+  it('normalizes ambiguously swapped coordinates using nearby anchor points', async () => {
+    const proposals = [
+      { ...baseProposal, id: 'p-anchor', lat: 48.8566, lng: 2.3522, city: 'Paris' },
+      { ...baseProposal, id: 'p-ambiguous-swapped', lat: 2.3508, lng: 48.8567, city: 'Paris' },
+    ];
+
+    await act(async () => {
+      render(<MapView proposals={proposals} />);
+    });
+
+    expect(mockMarker).toHaveBeenCalledTimes(2);
+    expect(mockMarker).toHaveBeenNthCalledWith(1, [48.8566, 2.3522], expect.anything());
+    expect(mockMarker).toHaveBeenNthCalledWith(2, [48.8567, 2.3508], expect.anything());
+  });
+
   it('shows only approved proposals when some are approved', async () => {
     const proposals = [
       { ...baseProposal, id: 'p-approved', status: 'approved' },

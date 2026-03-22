@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateProposals } from '@/lib/llm';
-import { normalizeCoordinates } from '@/lib/coordinates';
+import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
 
 interface GeneratedProposal {
   type?: string;
@@ -35,18 +35,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const existingProposals = await prisma.proposal.findMany({
     where: { tripId: id },
   });
+  const existingCenter = getCoordinateCentroid(existingProposals);
 
   const generated: GeneratedProposal[] = await generateProposals(allPreferences, city, existingProposals);
-  const normalizedGenerated = generated
-    .map((proposal) => {
-      const coords = normalizeCoordinates(proposal.lat, proposal.lng);
-      if (!coords) return null;
-      return {
-        ...proposal,
-        ...coords,
-      };
-    })
-    .filter((proposal): proposal is GeneratedProposal => proposal !== null);
+  const normalizedGenerated = normalizeCoordinateBatch(generated, { reference: existingCenter ?? undefined });
 
   const proposals = await prisma.$transaction(
     normalizedGenerated.map((p) =>

@@ -35,7 +35,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const existingProposals = await prisma.proposal.findMany({
     where: { tripId: id },
   });
-  const existingCenter = getCoordinateCentroid(existingProposals);
+  const existingCenter = getCoordinateCentroid(
+    existingProposals.filter((proposal) => proposal.city === city)
+  );
 
   const generated: GeneratedProposal[] = await generateProposals(allPreferences, city, existingProposals);
   const normalizedGenerated = normalizeCoordinateBatch(generated, { reference: existingCenter ?? undefined });

@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 type Mode = 'login' | 'register';
 
 export default function AuthPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,8 +32,7 @@ export default function AuthPage() {
         return;
       }
 
-      router.push('/');
-      router.refresh();
+      window.location.href = '/';
     } finally {
       setSubmitting(false);
     }
@@ -73,7 +70,7 @@ export default function AuthPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900"
               />
             </div>
           )}
@@ -84,7 +81,7 @@ export default function AuthPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900"
             />
           </div>
           <div>
@@ -95,7 +92,7 @@ export default function AuthPage() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900"
             />
           </div>
 

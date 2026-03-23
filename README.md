@@ -11,7 +11,7 @@ AI-powered collaborative trip planning with proposal voting, auto itinerary sche
 - AI proposal generation for places and food based on traveler preferences
 - Approve/reject flow for collaborative decision making
 - Automatic day-by-day itinerary construction from approved proposals
-- OpenStreetMap map view for approved locations
+- Google Maps map view with place search + POI click-to-add (beta), plus legacy Leaflet fallback
 - Per-traveler preferences (likes, dislikes, budget)
 
 ## Tech Stack
@@ -22,7 +22,7 @@ AI-powered collaborative trip planning with proposal voting, auto itinerary sche
 | Styling | Tailwind CSS |
 | Database | SQLite via Prisma ORM + `better-sqlite3` adapter |
 | LLM | OpenAI `gpt-5-mini` (default), Azure OpenAI / Bifrost optional |
-| Map | Leaflet / react-leaflet / OpenStreetMap |
+| Map | Google Maps JavaScript API (+ Places), Leaflet/OpenStreetMap fallback |
 | Testing | Jest + Testing Library |
 
 ## Getting Started
@@ -46,11 +46,14 @@ Optional: override model for non-Azure OpenAI.
 OPENAI_MODEL=gpt-5-mini
 ```
 
-Optional: use Google Maps Geocoding API for proposal coordinates.
+Optional: enable Google Maps picker (frontend) and Google Maps Geocoding (backend).
 
 ```env
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-google-maps-key
 GOOGLE_MAPS_API_KEY=your-google-maps-key
 ```
+
+Current setup keeps one key value for both frontend and backend variables.
 
 Optional: use Azure OpenAI instead of standard OpenAI.
 
@@ -79,6 +82,7 @@ Behavior:
 - `BIFROST_API_KEY` is optional and defaults to an empty string when unset.
 - Bifrost model selection uses `OPENAI_MODEL` (default `gpt-5-mini`).
 - Proposal `lat/lng` are resolved via Google Maps Geocoding when `GOOGLE_MAPS_API_KEY` is set.
+- Google Maps map picker requires `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
 
 Provider-specific error handling:
 
@@ -153,6 +157,7 @@ src/
       proposals/[id]/approve|reject
       users/                      # CRUD for users & preferences
   components/
+    GoogleMapView.tsx             # Google Maps place picker + map markers
     ProposalCard.tsx              # Proposal with approve/reject buttons
     ItineraryView.tsx             # Day-by-day itinerary grouped by time block
     MapView.tsx                   # Leaflet map (client-only)

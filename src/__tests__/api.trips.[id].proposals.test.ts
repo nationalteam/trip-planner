@@ -5,6 +5,7 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     proposal: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
     },
     trip: {
@@ -89,6 +90,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
     mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
     (mockPrisma.tripMember.findMany as jest.Mock).mockResolvedValue([{ userId: 'u-1' }]);
+    (mockPrisma.proposal.findFirst as jest.Mock).mockResolvedValue(null);
   });
 
   it('returns 404 when trip does not exist', async () => {
@@ -237,6 +239,101 @@ describe('POST /api/trips/[id]/proposals', () => {
         lng: 139.8107,
       }),
     });
+  });
+
+  it('creates a proposal from google place payload with hotel type mapping', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
+    const savedProposal = {
+      id: 'p-google-1',
+      tripId: 'trip-1',
+      type: 'hotel',
+      title: 'Shinjuku Granbell Hotel',
+      description: 'Imported from Google Maps',
+      reason: '',
+      lat: 35.694,
+      lng: 139.703,
+      city: 'Tokyo',
+      suggestedTime: 'afternoon',
+      durationMinutes: null,
+      status: 'pending',
+      googlePlaceId: 'google-place-1',
+      formattedAddress: '2 Chome-14-5 Kabukicho, Shinjuku City, Tokyo',
+      googleTypes: '["lodging","establishment"]',
+    };
+
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(savedProposal);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'google_place',
+        placeId: 'google-place-1',
+        title: 'Shinjuku Granbell Hotel',
+        city: 'Tokyo',
+        lat: 35.694,
+        lng: 139.703,
+        formattedAddress: '2 Chome-14-5 Kabukicho, Shinjuku City, Tokyo',
+        types: ['lodging', 'establishment'],
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+
+    expect(res.status).toBe(201);
+    expect(mockPrisma.proposal.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        type: 'hotel',
+        googlePlaceId: 'google-place-1',
+      }),
+    });
+  });
+
+  it('returns 409 when google place already exists in the trip', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+    (mockPrisma.proposal.findFirst as jest.Mock).mockResolvedValue({ id: 'existing' });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'google_place',
+        placeId: 'google-place-1',
+        title: 'Shinjuku Granbell Hotel',
+        city: 'Tokyo',
+        lat: 35.694,
+        lng: 139.703,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+
+    expect(res.status).toBe(409);
+    expect(mockPrisma.proposal.create).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for invalid google place payload', async () => {
+    const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: 'google_place',
+        placeId: '',
+        title: '',
+        lat: 'bad',
+        lng: 139.703,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await POST(req, context);
+
+    expect(res.status).toBe(400);
+    expect(mockPrisma.proposal.create).not.toHaveBeenCalled();
   });
 
   it('generates and saves proposals when trip exists', async () => {

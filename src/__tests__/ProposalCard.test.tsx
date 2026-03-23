@@ -61,6 +61,12 @@ describe('ProposalCard', () => {
     expect(screen.queryByText(/minutes/)).not.toBeInTheDocument();
   });
 
+  it('renders a Google Maps link using proposal coordinates', () => {
+    render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} />);
+    const link = screen.getByRole('link', { name: /open in google maps/i });
+    expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=48.865%2C2.321');
+  });
+
   it('shows Approve and Reject buttons when status is pending', () => {
     render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} />);
     expect(screen.getByRole('button', { name: /Approve/i })).toBeInTheDocument();

@@ -15,6 +15,8 @@ interface Trip {
   name: string;
   cities: string;
   createdAt: string;
+  startDate?: string | null;
+  durationDays?: number | null;
   currentRole?: 'owner' | 'viewer';
 }
 
@@ -315,6 +317,12 @@ export default function TripDetailPage() {
   }
 
   const cities: string[] = JSON.parse(trip.cities);
+  const tripSchedule = trip.startDate || trip.durationDays
+    ? [
+      trip.startDate ? `Start ${trip.startDate}` : null,
+      trip.durationDays ? `${trip.durationDays} days` : null,
+    ].filter(Boolean).join(' · ')
+    : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
   const filteredProposals = filterStatus === 'all' ? proposals : proposals.filter(p => p.status === filterStatus);
 
@@ -332,6 +340,7 @@ export default function TripDetailPage() {
                 </span>
               ))}
             </div>
+            <p className="text-sm text-gray-500 mt-2">{tripSchedule}</p>
           </div>
           <div className="flex gap-2">
             <Link

@@ -40,7 +40,14 @@ describe('GET /api/trips/[id]', () => {
   });
 
   it('returns the trip when found', async () => {
-    const fakeTrip = { id: 'trip-1', name: 'Paris Adventure', cities: '["Paris"]', createdAt: new Date() };
+    const fakeTrip = {
+      id: 'trip-1',
+      name: 'Paris Adventure',
+      cities: '["Paris"]',
+      startDate: '2026-04-01',
+      durationDays: 5,
+      createdAt: new Date(),
+    };
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1');
@@ -50,6 +57,8 @@ describe('GET /api/trips/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(data.name).toBe('Paris Adventure');
+    expect(data.startDate).toBe('2026-04-01');
+    expect(data.durationDays).toBe(5);
     expect(data.currentRole).toBe('owner');
   });
 

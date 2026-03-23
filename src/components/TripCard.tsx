@@ -7,6 +7,8 @@ interface Trip {
   name: string;
   cities: string;
   createdAt: string;
+  startDate?: string | null;
+  durationDays?: number | null;
   _count?: { proposals: number; itineraryItems: number };
 }
 
@@ -39,7 +41,13 @@ export default function TripCard({ trip }: TripCardProps) {
           ))}
         </div>
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>{date}</span>
+          <div className="flex flex-col">
+            <span>{date}</span>
+            <div className="flex gap-2 text-xs">
+              {trip.startDate ? <span>Start {trip.startDate}</span> : <span>Flexible schedule</span>}
+              {trip.durationDays ? <span>{trip.durationDays} days</span> : null}
+            </div>
+          </div>
           {trip._count && (
             <div className="flex gap-3">
               <span>{trip._count.proposals} proposals</span>

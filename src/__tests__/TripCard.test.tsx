@@ -10,6 +10,8 @@ const baseTrip = {
   name: 'Summer Vacation',
   cities: JSON.stringify(['Paris', 'Tokyo']),
   createdAt: '2024-06-15T00:00:00.000Z',
+  startDate: null,
+  durationDays: null,
 };
 
 describe('TripCard', () => {
@@ -44,6 +46,17 @@ describe('TripCard', () => {
     render(<TripCard trip={baseTrip} />);
     expect(screen.queryByText(/proposals/)).not.toBeInTheDocument();
     expect(screen.queryByText(/planned/)).not.toBeInTheDocument();
+  });
+
+  it('renders flexible schedule when date info is absent', () => {
+    render(<TripCard trip={baseTrip} />);
+    expect(screen.getByText('Flexible schedule')).toBeInTheDocument();
+  });
+
+  it('renders start date and duration when provided', () => {
+    render(<TripCard trip={{ ...baseTrip, startDate: '2026-04-01', durationDays: 7 }} />);
+    expect(screen.getByText('Start 2026-04-01')).toBeInTheDocument();
+    expect(screen.getByText('7 days')).toBeInTheDocument();
   });
 
   it('links to the correct trip detail page', () => {

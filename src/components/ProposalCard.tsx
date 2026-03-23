@@ -42,7 +42,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ProposalCard({ proposal, onApprove, onReject, onDelete, canEdit = true }: ProposalCardProps) {
-  const mapsQuery = encodeURIComponent(`${proposal.lat},${proposal.lng}`);
+  const placeQuery = [proposal.title.trim(), proposal.city.trim()].filter(Boolean).join(', ');
+  const mapsQuery = encodeURIComponent(placeQuery || `${proposal.lat},${proposal.lng}`);
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
   return (

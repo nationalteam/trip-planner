@@ -79,6 +79,10 @@ export default function TripDetailPage() {
   const [creatingManual, setCreatingManual] = useState(false);
   const [fillingDetails, setFillingDetails] = useState(false);
   const [mapProvider, setMapProvider] = useState<'google' | 'leaflet'>('google');
+  const [editingSchedule, setEditingSchedule] = useState(false);
+  const [scheduleStartDateInput, setScheduleStartDateInput] = useState('');
+  const [scheduleDurationDaysInput, setScheduleDurationDaysInput] = useState('');
+  const [savingSchedule, setSavingSchedule] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -115,6 +119,12 @@ export default function TripDetailPage() {
       setManualCity(selectedCity);
     }
   }, [selectedCity, manualCity]);
+
+  useEffect(() => {
+    if (!trip || editingSchedule) return;
+    setScheduleStartDateInput(trip.startDate || '');
+    setScheduleDurationDaysInput(trip.durationDays != null ? String(trip.durationDays) : '');
+  }, [trip, editingSchedule]);
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -338,6 +348,62 @@ export default function TripDetailPage() {
     alert(data.error || 'Failed to add place from Google Maps.');
   }
 
+  function handleStartEditSchedule() {
+    if (!trip) return;
+    setScheduleStartDateInput(trip.startDate || '');
+    setScheduleDurationDaysInput(trip.durationDays != null ? String(trip.durationDays) : '');
+    setEditingSchedule(true);
+  }
+
+  async function handleSaveSchedule(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingSchedule(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startDate: scheduleStartDateInput || '',
+          durationDays: scheduleDurationDaysInput || '',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setTrip((prev) => (prev ? { ...prev, ...data } : prev));
+        setEditingSchedule(false);
+      } else {
+        alert(data.error || 'Failed to update trip schedule.');
+      }
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
+  async function handleClearSchedule() {
+    setSavingSchedule(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startDate: '',
+          durationDays: '',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setTrip((prev) => (prev ? { ...prev, ...data } : prev));
+        setScheduleStartDateInput('');
+        setScheduleDurationDaysInput('');
+        setEditingSchedule(false);
+      } else {
+        alert(data.error || 'Failed to clear trip schedule.');
+      }
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -379,7 +445,69 @@ export default function TripDetailPage() {
                 </span>
               ))}
             </div>
-            <p className="text-sm text-gray-500 mt-2">{tripSchedule}</p>
+            {editingSchedule ? (
+              <form onSubmit={handleSaveSchedule} className="mt-3 flex flex-col sm:flex-row sm:items-end gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={scheduleStartDateInput}
+                    onChange={(e) => setScheduleStartDateInput(e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Duration Days</label>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={scheduleDurationDaysInput}
+                    onChange={(e) => setScheduleDurationDaysInput(e.target.value)}
+                    placeholder="e.g. 5"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 w-36"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={savingSchedule}
+                    className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {savingSchedule ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingSchedule}
+                    onClick={() => setEditingSchedule(false)}
+                    className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingSchedule}
+                    onClick={handleClearSchedule}
+                    className="border border-red-300 text-red-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="mt-2 flex items-center gap-2">
+                <p className="text-sm text-gray-500">{tripSchedule}</p>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={handleStartEditSchedule}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Edit schedule
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <Link

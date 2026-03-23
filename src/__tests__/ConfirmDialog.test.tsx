@@ -65,4 +65,11 @@ describe('ConfirmDialog', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onConfirm).not.toHaveBeenCalled();
   });
+
+  it('renders above high-z-index map overlays', () => {
+    render(
+      <ConfirmDialog open={true} message="Delete this item?" onConfirm={onConfirm} onCancel={onCancel} />
+    );
+    expect(screen.getByTestId('confirm-dialog-backdrop')).toHaveClass('z-[2000]');
+  });
 });

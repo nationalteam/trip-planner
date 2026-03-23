@@ -12,7 +12,7 @@ export default function ConfirmDialog({ open, message, onConfirm, onCancel }: Co
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50"
       data-testid="confirm-dialog-backdrop"
       onClick={onCancel}
     >

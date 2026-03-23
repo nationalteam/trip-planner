@@ -175,6 +175,78 @@ Return ONLY valid JSON, no markdown.`;
   }
 }
 
+export interface ProposalFillResult {
+  description: string;
+  type: 'food' | 'place';
+  suggestedTime: 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'night';
+  durationMinutes: number | null;
+}
+
+export async function fillProposalDetails(title: string, city: string): Promise<ProposalFillResult> {
+  const provider = resolveProvider();
+  const openai = createClient(provider);
+  const fallbackModel = process.env.OPENAI_MODEL ?? 'gpt-5-mini';
+  const model = provider === 'azure'
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
+    : fallbackModel;
+
+  const prompt = `You are a travel planner. Fill in details for a travel proposal.
+
+Title: ${title}
+City: ${city}
+
+Return a JSON object with these fields:
+{
+  "description": "Detailed description of the place or restaurant (2-3 sentences)",
+  "type": "food or place",
+  "suggestedTime": "morning, lunch, afternoon, dinner, or night",
+  "durationMinutes": 90
+}
+
+Return ONLY valid JSON, no markdown.`;
+
+  let response;
+  try {
+    response = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } catch (error) {
+    mapProviderError(provider, error);
+  }
+
+  const content = response.choices[0].message.content || '{}';
+  const defaults: ProposalFillResult = {
+    description: '',
+    type: 'place',
+    suggestedTime: 'afternoon',
+    durationMinutes: null,
+  };
+
+  function buildResult(parsed: Record<string, unknown>): ProposalFillResult {
+    return {
+      description: typeof parsed.description === 'string' ? parsed.description : defaults.description,
+      type: parsed.type === 'food' ? 'food' : 'place',
+      suggestedTime: ['morning', 'lunch', 'afternoon', 'dinner', 'night'].includes(parsed.suggestedTime as string)
+        ? (parsed.suggestedTime as ProposalFillResult['suggestedTime'])
+        : defaults.suggestedTime,
+      durationMinutes: typeof parsed.durationMinutes === 'number' ? parsed.durationMinutes : defaults.durationMinutes,
+    };
+  }
+
+  try {
+    return buildResult(JSON.parse(content));
+  } catch {
+    try {
+      const match = content.match(/\{[\s\S]*\}/);
+      if (match) return buildResult(JSON.parse(match[0]));
+    } catch {
+      // fall through
+    }
+    return defaults;
+  }
+}
+
 export async function organizeItinerary(items: ItineraryItemForLLM[]): Promise<OrganizedItineraryItem[]> {
   const provider = resolveProvider();
   const openai = createClient(provider);

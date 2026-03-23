@@ -71,6 +71,7 @@ export default function TripDetailPage() {
   const [manualLat, setManualLat] = useState('');
   const [manualLng, setManualLng] = useState('');
   const [creatingManual, setCreatingManual] = useState(false);
+  const [fillingDetails, setFillingDetails] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -159,6 +160,30 @@ export default function TripDetailPage() {
       }
     } finally {
       setCreatingManual(false);
+    }
+  }
+
+  async function handleFillWithAI() {
+    const city = manualCity || selectedCity;
+    if (!manualTitle || !city) return;
+    setFillingDetails(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/proposals/fill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: manualTitle, city }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.description) setManualDescription(data.description);
+        if (data.type) setManualType(data.type);
+        if (data.suggestedTime) setManualSuggestedTime(data.suggestedTime);
+        if (data.durationMinutes) setManualDurationMinutes(String(data.durationMinutes));
+        if (data.lat != null) setManualLat(String(data.lat));
+        if (data.lng != null) setManualLng(String(data.lng));
+      }
+    } finally {
+      setFillingDetails(false);
     }
   }
 
@@ -493,6 +518,14 @@ export default function TripDetailPage() {
                 className="mt-3 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50"
               >
                 {creatingManual ? 'Saving...' : 'Add Manual Proposal'}
+              </button>
+              <button
+                type="button"
+                onClick={handleFillWithAI}
+                disabled={fillingDetails || !manualTitle}
+                className="mt-3 ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {fillingDetails ? '⏳ Filling...' : '✨ Fill with AI'}
               </button>
             </form>
           )}

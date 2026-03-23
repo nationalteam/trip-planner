@@ -30,8 +30,14 @@ export default function Home() {
   async function fetchTrips() {
     try {
       const res = await fetch('/api/trips');
+      if (res.status === 401) {
+        window.location.href = '/auth';
+        return;
+      }
       const data = await res.json();
-      setTrips(data);
+      setTrips(Array.isArray(data) ? data : []);
+    } catch {
+      setTrips([]);
     } finally {
       setLoading(false);
     }

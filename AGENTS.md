@@ -59,3 +59,9 @@
 
 - Read `docs/TDD_POLICY.md` at session start; it MUST NOT be assumed to be auto-loaded.
 - Apply rules strictly during implementation and code changes.
+
+## Changelog
+
+- Append ONE line to the end of `docs/CHANGELOG.md`.
+- Format: `YYYY-MM-DD | type(scope): summary (#ref)`.
+- Do not modify existing content.

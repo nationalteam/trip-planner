@@ -10,6 +10,8 @@ model Trip {
   id        String   @id @default(cuid())
   name      String
   cities    String
+  startDate String?
+  durationDays Int?
   createdAt DateTime @default(now())
   proposals Proposal[]
   itineraryItems ItineraryItem[]

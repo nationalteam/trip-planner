@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+function isValidDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+}
+
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -26,12 +32,33 @@ export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
 
-  const { name, cities } = await req.json();
+  const { name, cities, startDate, durationDays } = await req.json();
+
+  const normalizedStartDate = typeof startDate === 'string' && startDate.trim().length > 0
+    ? startDate.trim()
+    : null;
+  const normalizedDurationDays = durationDays == null || durationDays === ''
+    ? null
+    : Number(durationDays);
+
+  if (normalizedStartDate && !isValidDateOnly(normalizedStartDate)) {
+    return NextResponse.json({ error: 'Invalid startDate. Expected YYYY-MM-DD.' }, { status: 400 });
+  }
+
+  if (
+    normalizedDurationDays != null &&
+    (!Number.isInteger(normalizedDurationDays) || normalizedDurationDays <= 0)
+  ) {
+    return NextResponse.json({ error: 'Invalid durationDays. Expected a positive integer.' }, { status: 400 });
+  }
+
   const trip = await prisma.$transaction(async (tx) => {
     const createdTrip = await tx.trip.create({
       data: {
         name,
         cities: JSON.stringify(cities),
+        startDate: normalizedStartDate,
+        durationDays: normalizedDurationDays,
       },
     });
     await tx.tripMember.create({

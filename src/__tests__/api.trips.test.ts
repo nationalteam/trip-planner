@@ -84,10 +84,90 @@ describe('POST /api/trips', () => {
     expect(res.status).toBe(201);
     expect(data.name).toBe('My Trip');
     expect(tx.trip.create).toHaveBeenCalledWith({
-      data: { name: 'My Trip', cities: JSON.stringify(['London', 'Berlin']) },
+      data: {
+        name: 'My Trip',
+        cities: JSON.stringify(['London', 'Berlin']),
+        startDate: null,
+        durationDays: null,
+      },
     });
     expect(tx.tripMember.create).toHaveBeenCalledWith({
       data: { tripId: '2', userId: 'u-1', role: 'owner' },
     });
+  });
+
+  it('creates a trip with optional startDate and durationDays', async () => {
+    const newTrip = {
+      id: '2',
+      name: 'My Trip',
+      cities: '["London","Berlin"]',
+      startDate: '2026-04-01',
+      durationDays: 7,
+      createdAt: new Date(),
+    };
+    const tx = {
+      trip: { create: jest.fn().mockResolvedValue(newTrip) },
+      tripMember: { create: jest.fn().mockResolvedValue({ id: 'tm-1' }) },
+    };
+    (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb) => cb(tx));
+
+    const req = new NextRequest('http://localhost/api/trips', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'My Trip',
+        cities: ['London', 'Berlin'],
+        startDate: '2026-04-01',
+        durationDays: 7,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(201);
+    expect(tx.trip.create).toHaveBeenCalledWith({
+      data: {
+        name: 'My Trip',
+        cities: JSON.stringify(['London', 'Berlin']),
+        startDate: '2026-04-01',
+        durationDays: 7,
+      },
+    });
+  });
+
+  it('returns 400 for invalid startDate format', async () => {
+    const req = new NextRequest('http://localhost/api/trips', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'My Trip',
+        cities: ['London', 'Berlin'],
+        startDate: '04/01/2026',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/startDate/);
+  });
+
+  it('returns 400 for non-positive durationDays', async () => {
+    const req = new NextRequest('http://localhost/api/trips', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'My Trip',
+        cities: ['London', 'Berlin'],
+        durationDays: 0,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/durationDays/);
   });
 });

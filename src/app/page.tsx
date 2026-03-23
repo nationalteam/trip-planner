@@ -8,6 +8,8 @@ interface Trip {
   name: string;
   cities: string;
   createdAt: string;
+  startDate?: string | null;
+  durationDays?: number | null;
   _count?: { proposals: number; itineraryItems: number };
 }
 
@@ -18,6 +20,8 @@ export default function Home() {
   const [name, setName] = useState('');
   const [citiesInput, setCitiesInput] = useState('');
   const [creating, setCreating] = useState(false);
+  const [startDateInput, setStartDateInput] = useState('');
+  const [durationDaysInput, setDurationDaysInput] = useState('');
 
   useEffect(() => {
     fetchTrips();
@@ -41,13 +45,20 @@ export default function Home() {
       const res = await fetch('/api/trips', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, cities }),
+        body: JSON.stringify({
+          name,
+          cities,
+          startDate: startDateInput || null,
+          durationDays: durationDaysInput ? Number(durationDaysInput) : null,
+        }),
       });
       if (res.ok) {
         const trip = await res.json();
         setTrips(prev => [trip, ...prev]);
         setName('');
         setCitiesInput('');
+        setStartDateInput('');
+        setDurationDaysInput('');
         setShowForm(false);
       }
     } finally {
@@ -95,6 +106,29 @@ export default function Home() {
                 required
                 className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date (optional)</label>
+                <input
+                  type="date"
+                  value={startDateInput}
+                  onChange={e => setStartDateInput(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration Days (optional)</label>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={durationDaysInput}
+                  onChange={e => setDurationDaysInput(e.target.value)}
+                  placeholder="e.g. 7"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
             </div>
             <div className="flex gap-3">
               <button

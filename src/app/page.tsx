@@ -82,7 +82,7 @@ export default function Home() {
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. European Summer 2024"
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
             <div>
@@ -93,7 +93,7 @@ export default function Home() {
                 onChange={e => setCitiesInput(e.target.value)}
                 placeholder="e.g. Paris, Rome, Barcelona"
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
             <div className="flex gap-3">

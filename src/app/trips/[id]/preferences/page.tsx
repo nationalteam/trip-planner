@@ -102,7 +102,7 @@ export default function PreferencesPage() {
               value={likes}
               onChange={(e) => setLikes(e.target.value)}
               placeholder="e.g. Italian food, museums, hiking, jazz music"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             />
           </div>
           <div>
@@ -114,7 +114,7 @@ export default function PreferencesPage() {
               value={dislikes}
               onChange={(e) => setDislikes(e.target.value)}
               placeholder="e.g. crowded tourist traps, fast food, clubs"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             />
           </div>
           <div>
@@ -122,7 +122,7 @@ export default function PreferencesPage() {
             <select
               value={preferredLanguage}
               onChange={(e) => setPreferredLanguage(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="">Not specified</option>
               <option value="zh-TW">繁體中文</option>
@@ -137,7 +137,7 @@ export default function PreferencesPage() {
             <select
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               <option value="">Not specified</option>
               <option value="budget">💰 Budget</option>

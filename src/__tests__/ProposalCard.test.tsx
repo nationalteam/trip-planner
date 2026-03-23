@@ -61,8 +61,15 @@ describe('ProposalCard', () => {
     expect(screen.queryByText(/minutes/)).not.toBeInTheDocument();
   });
 
-  it('renders a Google Maps link using proposal coordinates', () => {
+  it('renders a Google Maps link using proposal title and city', () => {
     render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} />);
+    const link = screen.getByRole('link', { name: /open in google maps/i });
+    expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=Le%20Petit%20Bistro%2C%20Paris');
+  });
+
+  it('falls back to coordinates for Google Maps link when title and city are blank', () => {
+    const proposal = { ...baseProposal, title: '   ', city: '   ' };
+    render(<ProposalCard proposal={proposal} onApprove={onApprove} onReject={onReject} />);
     const link = screen.getByRole('link', { name: /open in google maps/i });
     expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=48.865%2C2.321');
   });

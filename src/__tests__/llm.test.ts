@@ -16,7 +16,7 @@ jest.mock('openai', () => {
   };
 });
 
-import { generateProposals, organizeItinerary } from '@/lib/llm';
+import { generateProposals, organizeItinerary, fillProposalDetails } from '@/lib/llm';
 import OpenAI from 'openai';
 
 describe('generateProposals', () => {
@@ -332,5 +332,111 @@ describe('organizeItinerary', () => {
 
     const result = await organizeItinerary([]);
     expect(result).toEqual([]);
+  });
+});
+
+describe('fillProposalDetails', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    mockCreate.mockReset();
+    (OpenAI as unknown as jest.Mock).mockClear();
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  it('returns parsed fill details from LLM response', async () => {
+    const fakeFill = {
+      description: 'A famous ski resort in Hokkaido, Japan.',
+      type: 'place',
+      suggestedTime: 'morning',
+      durationMinutes: 180,
+    };
+
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(fakeFill) } }],
+    });
+
+    const result = await fillProposalDetails('Tomamu Ski Resort', 'Hokkaido');
+    expect(result).toEqual(fakeFill);
+  });
+
+  it('includes title and city in the LLM prompt', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: '{}' } }],
+    });
+
+    await fillProposalDetails('Tomamu Ski Resort', 'Hokkaido');
+
+    const callArgs = mockCreate.mock.calls[0][0];
+    const prompt = callArgs.messages[0].content as string;
+    expect(prompt).toContain('Tomamu Ski Resort');
+    expect(prompt).toContain('Hokkaido');
+  });
+
+  it('extracts JSON object from response that contains extra text', async () => {
+    const fakeFill = { description: 'Great ski resort', type: 'place', suggestedTime: 'morning', durationMinutes: 120 };
+    const responseWithExtraText = `Here are the details:\n${JSON.stringify(fakeFill)}\nEnjoy!`;
+
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: responseWithExtraText } }],
+    });
+
+    const result = await fillProposalDetails('Tomamu', 'Hokkaido');
+    expect(result.description).toBe('Great ski resort');
+    expect(result.type).toBe('place');
+  });
+
+  it('returns defaults when JSON parsing fails entirely', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: 'not valid json at all' } }],
+    });
+
+    const result = await fillProposalDetails('Unknown', 'City');
+    expect(result).toEqual({
+      description: '',
+      type: 'place',
+      suggestedTime: 'afternoon',
+      durationMinutes: null,
+    });
+  });
+
+  it('defaults type to place when LLM returns unknown type', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ type: 'restaurant', suggestedTime: 'dinner', durationMinutes: 60, description: 'Nice' }) } }],
+    });
+
+    const result = await fillProposalDetails('Some Place', 'City');
+    expect(result.type).toBe('place');
+  });
+
+  it('defaults suggestedTime to afternoon when LLM returns unknown value', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ type: 'food', suggestedTime: 'brunch', durationMinutes: 60, description: 'Nice' }) } }],
+    });
+
+    const result = await fillProposalDetails('Some Place', 'City');
+    expect(result.suggestedTime).toBe('afternoon');
+  });
+
+  it('sets durationMinutes to null when LLM returns non-number', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ type: 'place', suggestedTime: 'afternoon', durationMinutes: 'about an hour', description: 'Nice' }) } }],
+    });
+
+    const result = await fillProposalDetails('Some Place', 'City');
+    expect(result.durationMinutes).toBeNull();
+  });
+
+  it('accepts food as a valid type', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ type: 'food', suggestedTime: 'dinner', durationMinutes: 90, description: 'Great restaurant' }) } }],
+    });
+
+    const result = await fillProposalDetails('Le Bistro', 'Paris');
+    expect(result.type).toBe('food');
   });
 });

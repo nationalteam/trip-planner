@@ -42,6 +42,9 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ProposalCard({ proposal, onApprove, onReject, onDelete, canEdit = true }: ProposalCardProps) {
+  const mapsQuery = encodeURIComponent(`${proposal.lat},${proposal.lng}`);
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+
   return (
     <div className={`rounded-xl border p-5 transition-all ${statusColors[proposal.status] || 'bg-white border-gray-200'}`}>
       <div className="flex items-start justify-between mb-3">
@@ -78,6 +81,18 @@ export default function ProposalCard({ proposal, onApprove, onReject, onDelete, 
       {proposal.durationMinutes && (
         <p className="text-xs text-gray-500 mb-4">⏱ ~{proposal.durationMinutes} minutes</p>
       )}
+
+      <p className="text-xs mb-4">
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-700 hover:underline"
+          aria-label="Open in Google Maps"
+        >
+          📍 Open in Google Maps
+        </a>
+      </p>
 
       {proposal.status === 'pending' && canEdit && (
         <div className="flex gap-2">

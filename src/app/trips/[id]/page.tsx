@@ -359,7 +359,7 @@ export default function TripDetailPage() {
             onChange={(e) => setShareEmail(e.target.value)}
             placeholder="Share with user email"
             required
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 text-gray-900"
           />
           <button
             type="submit"
@@ -394,7 +394,7 @@ export default function TripDetailPage() {
             <select
               value={selectedCity}
               onChange={e => setSelectedCity(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             >
               {cities.map(city => (
                 <option key={city} value={city}>{city}</option>
@@ -411,7 +411,7 @@ export default function TripDetailPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as 'createdAt' | 'title' | 'city' | 'status')}
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="createdAt">Created time</option>
                 <option value="title">Title</option>
@@ -421,7 +421,7 @@ export default function TripDetailPage() {
               <select
                 value={sortOrder}
                 onChange={e => setSortOrder(e.target.value as 'asc' | 'desc')}
-                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               >
                 <option value="desc">Desc</option>
                 <option value="asc">Asc</option>
@@ -451,27 +451,27 @@ export default function TripDetailPage() {
                   onChange={e => setManualTitle(e.target.value)}
                   required
                   placeholder="Title"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 />
                 <input
                   value={manualCity}
                   onChange={e => setManualCity(e.target.value)}
                   required
                   placeholder="City"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 />
                 <textarea
                   value={manualDescription}
                   onChange={e => setManualDescription(e.target.value)}
                   required
                   placeholder="Description"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2 text-gray-900"
                   rows={2}
                 />
                 <select
                   value={manualType}
                   onChange={e => setManualType(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="place">place</option>
                   <option value="food">food</option>
@@ -479,7 +479,7 @@ export default function TripDetailPage() {
                 <select
                   value={manualSuggestedTime}
                   onChange={e => setManualSuggestedTime(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 >
                   <option value="morning">morning</option>
                   <option value="lunch">lunch</option>
@@ -493,7 +493,7 @@ export default function TripDetailPage() {
                   value={manualDurationMinutes}
                   onChange={e => setManualDurationMinutes(e.target.value)}
                   placeholder="Duration (minutes, optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 />
                 <input
                   type="number"
@@ -501,7 +501,7 @@ export default function TripDetailPage() {
                   value={manualLat}
                   onChange={e => setManualLat(e.target.value)}
                   placeholder="Latitude (optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 />
                 <input
                   type="number"
@@ -509,7 +509,7 @@ export default function TripDetailPage() {
                   value={manualLng}
                   onChange={e => setManualLng(e.target.value)}
                   placeholder="Longitude (optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
                 />
               </div>
               <button

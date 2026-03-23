@@ -79,7 +79,7 @@ export default function MapView({ proposals }: MapViewProps) {
       toShow.forEach(proposal => {
         const icon = L.divIcon({
           html: `<div style="background:${proposal.status === 'approved' ? '#16a34a' : '#2563eb'};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-            ${proposal.type === 'food' ? '🍽' : '🏛'}
+            ${proposal.type === 'food' ? '🍽' : proposal.type === 'hotel' ? '🏨' : '🏛'}
           </div>`,
           className: '',
           iconSize: [32, 32],

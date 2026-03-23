@@ -33,6 +33,7 @@ const timeIcons: Record<string, string> = {
 const typeIcons: Record<string, string> = {
   food: '🍽️',
   place: '🏛️',
+  hotel: '🏨',
 };
 
 const statusColors: Record<string, string> = {

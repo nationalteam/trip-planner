@@ -72,9 +72,14 @@ model Proposal {
   city            String
   suggestedTime   String
   durationMinutes Int?
+  googlePlaceId   String?
+  formattedAddress String?
+  googleTypes     String?
   status          String          @default("pending")
   itineraryItem   ItineraryItem?
   createdAt       DateTime        @default(now())
+
+  @@unique([tripId, googlePlaceId])
 }
 
 model ItineraryItem {

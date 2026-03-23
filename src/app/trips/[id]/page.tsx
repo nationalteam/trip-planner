@@ -9,6 +9,7 @@ import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+const GoogleMapView = dynamic(() => import('@/components/GoogleMapView'), { ssr: false });
 
 interface Trip {
   id: string;
@@ -32,6 +33,9 @@ interface Proposal {
   suggestedTime: string;
   durationMinutes: number | null;
   status: string;
+  googlePlaceId?: string | null;
+  formattedAddress?: string | null;
+  googleTypes?: string | null;
 }
 
 interface ItineraryItem {
@@ -74,6 +78,7 @@ export default function TripDetailPage() {
   const [manualLng, setManualLng] = useState('');
   const [creatingManual, setCreatingManual] = useState(false);
   const [fillingDetails, setFillingDetails] = useState(false);
+  const [mapProvider, setMapProvider] = useState<'google' | 'leaflet'>('google');
 
   const fetchAll = useCallback(async () => {
     try {
@@ -297,6 +302,40 @@ export default function TripDetailPage() {
     } finally {
       setSharing(false);
     }
+  }
+
+  async function handleAddGooglePlace(place: {
+    placeId: string;
+    title: string;
+    lat: number;
+    lng: number;
+    city: string;
+    formattedAddress: string;
+    types: string[];
+  }) {
+    const res = await fetch(`/api/trips/${tripId}/proposals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'google_place',
+        placeId: place.placeId,
+        title: place.title,
+        city: place.city || selectedCity,
+        lat: place.lat,
+        lng: place.lng,
+        formattedAddress: place.formattedAddress,
+        types: place.types,
+      }),
+    });
+
+    if (res.ok) {
+      const created = await res.json();
+      setProposals((prev) => [created, ...prev]);
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    alert(data.error || 'Failed to add place from Google Maps.');
   }
 
   if (loading) {
@@ -579,18 +618,42 @@ export default function TripDetailPage() {
 
       {activeTab === 'map' && (
         <div>
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setMapProvider('google')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                mapProvider === 'google' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              Google Maps (Beta)
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapProvider('leaflet')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                mapProvider === 'leaflet' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              Leaflet (Legacy)
+            </button>
+          </div>
           <p className="text-sm text-gray-500 mb-4">
             {proposals.filter(p => p.status === 'approved').length > 0
               ? 'Showing approved proposals on the map'
               : 'Showing all proposals (approve some to highlight them)'}
           </p>
-          {proposals.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
-              <div className="text-5xl mb-3">🗺️</div>
-              <p className="text-gray-500">Generate proposals to see them on the map</p>
-            </div>
+          {mapProvider === 'google' ? (
+            <GoogleMapView proposals={proposals} canEdit={canEdit} onAddPlace={handleAddGooglePlace} />
           ) : (
-            <MapView proposals={proposals} />
+            proposals.length === 0 ? (
+              <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="text-5xl mb-3">🗺️</div>
+                <p className="text-gray-500">Generate proposals to see them on the map</p>
+              </div>
+            ) : (
+              <MapView proposals={proposals} />
+            )
           )}
         </div>
       )}

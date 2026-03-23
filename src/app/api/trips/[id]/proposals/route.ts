@@ -25,6 +25,13 @@ function hasResolvedCoordinates(proposal: ResolvedProposal | null): proposal is 
   return proposal !== null;
 }
 
+function mapGoogleTypesToProposalType(types: string[]): 'food' | 'hotel' | 'place' {
+  const normalized = types.map((type) => type.toLowerCase());
+  if (normalized.includes('lodging')) return 'hotel';
+  if (normalized.includes('restaurant') || normalized.includes('food') || normalized.includes('cafe')) return 'food';
+  return 'place';
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -100,6 +107,64 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         suggestedTime: body.suggestedTime || 'afternoon',
         durationMinutes: body.durationMinutes || null,
         status: 'pending',
+      },
+    });
+
+    return NextResponse.json(proposal, { status: 201 });
+  }
+
+  if (body?.mode === 'google_place') {
+    const placeId = typeof body.placeId === 'string' ? body.placeId.trim() : '';
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const description = typeof body.description === 'string' && body.description.trim()
+      ? body.description.trim()
+      : 'Imported from Google Maps';
+    const city = typeof body.city === 'string' && body.city.trim()
+      ? body.city.trim()
+      : 'Unknown';
+    const formattedAddress = typeof body.formattedAddress === 'string' ? body.formattedAddress.trim() : '';
+    const parsedLat = Number(body.lat);
+    const parsedLng = Number(body.lng);
+    const hasCoordinates = Number.isFinite(parsedLat) && Number.isFinite(parsedLng);
+    const types = Array.isArray(body.types)
+      ? body.types.filter((type: unknown): type is string => typeof type === 'string' && type.trim().length > 0)
+      : [];
+
+    if (!placeId || !title || !hasCoordinates) {
+      return NextResponse.json(
+        { error: 'Google place proposal requires non-empty placeId, title, lat, and lng' },
+        { status: 400 }
+      );
+    }
+
+    const duplicate = await prisma.proposal.findFirst({
+      where: {
+        tripId: id,
+        googlePlaceId: placeId,
+      },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return NextResponse.json({ error: 'This place is already added to the trip' }, { status: 409 });
+    }
+
+    const normalized = normalizeCoordinateBatch([{ lat: parsedLat, lng: parsedLng }])[0];
+    const proposal = await prisma.proposal.create({
+      data: {
+        tripId: id,
+        type: mapGoogleTypesToProposalType(types),
+        title,
+        description,
+        reason: '',
+        lat: normalized.lat,
+        lng: normalized.lng,
+        city,
+        suggestedTime: body.suggestedTime || 'afternoon',
+        durationMinutes: body.durationMinutes || null,
+        status: 'pending',
+        googlePlaceId: placeId,
+        formattedAddress: formattedAddress || null,
+        googleTypes: types.length > 0 ? JSON.stringify(types) : null,
       },
     });
 

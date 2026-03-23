@@ -138,6 +138,12 @@ describe('ProposalCard', () => {
     expect(screen.getByText('🏛️')).toBeInTheDocument();
   });
 
+  it('renders hotel type icon for hotel proposals', () => {
+    const proposal = { ...baseProposal, type: 'hotel' };
+    render(<ProposalCard proposal={proposal} onApprove={onApprove} onReject={onReject} />);
+    expect(screen.getByText('🏨')).toBeInTheDocument();
+  });
+
   it('does not render a delete button when onDelete is not provided', () => {
     render(<ProposalCard proposal={baseProposal} onApprove={onApprove} onReject={onReject} />);
     expect(screen.queryByRole('button', { name: /delete proposal/i })).not.toBeInTheDocument();

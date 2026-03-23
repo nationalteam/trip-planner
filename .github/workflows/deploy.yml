@@ -32,6 +32,7 @@ jobs:
             echo "OPENAI_MODEL=${OPENAI_MODEL:-gpt-5-mini}"
             echo "DATABASE_URL=${DATABASE_URL:-file:/app/data/prod.db}"
             echo "GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}"
+            echo "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}"
           } >> .env
 
       - name: Deploy with Docker Compose

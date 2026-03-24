@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
-
-function isValidDateOnly(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
-}
+import { isValidDateOnly } from '@/lib/dates';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
@@ -53,8 +48,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const trip = await prisma.trip.findUnique({ where: { id } });
   if (!trip) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const body = await req.json();
-  const { startDate, durationDays } = body;
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json(
+      { error: 'Invalid request body. Expected a JSON object.' },
+      { status: 400 },
+    );
+  }
+  const { startDate, durationDays } = body as { startDate?: unknown; durationDays?: unknown };
   const hasStartDate = Object.prototype.hasOwnProperty.call(body, 'startDate');
   const hasDurationDays = Object.prototype.hasOwnProperty.call(body, 'durationDays');
   const normalizedStartDate = typeof startDate === 'string' && startDate.trim().length > 0

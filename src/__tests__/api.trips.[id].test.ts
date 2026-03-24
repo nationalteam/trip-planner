@@ -226,6 +226,57 @@ describe('PATCH /api/trips/[id]', () => {
     expect(data.error).toBe('Not found');
   });
 
+  it('returns 400 for invalid JSON body', async () => {
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1', {
+      method: 'PATCH',
+      body: 'not-valid-json',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/Invalid JSON/i);
+    expect(mockPrisma.trip.update).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for null JSON body', async () => {
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1', {
+      method: 'PATCH',
+      body: 'null',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/Invalid request body/i);
+    expect(mockPrisma.trip.update).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for array JSON body', async () => {
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1', {
+      method: 'PATCH',
+      body: JSON.stringify([{ startDate: '2026-04-01' }]),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/Invalid request body/i);
+    expect(mockPrisma.trip.update).not.toHaveBeenCalled();
+  });
+
   it('returns 403 for non-owner', async () => {
     mockRequireTripRole.mockResolvedValue({ ok: false });
 

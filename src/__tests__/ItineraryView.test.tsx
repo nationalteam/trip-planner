@@ -146,6 +146,25 @@ describe('ItineraryView', () => {
     render(<ItineraryView items={items} schedule={{ durationDays: 5 }} />);
     expect(screen.getByText('Over planned range')).toBeInTheDocument();
   });
+
+  it('renders empty days up to durationDays even when no items exist on some days', () => {
+    const items = [makeItem({ id: 'item-1', day: 1 }), makeItem({ id: 'item-2', day: 3 })];
+    render(<ItineraryView items={items} schedule={{ durationDays: 4 }} />);
+    expect(screen.getByText('Day 2 / 4 days')).toBeInTheDocument();
+    expect(screen.getByText('Day 4 / 4 days')).toBeInTheDocument();
+  });
+
+  it('renders empty-day message for days without itinerary items', () => {
+    const items = [makeItem({ id: 'item-1', day: 1 })];
+    render(<ItineraryView items={items} schedule={{ durationDays: 2 }} />);
+    expect(screen.getByText('No items planned for this day yet')).toBeInTheDocument();
+  });
+
+  it('renders manually expanded days when durationDays is not set', () => {
+    const items = [makeItem({ id: 'item-1', day: 1 })];
+    render(<ItineraryView items={items} schedule={{ itineraryVisibleDays: 3 }} />);
+    expect(screen.getByText('Day 3')).toBeInTheDocument();
+  });
 });
 
 describe('ItineraryView drag-and-drop', () => {

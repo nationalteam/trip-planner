@@ -12,6 +12,7 @@ model Trip {
   cities    String
   startDate String?
   durationDays Int?
+  itineraryVisibleDays Int?
   createdAt DateTime @default(now())
   proposals Proposal[]
   itineraryItems ItineraryItem[]

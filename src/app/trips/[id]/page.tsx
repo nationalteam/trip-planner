@@ -18,6 +18,7 @@ interface Trip {
   createdAt: string;
   startDate?: string | null;
   durationDays?: number | null;
+  itineraryVisibleDays?: number | null;
   currentRole?: 'owner' | 'viewer';
 }
 
@@ -85,6 +86,8 @@ export default function TripDetailPage() {
   const [scheduleStartDateInput, setScheduleStartDateInput] = useState('');
   const [scheduleDurationDaysInput, setScheduleDurationDaysInput] = useState('');
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [addingDay, setAddingDay] = useState(false);
+  const [deletingDay, setDeletingDay] = useState<number | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -262,6 +265,41 @@ export default function TripDetailPage() {
     } catch {
       // Revert on network error
       fetchAll();
+    }
+  }
+
+  async function handleAddItineraryDay() {
+    setAddingDay(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/itinerary/days`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.trip) {
+        setTrip((prev) => (prev ? { ...prev, ...data.trip } : prev));
+      } else {
+        alert(data.error || 'Failed to add itinerary day.');
+      }
+    } finally {
+      setAddingDay(false);
+    }
+  }
+
+  async function handleDeleteEmptyDay(day: number) {
+    setDeletingDay(day);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/itinerary/days`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ day }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (data.trip) setTrip((prev) => (prev ? { ...prev, ...data.trip } : prev));
+        if (Array.isArray(data.itinerary)) setItinerary(data.itinerary);
+      } else {
+        alert(data.error || 'Failed to delete itinerary day.');
+      }
+    } finally {
+      setDeletingDay(null);
     }
   }
 
@@ -772,7 +810,7 @@ export default function TripDetailPage() {
 
       {activeTab === 'itinerary' && (
         <div>
-          <div className="mb-4">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <button
               onClick={handleOrganizeItinerary}
               disabled={organizing || itinerary.length === 0 || !canEdit}
@@ -780,6 +818,16 @@ export default function TripDetailPage() {
             >
               {organizing ? '⏳ Organizing...' : '🤖 Organize with AI'}
             </button>
+            {canEdit && !trip.durationDays && (
+              <button
+                type="button"
+                onClick={handleAddItineraryDay}
+                disabled={addingDay}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {addingDay ? 'Adding...' : '+ Add Day'}
+              </button>
+            )}
             {hasOverRangeDays && (
               <p className="text-xs text-amber-700 mt-2">
                 Some itinerary days exceed your planned duration ({trip.durationDays} days). You can keep it as-is or drag items back into range.
@@ -788,8 +836,14 @@ export default function TripDetailPage() {
           </div>
           <ItineraryView
             items={itinerary}
-            schedule={{ startDate: trip.startDate, durationDays: trip.durationDays }}
+            schedule={{
+              startDate: trip.startDate,
+              durationDays: trip.durationDays,
+              itineraryVisibleDays: trip.itineraryVisibleDays,
+            }}
             onReorder={canEdit ? handleReorderItinerary : undefined}
+            onDeleteEmptyDay={canEdit && !trip.durationDays ? handleDeleteEmptyDay : undefined}
+            deletingDay={deletingDay}
           />
         </div>
       )}

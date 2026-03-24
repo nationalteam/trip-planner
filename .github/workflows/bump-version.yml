@@ -32,7 +32,18 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            core.info(`Authenticated as ${context.actor}`);
+            const { owner, repo } = context.repo;
+            const currentRef = process.env.GITHUB_REF_NAME;
+            if (!currentRef) {
+              core.setFailed('GITHUB_REF_NAME is not available.');
+              return;
+            }
+            await github.rest.repos.getBranch({
+              owner,
+              repo,
+              branch: currentRef,
+            });
+            core.info(`Validated access to ${owner}/${repo}@${currentRef}`);
 
       - name: Configure git author
         run: |
@@ -40,7 +51,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version
-        run: npm version "${{ inputs.bump }}" -m "chore(release): bump version to %s"
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Working tree is not clean before version bump."
+            git --no-pager status --short
+            exit 1
+          fi
+          npm version "${{ inputs.bump }}" -m "chore(release): bump version to %s"
 
       - name: Push commit and tags
-        run: git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags
+        run: |
+          set -euo pipefail
+          git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags

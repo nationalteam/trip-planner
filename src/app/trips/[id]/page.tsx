@@ -434,6 +434,8 @@ export default function TripDetailPage() {
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
   const filteredProposals = filterStatus === 'all' ? proposals : proposals.filter(p => p.status === filterStatus);
+  const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
+  const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -778,8 +780,17 @@ export default function TripDetailPage() {
             >
               {organizing ? '⏳ Organizing...' : '🤖 Organize with AI'}
             </button>
+            {hasOverRangeDays && (
+              <p className="text-xs text-amber-700 mt-2">
+                Some itinerary days exceed your planned duration ({trip.durationDays} days). You can keep it as-is or drag items back into range.
+              </p>
+            )}
           </div>
-          <ItineraryView items={itinerary} onReorder={canEdit ? handleReorderItinerary : undefined} />
+          <ItineraryView
+            items={itinerary}
+            schedule={{ startDate: trip.startDate, durationDays: trip.durationDays }}
+            onReorder={canEdit ? handleReorderItinerary : undefined}
+          />
         </div>
       )}
 

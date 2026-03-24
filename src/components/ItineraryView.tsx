@@ -25,6 +25,11 @@ interface ReorderPayload {
   order: number;
 }
 
+interface ItinerarySchedule {
+  startDate?: string | null;
+  durationDays?: number | null;
+}
+
 const timeBlockOrder = ['morning', 'afternoon', 'dinner'];
 const timeBlockLabels: Record<string, string> = {
   morning: '🌅 Morning',
@@ -40,10 +45,51 @@ const typeIcons: Record<string, string> = {
 
 interface Props {
   items: ItineraryItem[];
+  schedule?: ItinerarySchedule;
   onReorder?: (updates: ReorderPayload[]) => void;
 }
 
-export default function ItineraryView({ items, onReorder }: Props) {
+function deriveDateLabel(startDate: string, day: number): string | null {
+  const matched = startDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!matched) return null;
+
+  const year = Number(matched[1]);
+  const month = Number(matched[2]);
+  const dayOfMonth = Number(matched[3]);
+  const base = new Date(Date.UTC(year, month - 1, dayOfMonth));
+  if (Number.isNaN(base.getTime())) return null;
+
+  const shifted = new Date(base);
+  shifted.setUTCDate(base.getUTCDate() + (day - 1));
+  const y = shifted.getUTCFullYear();
+  const m = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(shifted.getUTCDate()).padStart(2, '0');
+  const weekday = shifted.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+  return `${y}-${m}-${d} (${weekday})`;
+}
+
+function buildDayHeading(day: number, schedule?: ItinerarySchedule): string {
+  const hasDuration = typeof schedule?.durationDays === 'number' && schedule.durationDays > 0;
+  const hasStartDate = typeof schedule?.startDate === 'string' && schedule.startDate.trim().length > 0;
+
+  if (hasStartDate) {
+    const derivedDate = deriveDateLabel(schedule.startDate!, day);
+    if (derivedDate) {
+      if (hasDuration) {
+        return `Day ${day} / ${schedule.durationDays} days · ${derivedDate}`;
+      }
+      return `Day ${day} · ${derivedDate}`;
+    }
+  }
+
+  if (hasDuration) {
+    return `Day ${day} / ${schedule.durationDays} days`;
+  }
+
+  return `Day ${day}`;
+}
+
+export default function ItineraryView({ items, schedule, onReorder }: Props) {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragItemId = useRef<string | null>(null);
 
@@ -125,7 +171,14 @@ export default function ItineraryView({ items, onReorder }: Props) {
       {days.map(day => (
         <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-blue-600 text-white px-6 py-3">
-            <h3 className="font-semibold text-lg">Day {day}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-lg">{buildDayHeading(day, schedule)}</h3>
+              {typeof schedule?.durationDays === 'number' && schedule.durationDays > 0 && day > schedule.durationDays && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">
+                  Over planned range
+                </span>
+              )}
+            </div>
           </div>
           <div className="p-6 space-y-6">
             {timeBlockOrder.filter(tb => byDay[day][tb]?.length > 0).map(timeBlock => (

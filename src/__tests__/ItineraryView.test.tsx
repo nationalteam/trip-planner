@@ -128,6 +128,24 @@ describe('ItineraryView', () => {
     expect(days[1]).toHaveTextContent('Day 2');
     expect(days[2]).toHaveTextContent('Day 3');
   });
+
+  it('renders derived calendar date in day heading when startDate is provided', () => {
+    const items = [makeItem({ id: 'item-1', day: 2, proposalTitle: 'Day 2 item' })];
+    render(<ItineraryView items={items} schedule={{ startDate: '2026-04-01' }} />);
+    expect(screen.getByText(/Day 2 · 2026-04-02/)).toBeInTheDocument();
+  });
+
+  it('renders duration progress when durationDays is provided without startDate', () => {
+    const items = [makeItem({ id: 'item-1', day: 2, proposalTitle: 'Day 2 item' })];
+    render(<ItineraryView items={items} schedule={{ durationDays: 5 }} />);
+    expect(screen.getByText('Day 2 / 5 days')).toBeInTheDocument();
+  });
+
+  it('renders over-range warning when day exceeds durationDays', () => {
+    const items = [makeItem({ id: 'item-1', day: 6, proposalTitle: 'Day 6 item' })];
+    render(<ItineraryView items={items} schedule={{ durationDays: 5 }} />);
+    expect(screen.getByText('Over planned range')).toBeInTheDocument();
+  });
 });
 
 describe('ItineraryView drag-and-drop', () => {

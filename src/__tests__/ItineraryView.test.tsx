@@ -224,4 +224,27 @@ describe('ItineraryView drag-and-drop', () => {
       fireEvent.drop(target, { preventDefault: jest.fn() });
     }).not.toThrow();
   });
+
+  it('calls onReorder when dropping an item into an empty day', () => {
+    const onReorder = jest.fn();
+    const items = [makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', proposalTitle: 'Eiffel Tower' })];
+    render(<ItineraryView items={items} schedule={{ durationDays: 2 }} onReorder={onReorder} />);
+
+    const source = document.querySelector('[draggable="true"]') as Element;
+    const emptyDayDropzone = screen.getByTestId('empty-day-dropzone-2');
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(emptyDayDropzone, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
+    fireEvent.drop(emptyDayDropzone, { preventDefault: jest.fn() });
+
+    expect(onReorder).toHaveBeenCalledTimes(1);
+    expect(onReorder).toHaveBeenCalledWith([
+      {
+        id: 'item-1',
+        day: 2,
+        timeBlock: 'morning',
+        order: 0,
+      },
+    ]);
+  });
 });

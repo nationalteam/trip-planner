@@ -120,6 +120,11 @@ export interface OrganizedItineraryItem {
   timeBlock: ItineraryTimeBlock;
 }
 
+export interface ChatActionPlanResult {
+  summary: string;
+  actionPlan: unknown[];
+}
+
 export async function generateProposals(preferences: object[], city: string, existingProposals: ProposalLike[] = []) {
   const provider = resolveProvider();
   const openai = createClient(provider);
@@ -294,6 +299,85 @@ Rules:
       return match ? JSON.parse(match[0]) : [];
     } catch {
       return [];
+    }
+  }
+}
+
+export async function generateChatActionPlan(
+  message: string,
+  context: { tripId: string; userId: string; extraContext?: unknown }
+): Promise<ChatActionPlanResult> {
+  const provider = resolveProvider();
+  const openai = createClient(provider);
+  const fallbackModel = process.env.OPENAI_MODEL ?? 'gpt-5-mini';
+  const model = provider === 'azure'
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
+    : fallbackModel;
+
+  const prompt = `You are a trip planning assistant. Convert user instruction into executable actions.
+
+Trip ID: ${context.tripId}
+User ID: ${context.userId}
+Instruction: ${message}
+Optional Context: ${JSON.stringify(context.extraContext ?? {}, null, 2)}
+
+Return ONLY strict JSON with this format:
+{
+  "summary": "human readable summary",
+  "actionPlan": [
+    { "type": "proposal.generate", "city": "Tokyo" },
+    { "type": "proposal.create", "title": "Senso-ji", "description": "Temple", "city": "Tokyo", "proposalType": "place", "suggestedTime": "morning", "durationMinutes": 90 },
+    { "type": "proposal.update", "proposalId": "proposal-id", "title": "New title" },
+    { "type": "proposal.delete", "proposalId": "proposal-id" },
+    { "type": "itinerary.organize" },
+    { "type": "itinerary.addProposal", "proposalId": "proposal-id", "day": 1, "timeBlock": "morning", "order": 0 },
+    { "type": "trip.update", "name": "New trip", "cities": ["Tokyo"], "startDate": "2026-04-01", "durationDays": 5 },
+    { "type": "preference.updateMe", "likes": ["sushi"], "dislikes": [], "budget": "medium", "preferredLanguage": "ja-JP" }
+  ]
+}
+
+Allowed action types are exactly:
+- proposal.generate
+- proposal.create
+- proposal.update
+- proposal.delete
+- itinerary.organize
+- itinerary.addProposal
+- trip.update
+- preference.updateMe
+
+Use actionPlan: [] when instruction cannot be mapped safely.
+Return ONLY valid JSON, no markdown.`;
+
+  let response;
+  try {
+    response = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } catch (error) {
+    mapProviderError(provider, error);
+  }
+
+  const content = response.choices[0].message.content || '{}';
+  const fallback: ChatActionPlanResult = { summary: '', actionPlan: [] };
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    return {
+      summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+      actionPlan: Array.isArray(parsed.actionPlan) ? parsed.actionPlan : [],
+    };
+  } catch {
+    try {
+      const match = content.match(/\{[\s\S]*\}/);
+      if (!match) return fallback;
+      const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+      return {
+        summary: typeof parsed.summary === 'string' ? parsed.summary : '',
+        actionPlan: Array.isArray(parsed.actionPlan) ? parsed.actionPlan : [],
+      };
+    } catch {
+      return fallback;
     }
   }
 }

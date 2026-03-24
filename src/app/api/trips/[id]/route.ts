@@ -60,9 +60,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       { status: 400 },
     );
   }
-  const { startDate, durationDays } = body as { startDate?: unknown; durationDays?: unknown };
+  const { startDate, durationDays, name, cities } = body as {
+    startDate?: unknown;
+    durationDays?: unknown;
+    name?: unknown;
+    cities?: unknown;
+  };
   const hasStartDate = Object.prototype.hasOwnProperty.call(body, 'startDate');
   const hasDurationDays = Object.prototype.hasOwnProperty.call(body, 'durationDays');
+  const hasName = Object.prototype.hasOwnProperty.call(body, 'name');
+  const hasCities = Object.prototype.hasOwnProperty.call(body, 'cities');
   const normalizedStartDate = typeof startDate === 'string' && startDate.trim().length > 0
     ? startDate.trim()
     : startDate == null || startDate === ''
@@ -87,7 +94,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Invalid durationDays. Expected a positive integer.' }, { status: 400 });
   }
 
-  const data: { startDate?: string | null; durationDays?: number | null } = {};
+  if (hasName && (typeof name !== 'string' || !name.trim())) {
+    return NextResponse.json({ error: 'Invalid name. Expected non-empty string.' }, { status: 400 });
+  }
+  if (hasCities) {
+    if (!Array.isArray(cities) || cities.length === 0 || cities.some((city) => typeof city !== 'string' || !city.trim())) {
+      return NextResponse.json(
+        { error: 'Invalid cities. Expected a non-empty array of non-empty strings.' },
+        { status: 400 },
+      );
+    }
+  }
+
+  const data: { name?: string; cities?: string; startDate?: string | null; durationDays?: number | null } = {};
+  if (hasName) data.name = (name as string).trim();
+  if (hasCities) data.cities = JSON.stringify((cities as string[]).map((city) => city.trim()));
   if (hasStartDate) data.startDate = normalizedStartDate;
   if (hasDurationDays) data.durationDays = normalizedDurationDays;
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   ITINERARY_TIME_BLOCK_LABELS,
   ITINERARY_TIME_BLOCKS,
   type ItineraryTimeBlock,
 } from '@/lib/time-block';
+import { calculateAutoScrollDelta } from '@/lib/drag-autoscroll';
 
 interface ItineraryItem {
   id: string;
@@ -134,6 +135,10 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     e.dataTransfer.dropEffect = 'move';
     if (targetId !== dragItemId.current) {
       setDragOverId(targetId);
+    }
+    const delta = calculateAutoScrollDelta(e.clientY, window.innerHeight);
+    if (delta !== 0) {
+      window.scrollBy(0, delta);
     }
   }
 

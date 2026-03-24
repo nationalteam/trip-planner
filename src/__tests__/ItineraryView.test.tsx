@@ -259,4 +259,5 @@ describe('ItineraryView drag-and-drop', () => {
       },
     ]);
   });
+
 });

@@ -159,4 +159,19 @@ describe('DELETE /api/trips/[id]/itinerary/days', () => {
     expect(res.status).toBe(400);
     expect(data.error).toMatch(/empty day/i);
   });
+
+  it('returns 400 when day is not a number', async () => {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/itinerary/days', {
+      method: 'DELETE',
+      body: JSON.stringify({ day: '2' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await DELETE(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/positive integer/i);
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
 });

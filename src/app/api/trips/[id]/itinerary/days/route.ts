@@ -2,20 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
 
-async function findMaxItemDay(tx: {
-  itineraryItem: {
-    findMany: (args: unknown) => Promise<Array<{ day: number }>>;
-  };
-}, tripId: string): Promise<number> {
-  const rows = await tx.itineraryItem.findMany({
-    where: { tripId },
-    select: { day: true },
-    orderBy: { day: 'desc' },
-    take: 1,
-  });
-  return rows[0]?.day ?? 0;
-}
-
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -30,7 +16,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Cannot add manual day when durationDays is set' }, { status: 400 });
   }
 
-  const maxItemDay = await findMaxItemDay(prisma, id);
+  const maxItemRows = await prisma.itineraryItem.findMany({
+    where: { tripId: id },
+    select: { day: true },
+    orderBy: { day: 'desc' },
+    take: 1,
+  });
+  const maxItemDay = maxItemRows[0]?.day ?? 0;
   const currentVisible = Math.max(trip.itineraryVisibleDays ?? 0, maxItemDay);
   const nextVisible = currentVisible + 1;
 
@@ -60,7 +52,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: 'Invalid request body. Expected a JSON object.' }, { status: 400 });
   }
   const { day } = body as { day?: unknown };
-  if (!Number.isInteger(day) || day < 1) {
+  if (typeof day !== 'number' || !Number.isInteger(day) || day < 1) {
     return NextResponse.json({ error: 'Invalid day. Expected a positive integer.' }, { status: 400 });
   }
 
@@ -71,7 +63,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return { error: 'Cannot delete manual day when durationDays is set', status: 400 as const };
     }
 
-    const maxItemDayBefore = await findMaxItemDay(tx, id);
+    const maxItemRowsBefore = await tx.itineraryItem.findMany({
+      where: { tripId: id },
+      select: { day: true },
+      orderBy: { day: 'desc' },
+      take: 1,
+    });
+    const maxItemDayBefore = maxItemRowsBefore[0]?.day ?? 0;
     const currentVisible = Math.max(trip.itineraryVisibleDays ?? 0, maxItemDayBefore);
     if (day > currentVisible) {
       return { error: 'Day is out of visible range', status: 400 as const };

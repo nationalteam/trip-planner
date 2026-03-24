@@ -30,9 +30,13 @@ interface GoogleMapViewProps {
   proposals: Proposal[];
   canEdit: boolean;
   onAddPlace: (place: SelectedPlace) => Promise<void>;
+  focusTrigger?: number;
 }
 
 const DEFAULT_CENTER = { lat: 35.6764, lng: 139.65 };
+const AUTO_FIT_PADDING_PX = 56;
+const AUTO_FIT_MAX_ZOOM = 15;
+const SINGLE_POINT_ZOOM = 15;
 const GOOGLE_MAPS_LIBRARIES = 'places';
 let mapsApiPromise: Promise<void> | null = null;
 
@@ -109,7 +113,7 @@ function toSelectedPlace(place: any): SelectedPlace | null {
   };
 }
 
-export default function GoogleMapView({ proposals, canEdit, onAddPlace }: GoogleMapViewProps) {
+export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -158,9 +162,44 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
     });
   }, [clearMarkers, normalizedProposals]);
 
+  const autoFitMapToProposals = useCallback(() => {
+    const google = window.google;
+    const map = mapInstanceRef.current;
+    if (!google || !map) return;
+
+    const validProposals = normalizedProposals.filter(
+      (proposal) => Number.isFinite(proposal.lat) && Number.isFinite(proposal.lng)
+    );
+    if (validProposals.length === 0) return;
+
+    if (validProposals.length === 1) {
+      const proposal = validProposals[0];
+      map.panTo({ lat: proposal.lat, lng: proposal.lng });
+      map.setZoom(SINGLE_POINT_ZOOM);
+      return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+    validProposals.forEach((proposal) => bounds.extend({ lat: proposal.lat, lng: proposal.lng }));
+    map.fitBounds(bounds, {
+      top: AUTO_FIT_PADDING_PX,
+      right: AUTO_FIT_PADDING_PX,
+      bottom: AUTO_FIT_PADDING_PX,
+      left: AUTO_FIT_PADDING_PX,
+    });
+    const zoomAfterFit = typeof map.getZoom === 'function' ? map.getZoom() : null;
+    if (typeof zoomAfterFit === 'number' && zoomAfterFit > AUTO_FIT_MAX_ZOOM) {
+      map.setZoom(AUTO_FIT_MAX_ZOOM);
+    }
+  }, [normalizedProposals]);
+
   useEffect(() => {
     renderProposalMarkers();
   }, [renderProposalMarkers]);
+
+  useEffect(() => {
+    autoFitMapToProposals();
+  }, [focusTrigger, autoFitMapToProposals]);
 
   useEffect(() => {
     let cancelled = false;
@@ -193,6 +232,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
       mapInstanceRef.current = map;
       placesServiceRef.current = new google.maps.places.PlacesService(map);
       renderProposalMarkers();
+      autoFitMapToProposals();
 
       const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
         fields: ['place_id', 'name', 'geometry', 'formatted_address', 'address_components', 'types'],
@@ -233,7 +273,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
       mapInstanceRef.current = null;
       placesServiceRef.current = null;
     };
-  }, [clearMarkers, renderProposalMarkers]);
+  }, [autoFitMapToProposals, clearMarkers, renderProposalMarkers]);
 
   const handleAdd = useCallback(async () => {
     if (!selectedPlace || adding || !canEdit) return;

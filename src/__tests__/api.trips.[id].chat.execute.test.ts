@@ -9,20 +9,23 @@ jest.mock('@/lib/auth', () => ({
 
 jest.mock('@/lib/chatbot', () => ({
   executeTripActions: jest.fn(),
+  validateChatActionPlan: jest.fn(),
 }));
 
 import { requireAuth, requireTripRole } from '@/lib/auth';
-import { executeTripActions } from '@/lib/chatbot';
+import { executeTripActions, validateChatActionPlan } from '@/lib/chatbot';
 
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockRequireTripRole = requireTripRole as jest.Mock;
 const mockExecuteTripActions = executeTripActions as jest.Mock;
+const mockValidateChatActionPlan = validateChatActionPlan as jest.Mock;
 
 describe('POST /api/trips/[id]/chat/execute', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequireAuth.mockResolvedValue({ id: 'owner-1', email: 'owner@example.com', name: 'Owner' });
     mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
+    mockValidateChatActionPlan.mockImplementation((actions) => actions);
   });
 
   it('executes validated actions for owner', async () => {
@@ -62,6 +65,9 @@ describe('POST /api/trips/[id]/chat/execute', () => {
   });
 
   it('rejects invalid action payload', async () => {
+    mockValidateChatActionPlan.mockImplementationOnce(() => {
+      throw new Error('Invalid day.');
+    });
     const req = new NextRequest('http://localhost/api/trips/trip-1/chat/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -86,6 +92,9 @@ describe('POST /api/trips/[id]/chat/execute', () => {
   });
 
   it('rejects unsupported action type', async () => {
+    mockValidateChatActionPlan.mockImplementationOnce(() => {
+      throw new Error('Unsupported action type.');
+    });
     const req = new NextRequest('http://localhost/api/trips/trip-1/chat/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

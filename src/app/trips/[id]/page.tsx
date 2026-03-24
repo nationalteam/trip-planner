@@ -49,6 +49,8 @@ interface ItineraryItem {
 }
 
 type Tab = 'proposals' | 'itinerary' | 'map';
+type ChatPlanAction = { type: string; [key: string]: unknown };
+type ChatPlanResponse = { summary: string; actionPlan: ChatPlanAction[] };
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -89,6 +91,11 @@ export default function TripDetailPage() {
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [addingDay, setAddingDay] = useState(false);
   const [deletingDay, setDeletingDay] = useState<number | null>(null);
+  const [chatMessage, setChatMessage] = useState('');
+  const [planningChat, setPlanningChat] = useState(false);
+  const [executingChat, setExecutingChat] = useState(false);
+  const [chatError, setChatError] = useState('');
+  const [chatPreview, setChatPreview] = useState<ChatPlanResponse | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -396,6 +403,60 @@ export default function TripDetailPage() {
     alert(data.error || 'Failed to add place from Google Maps.');
   }
 
+  async function handlePlanChat() {
+    if (!chatMessage.trim()) return;
+    setPlanningChat(true);
+    setChatError('');
+    setChatPreview(null);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/chat/plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: chatMessage.trim(),
+          context: {
+            selectedCity,
+          },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setChatPreview({
+          summary: data.summary || '',
+          actionPlan: Array.isArray(data.actionPlan) ? data.actionPlan : [],
+        });
+      } else {
+        setChatError(data.error || 'Failed to preview chat actions.');
+      }
+    } finally {
+      setPlanningChat(false);
+    }
+  }
+
+  async function handleConfirmChat() {
+    if (!chatPreview) return;
+    setExecutingChat(true);
+    setChatError('');
+    try {
+      const res = await fetch(`/api/trips/${tripId}/chat/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionPlan: chatPreview.actionPlan }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (data.trip) setTrip((prev) => (prev ? { ...prev, ...data.trip } : prev));
+        if (Array.isArray(data.proposals)) setProposals(data.proposals);
+        if (Array.isArray(data.itinerary)) setItinerary(data.itinerary);
+        setChatPreview(null);
+      } else {
+        setChatError(data.error || 'Failed to apply chat actions.');
+      }
+    } finally {
+      setExecutingChat(false);
+    }
+  }
+
   function handleStartEditSchedule() {
     if (!trip) return;
     setScheduleStartDateInput(trip.startDate || '');
@@ -577,6 +638,61 @@ export default function TripDetailPage() {
           </div>
         </div>
       </div>
+      {trip.currentRole === 'owner' && (
+        <div className="mb-6 border border-blue-200 rounded-xl bg-blue-50 p-4">
+          <h2 className="text-sm font-semibold text-blue-900">🤖 Chat Planner</h2>
+          <p className="text-xs text-blue-700 mt-1">Describe changes in natural language. Preview first, then confirm to apply.</p>
+          <div className="mt-3 flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              placeholder="Ask Chat Planner (e.g. add a sushi proposal in Tokyo and organize itinerary)"
+              className="border border-blue-200 rounded-lg px-3 py-2 text-sm flex-1 text-gray-900"
+            />
+            <button
+              type="button"
+              onClick={handlePlanChat}
+              disabled={planningChat || !chatMessage.trim()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {planningChat ? 'Previewing...' : 'Preview Changes'}
+            </button>
+          </div>
+          {chatError && <p className="text-sm text-red-600 mt-2">{chatError}</p>}
+          {chatPreview && (
+            <div className="mt-3 bg-white border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-gray-700">{chatPreview.summary || 'Ready to apply planned changes.'}</p>
+              <ul className="mt-2 text-xs text-gray-600 list-disc pl-4 space-y-1">
+                {chatPreview.actionPlan.map((action, index) => (
+                  <li key={`${action.type}-${index}`}>
+                    <span className="font-medium">{action.type}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleConfirmChat}
+                  disabled={executingChat}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                >
+                  {executingChat ? 'Applying...' : 'Confirm Apply'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChatPreview(null)}
+                  disabled={executingChat}
+                  className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {trip.currentRole === 'owner' && (
         <form onSubmit={handleShareTrip} className="mb-6 flex flex-col sm:flex-row gap-2 sm:items-center">
           <input

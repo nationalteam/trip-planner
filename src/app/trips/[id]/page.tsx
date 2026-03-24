@@ -670,7 +670,7 @@ export default function TripDetailPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            {tab === 'proposals' ? '💡 Proposals' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI'}
+            {tab === 'proposals' ? '💡 Proposals' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
           </button>
         ))}
       </div>
@@ -959,7 +959,7 @@ export default function TripDetailPage() {
 
       {activeTab === 'ai' && canEdit && (
         <div className="border border-blue-200 rounded-xl bg-blue-50 p-4">
-          <h2 className="text-sm font-semibold text-blue-900">🤖 Chat Planner</h2>
+          <h2 className="text-sm font-semibold text-blue-900">🤖 Chat Planner (Experimental)</h2>
           <p className="text-xs text-blue-700 mt-1">Describe changes in natural language. Preview first, then confirm to apply.</p>
           <div className="mt-3 flex flex-col sm:flex-row gap-2">
             <input

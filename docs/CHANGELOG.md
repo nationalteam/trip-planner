@@ -19,3 +19,4 @@
 2026-03-24 | fix(deps): override vulnerable prisma transitive packages to patched versions (#0)
 2026-03-24 | feat(chat): add owner-only trip chat planner preview and execute workflow (#0)
 2026-03-24 | refactor(trip): move chat planner into dedicated AI tab on trip detail (#0)
+2026-03-24 | chore(ui): mark AI chatbot tab and panel as experimental (#0)

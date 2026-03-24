@@ -3,3 +3,4 @@
 2026-03-24 | feat(map): add Google Maps place picker with google_place proposal flow (#0)
 2026-03-24 | fix(home): guard trips list parsing to prevent map crash (#0)
 2026-03-24 | feat(trip): allow editing trip start date and duration after creation (#0)
+2026-03-24 | refactor(api): move isValidDateOnly to shared lib/dates and harden PATCH body parsing (#66)

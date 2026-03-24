@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -8,49 +8,11 @@ import ProposalCard from '@/components/ProposalCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
+import { buildMapProposals } from '@/lib/map-proposals';
+import type { ChatPlanResponse, ItineraryItem, Proposal, Tab, Trip } from './types';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 const GoogleMapView = dynamic(() => import('@/components/GoogleMapView'), { ssr: false });
-
-interface Trip {
-  id: string;
-  name: string;
-  cities: string;
-  createdAt: string;
-  startDate?: string | null;
-  durationDays?: number | null;
-  itineraryVisibleDays?: number | null;
-  currentRole?: 'owner' | 'viewer';
-}
-
-interface Proposal {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  reason: string;
-  lat: number;
-  lng: number;
-  city: string;
-  suggestedTime: string;
-  durationMinutes: number | null;
-  status: string;
-  googlePlaceId?: string | null;
-  formattedAddress?: string | null;
-  googleTypes?: string | null;
-}
-
-interface ItineraryItem {
-  id: string;
-  day: number;
-  timeBlock: string;
-  order: number;
-  proposal: Proposal;
-}
-
-type Tab = 'proposals' | 'itinerary' | 'map' | 'ai';
-type ChatPlanAction = { type: string; [key: string]: unknown };
-type ChatPlanResponse = { summary: string; actionPlan: ChatPlanAction[] };
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -138,6 +100,8 @@ export default function TripDetailPage() {
     setScheduleStartDateInput(trip.startDate || '');
     setScheduleDurationDaysInput(trip.durationDays != null ? String(trip.durationDays) : '');
   }, [trip, editingSchedule]);
+
+  const mapProposals = useMemo(() => buildMapProposals(proposals, itinerary), [proposals, itinerary]);
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -539,6 +503,7 @@ export default function TripDetailPage() {
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
   const filteredProposals = filterStatus === 'all' ? proposals : proposals.filter(p => p.status === filterStatus);
+  const arrangedMapCount = mapProposals.filter((proposal) => proposal.isArranged).length;
   const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
   const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;
 
@@ -938,20 +903,18 @@ export default function TripDetailPage() {
             </button>
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {proposals.filter(p => p.status === 'approved').length > 0
-              ? 'Showing approved proposals on the map'
-              : 'Showing all proposals (approve some to highlight them)'}
+            Showing {arrangedMapCount} arranged and {mapProposals.length - arrangedMapCount} unarranged activities (rejected hidden)
           </p>
           {mapProvider === 'google' ? (
-            <GoogleMapView proposals={proposals} canEdit={canEdit} onAddPlace={handleAddGooglePlace} />
+            <GoogleMapView proposals={mapProposals} canEdit={canEdit} onAddPlace={handleAddGooglePlace} />
           ) : (
-            proposals.length === 0 ? (
+            mapProposals.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="text-5xl mb-3">🗺️</div>
                 <p className="text-gray-500">Generate proposals to see them on the map</p>
               </div>
             ) : (
-              <MapView proposals={proposals} />
+              <MapView proposals={mapProposals} />
             )
           )}
         </div>

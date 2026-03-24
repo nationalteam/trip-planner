@@ -16,3 +16,4 @@
 2026-03-24 | fix(deploy): fallback google maps secrets for public key env in deploy workflow (#0)
 2026-03-24 | refactor(map): remove NEXT_PUBLIC_GOOGLE_MAPS_API_KEY and unify on GOOGLE_MAPS_API_KEY (#0)
 2026-03-24 | fix(map): fallback to authenticated maps config API when NEXT_PUBLIC key is missing at runtime (#0)
+2026-03-24 | fix(deps): override vulnerable prisma transitive packages to patched versions (#0)

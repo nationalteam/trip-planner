@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ITINERARY_TIME_BLOCK_LABELS,
   ITINERARY_TIME_BLOCKS,
@@ -94,6 +94,18 @@ function buildDayHeading(day: number, schedule?: ItinerarySchedule): string {
 export default function ItineraryView({ items, schedule, onReorder, onDeleteEmptyDay, deletingDay }: Props) {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragItemId = useRef<string | null>(null);
+  const lastDragClientY = useRef<number | null>(null);
+  const autoScrollFrameId = useRef<number | null>(null);
+  const autoScrollActive = useRef(false);
+
+  useEffect(() => () => {
+    autoScrollActive.current = false;
+    lastDragClientY.current = null;
+    if (autoScrollFrameId.current != null) {
+      window.cancelAnimationFrame(autoScrollFrameId.current);
+      autoScrollFrameId.current = null;
+    }
+  }, []);
 
   const maxItemDay = items.reduce((max, item) => Math.max(max, item.day), 0);
   const plannedDays = typeof schedule?.durationDays === 'number' && schedule.durationDays > 0
@@ -125,9 +137,45 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
 
   const days = Array.from({ length: visibleDays }, (_, idx) => idx + 1);
 
+  function stopAutoScrollLoop() {
+    autoScrollActive.current = false;
+    lastDragClientY.current = null;
+    if (autoScrollFrameId.current != null) {
+      window.cancelAnimationFrame(autoScrollFrameId.current);
+      autoScrollFrameId.current = null;
+    }
+  }
+
+  function runAutoScrollFrame() {
+    if (!autoScrollActive.current) {
+      autoScrollFrameId.current = null;
+      return;
+    }
+
+    const clientY = lastDragClientY.current;
+    if (clientY != null) {
+      const delta = calculateAutoScrollDelta(clientY, window.innerHeight);
+      if (delta !== 0) {
+        window.scrollBy(0, delta);
+      }
+    }
+
+    autoScrollFrameId.current = window.requestAnimationFrame(runAutoScrollFrame);
+  }
+
+  function startAutoScrollLoop() {
+    if (autoScrollActive.current) return;
+    autoScrollActive.current = true;
+    if (autoScrollFrameId.current == null) {
+      autoScrollFrameId.current = window.requestAnimationFrame(runAutoScrollFrame);
+    }
+  }
+
   function handleDragStart(e: React.DragEvent, itemId: string) {
     dragItemId.current = itemId;
+    lastDragClientY.current = e.clientY;
     e.dataTransfer.effectAllowed = 'move';
+    startAutoScrollLoop();
   }
 
   function handleDragOver(e: React.DragEvent, targetId: string) {
@@ -136,10 +184,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     if (targetId !== dragItemId.current) {
       setDragOverId(targetId);
     }
-    const delta = calculateAutoScrollDelta(e.clientY, window.innerHeight);
-    if (delta !== 0) {
-      window.scrollBy(0, delta);
-    }
+    lastDragClientY.current = e.clientY;
   }
 
   function handleDrop(
@@ -148,6 +193,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     dropTarget?: { day: number; timeBlock: string }
   ) {
     e.preventDefault();
+    stopAutoScrollLoop();
     setDragOverId(null);
     const sourceId = dragItemId.current;
     dragItemId.current = null;
@@ -201,6 +247,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
   }
 
   function handleDragEnd() {
+    stopAutoScrollLoop();
     dragItemId.current = null;
     setDragOverId(null);
   }

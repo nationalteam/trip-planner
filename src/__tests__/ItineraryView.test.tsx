@@ -180,6 +180,26 @@ describe('ItineraryView', () => {
 });
 
 describe('ItineraryView drag-and-drop', () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  let requestAnimationFrameSpy: jest.SpyInstance;
+  let cancelAnimationFrameSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    rafCallbacks = [];
+    requestAnimationFrameSpy = jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => {
+        rafCallbacks.push(callback);
+        return rafCallbacks.length;
+      });
+    cancelAnimationFrameSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
+  });
+
   const makeDndItems = () => [
     makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', proposalTitle: 'Eiffel Tower' }),
     makeItem({ id: 'item-2', day: 1, timeBlock: 'morning', proposalTitle: 'Louvre Museum' }),
@@ -199,7 +219,10 @@ describe('ItineraryView drag-and-drop', () => {
     const source = draggables[0];
     const target = draggables[1];
 
-    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragStart(source, {
+      clientY: window.innerHeight - 2,
+      dataTransfer: { setData: jest.fn(), effectAllowed: '' },
+    });
     fireEvent.dragOver(target, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
     fireEvent.drop(target, { preventDefault: jest.fn() });
 
@@ -216,7 +239,10 @@ describe('ItineraryView drag-and-drop', () => {
     const draggables = document.querySelectorAll('[draggable="true"]');
     const source = draggables[0];
 
-    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragStart(source, {
+      clientY: window.innerHeight - 2,
+      dataTransfer: { setData: jest.fn(), effectAllowed: '' },
+    });
     fireEvent.dragOver(source, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
     fireEvent.drop(source, { preventDefault: jest.fn() });
 
@@ -260,4 +286,55 @@ describe('ItineraryView drag-and-drop', () => {
     ]);
   });
 
+  it('keeps auto-scrolling across frames while dragging near viewport edge', () => {
+    render(<ItineraryView items={makeDndItems()} schedule={{ durationDays: 2 }} onReorder={jest.fn()} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+    const target = draggables[1];
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(target, {
+      preventDefault: jest.fn(),
+      clientY: window.innerHeight - 2,
+      dataTransfer: { dropEffect: '' },
+    });
+
+    expect(requestAnimationFrameSpy).toHaveBeenCalled();
+    expect(rafCallbacks.length).toBeGreaterThan(0);
+
+    const firstFrame = rafCallbacks.shift();
+    firstFrame?.(0);
+    expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(2);
+
+    const secondFrame = rafCallbacks.shift();
+    secondFrame?.(16);
+    expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops auto-scroll loop on drag end', () => {
+    render(<ItineraryView items={makeDndItems()} schedule={{ durationDays: 2 }} onReorder={jest.fn()} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+    const target = draggables[1];
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(target, {
+      preventDefault: jest.fn(),
+      clientY: window.innerHeight - 2,
+      dataTransfer: { dropEffect: '' },
+    });
+
+    const frame = rafCallbacks.shift();
+    frame?.(0);
+    const beforeDragEndRafCalls = requestAnimationFrameSpy.mock.calls.length;
+
+    fireEvent.dragEnd(source);
+    expect(cancelAnimationFrameSpy).toHaveBeenCalled();
+
+    const maybeNextFrame = rafCallbacks.shift();
+    maybeNextFrame?.(16);
+    expect(requestAnimationFrameSpy.mock.calls.length).toBe(beforeDragEndRafCalls);
+  });
 });

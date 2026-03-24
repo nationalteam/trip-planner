@@ -14,6 +14,9 @@ interface Proposal {
   city: string;
   status: string;
   isArranged: boolean;
+  suggestedTime?: string;
+  durationMinutes?: number | null;
+  formattedAddress?: string | null;
 }
 
 interface SelectedPlace {
@@ -113,6 +116,40 @@ function toSelectedPlace(place: any): SelectedPlace | null {
   };
 }
 
+function toLabel(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return '';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function buildGoogleMapsSearchUrl(proposal: Proposal): string {
+  const placeQuery = [proposal.title.trim(), proposal.city.trim()].filter(Boolean).join(', ');
+  const query = placeQuery || `${proposal.lat},${proposal.lng}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function buildInfoWindowContent(proposal: Proposal): string {
+  const arrangedLabel = proposal.isArranged ? 'Arranged' : 'Unarranged';
+  const typeLabel = toLabel(proposal.type);
+  const timeLabel = proposal.suggestedTime ? toLabel(proposal.suggestedTime) : '';
+  const durationLabel = typeof proposal.durationMinutes === 'number' && proposal.durationMinutes > 0
+    ? `~${proposal.durationMinutes} min`
+    : '';
+  const address = proposal.formattedAddress?.trim() || proposal.city.trim();
+  const googleMapsUrl = buildGoogleMapsSearchUrl(proposal);
+
+  return `<div style="min-width:220px;max-width:280px">
+    <strong style="font-size:14px;color:#111827">${proposal.title || 'Untitled place'}</strong>
+    <p style="margin:6px 0 0;color:#374151;font-size:12px">${[typeLabel, timeLabel].filter(Boolean).join(' · ')}</p>
+    ${durationLabel ? `<p style="margin:4px 0 0;color:#6b7280;font-size:12px">${durationLabel}</p>` : ''}
+    ${address ? `<p style="margin:4px 0 0;color:#6b7280;font-size:12px">${address}</p>` : ''}
+    <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${proposal.isArranged ? '#dcfce7' : '#dbeafe'};color:${proposal.isArranged ? '#166534' : '#1e40af'}">${arrangedLabel}</span>
+      <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#2563eb;text-decoration:underline">Open in Google Maps</a>
+    </div>
+  </div>`;
+}
+
 export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -140,7 +177,6 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTri
 
     clearMarkers();
     normalizedProposals.forEach((proposal) => {
-      const arrangedLabel = proposal.isArranged ? 'Arranged' : 'Unarranged';
       const marker = new google.maps.Marker({
         map,
         position: { lat: proposal.lat, lng: proposal.lng },
@@ -155,7 +191,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTri
         },
       });
       const infoWindow = new google.maps.InfoWindow({
-        content: `<div style="min-width:180px"><strong>${proposal.title}</strong><p style="margin:4px 0;color:#555">${proposal.city}</p><span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${proposal.isArranged ? '#dcfce7' : '#dbeafe'};color:${proposal.isArranged ? '#166534' : '#1e40af'}">${arrangedLabel}</span></div>`,
+        content: buildInfoWindowContent(proposal),
       });
       marker.addListener('click', () => infoWindow.open({ anchor: marker, map }));
       markerInstancesRef.current.push(marker);

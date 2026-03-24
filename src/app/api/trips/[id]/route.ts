@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
+import { isValidDateOnly } from '@/lib/dates';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
@@ -34,4 +35,66 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   await prisma.trip.delete({ where: { id } });
 
   return new NextResponse(null, { status: 204 });
+}
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id } = await params;
+  const access = await requireTripRole(id, auth.id, ['owner']);
+  if (!access.ok) return buildForbiddenResponse();
+
+  const trip = await prisma.trip.findUnique({ where: { id } });
+  if (!trip) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json(
+      { error: 'Invalid request body. Expected a JSON object.' },
+      { status: 400 },
+    );
+  }
+  const { startDate, durationDays } = body as { startDate?: unknown; durationDays?: unknown };
+  const hasStartDate = Object.prototype.hasOwnProperty.call(body, 'startDate');
+  const hasDurationDays = Object.prototype.hasOwnProperty.call(body, 'durationDays');
+  const normalizedStartDate = typeof startDate === 'string' && startDate.trim().length > 0
+    ? startDate.trim()
+    : startDate == null || startDate === ''
+      ? null
+      : startDate;
+  const normalizedDurationDays = durationDays == null || durationDays === ''
+    ? null
+    : Number(durationDays);
+
+  if (normalizedStartDate != null && typeof normalizedStartDate !== 'string') {
+    return NextResponse.json({ error: 'Invalid startDate. Expected YYYY-MM-DD.' }, { status: 400 });
+  }
+
+  if (typeof normalizedStartDate === 'string' && !isValidDateOnly(normalizedStartDate)) {
+    return NextResponse.json({ error: 'Invalid startDate. Expected YYYY-MM-DD.' }, { status: 400 });
+  }
+
+  if (
+    normalizedDurationDays != null &&
+    (!Number.isInteger(normalizedDurationDays) || normalizedDurationDays <= 0)
+  ) {
+    return NextResponse.json({ error: 'Invalid durationDays. Expected a positive integer.' }, { status: 400 });
+  }
+
+  const data: { startDate?: string | null; durationDays?: number | null } = {};
+  if (hasStartDate) data.startDate = normalizedStartDate;
+  if (hasDurationDays) data.durationDays = normalizedDurationDays;
+
+  const updated = await prisma.trip.update({
+    where: { id },
+    data,
+  });
+
+  return NextResponse.json({ ...updated, currentRole: access.role });
 }

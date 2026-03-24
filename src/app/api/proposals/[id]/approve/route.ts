@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
+import { normalizeSuggestedTimeToTimeBlock } from '@/lib/time-block';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
@@ -29,14 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       orderBy: { day: 'asc' },
     });
 
-    const timeBlockMap: Record<string, string> = {
-      morning: 'morning',
-      lunch: 'morning',
-      afternoon: 'afternoon',
-      dinner: 'dinner',
-      night: 'dinner',
-    };
-    const timeBlock = timeBlockMap[proposal.suggestedTime] || 'afternoon';
+    const timeBlock = normalizeSuggestedTimeToTimeBlock(proposal.suggestedTime);
 
     let day = 1;
     while (true) {

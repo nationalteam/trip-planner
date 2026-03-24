@@ -1,6 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ITINERARY_TIME_BLOCK_LABELS,
+  ITINERARY_TIME_BLOCKS,
+  type ItineraryTimeBlock,
+} from '@/lib/time-block';
+import { calculateAutoScrollDelta } from '@/lib/drag-autoscroll';
 
 interface ItineraryItem {
   id: string;
@@ -30,13 +36,6 @@ interface ItinerarySchedule {
   durationDays?: number | null;
   itineraryVisibleDays?: number | null;
 }
-
-const timeBlockOrder = ['morning', 'afternoon', 'dinner'];
-const timeBlockLabels: Record<string, string> = {
-  morning: '🌅 Morning',
-  afternoon: '🌤 Afternoon',
-  dinner: '🌙 Evening / Dinner',
-};
 
 const typeIcons: Record<string, string> = {
   food: '🍽️',
@@ -95,6 +94,18 @@ function buildDayHeading(day: number, schedule?: ItinerarySchedule): string {
 export default function ItineraryView({ items, schedule, onReorder, onDeleteEmptyDay, deletingDay }: Props) {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragItemId = useRef<string | null>(null);
+  const lastDragClientY = useRef<number | null>(null);
+  const autoScrollFrameId = useRef<number | null>(null);
+  const autoScrollActive = useRef(false);
+
+  useEffect(() => () => {
+    autoScrollActive.current = false;
+    lastDragClientY.current = null;
+    if (autoScrollFrameId.current != null) {
+      window.cancelAnimationFrame(autoScrollFrameId.current);
+      autoScrollFrameId.current = null;
+    }
+  }, []);
 
   const maxItemDay = items.reduce((max, item) => Math.max(max, item.day), 0);
   const plannedDays = typeof schedule?.durationDays === 'number' && schedule.durationDays > 0
@@ -126,9 +137,45 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
 
   const days = Array.from({ length: visibleDays }, (_, idx) => idx + 1);
 
+  function stopAutoScrollLoop() {
+    autoScrollActive.current = false;
+    lastDragClientY.current = null;
+    if (autoScrollFrameId.current != null) {
+      window.cancelAnimationFrame(autoScrollFrameId.current);
+      autoScrollFrameId.current = null;
+    }
+  }
+
+  function runAutoScrollFrame() {
+    if (!autoScrollActive.current) {
+      autoScrollFrameId.current = null;
+      return;
+    }
+
+    const clientY = lastDragClientY.current;
+    if (clientY != null) {
+      const delta = calculateAutoScrollDelta(clientY, window.innerHeight);
+      if (delta !== 0) {
+        window.scrollBy(0, delta);
+      }
+    }
+
+    autoScrollFrameId.current = window.requestAnimationFrame(runAutoScrollFrame);
+  }
+
+  function startAutoScrollLoop() {
+    if (autoScrollActive.current) return;
+    autoScrollActive.current = true;
+    if (autoScrollFrameId.current == null) {
+      autoScrollFrameId.current = window.requestAnimationFrame(runAutoScrollFrame);
+    }
+  }
+
   function handleDragStart(e: React.DragEvent, itemId: string) {
     dragItemId.current = itemId;
+    lastDragClientY.current = e.clientY;
     e.dataTransfer.effectAllowed = 'move';
+    startAutoScrollLoop();
   }
 
   function handleDragOver(e: React.DragEvent, targetId: string) {
@@ -137,6 +184,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     if (targetId !== dragItemId.current) {
       setDragOverId(targetId);
     }
+    lastDragClientY.current = e.clientY;
   }
 
   function handleDrop(
@@ -145,6 +193,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     dropTarget?: { day: number; timeBlock: string }
   ) {
     e.preventDefault();
+    stopAutoScrollLoop();
     setDragOverId(null);
     const sourceId = dragItemId.current;
     dragItemId.current = null;
@@ -161,9 +210,21 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
 
     // Move sourceItem to just after targetItem, adopting its day/timeBlock
     const withoutSource = items.filter(i => i.id !== sourceId);
-    const targetIndex = targetItem
-      ? withoutSource.findIndex(i => i.id === targetId)
-      : withoutSource.length - 1;
+    let targetIndex: number;
+    if (targetItem) {
+      targetIndex = withoutSource.findIndex(i => i.id === targetId);
+    } else {
+      targetIndex = -1;
+      for (let i = withoutSource.length - 1; i >= 0; i--) {
+        if (withoutSource[i].day === targetDay && withoutSource[i].timeBlock === targetTimeBlock) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex === -1) {
+        targetIndex = withoutSource.length - 1;
+      }
+    }
     const reordered = [
       ...withoutSource.slice(0, targetIndex + 1),
       sourceItem,
@@ -186,6 +247,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
   }
 
   function handleDragEnd() {
+    stopAutoScrollLoop();
     dragItemId.current = null;
     setDragOverId(null);
   }
@@ -205,54 +267,63 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
             </div>
           </div>
           <div className="p-6 space-y-6">
-            {timeBlockOrder.filter(tb => byDay[day]?.[tb]?.length > 0).map(timeBlock => (
-              <div key={timeBlock}>
+            {ITINERARY_TIME_BLOCKS.map((timeBlock: ItineraryTimeBlock) => {
+              const slotId = `timeblock-dropzone-${day}-${timeBlock}`;
+              const slotItems = byDay[day]?.[timeBlock] ?? [];
+              return (
+                <div key={timeBlock}>
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  {timeBlockLabels[timeBlock]}
+                  {ITINERARY_TIME_BLOCK_LABELS[timeBlock]}
                 </h4>
-                <div className="space-y-3">
-                  {byDay[day][timeBlock].map(item => (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={e => handleDragStart(e, item.id)}
-                      onDragOver={e => handleDragOver(e, item.id)}
-                      onDrop={e => handleDrop(e, item.id)}
-                      onDragEnd={handleDragEnd}
-                      className={`flex items-start gap-3 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-colors ${
-                        dragOverId === item.id
-                          ? 'bg-blue-50 border-2 border-blue-300'
-                          : 'bg-gray-50'
-                      }`}
-                    >
-                      <span className="text-xl mt-0.5 select-none">⠿</span>
-                      <span className="text-xl mt-0.5">{typeIcons[item.proposal.type] || '📌'}</span>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.proposal.title}</p>
-                        <p className="text-sm text-gray-600">{item.proposal.description}</p>
-                        <div className="flex gap-3 mt-1">
-                          <span className="text-xs text-gray-400">{item.proposal.city}</span>
-                          {item.proposal.durationMinutes && (
-                            <span className="text-xs text-gray-400">⏱ {item.proposal.durationMinutes}min</span>
-                          )}
+                <div
+                  data-testid={slotId}
+                  onDragOver={e => handleDragOver(e, slotId)}
+                  onDrop={e => handleDrop(e, slotId, { day, timeBlock })}
+                  className={`rounded-lg border border-dashed p-3 transition-colors ${
+                    dragOverId === slotId
+                      ? 'border-blue-300 bg-blue-50'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {slotItems.length === 0 && (
+                      <p className="text-xs text-gray-400">Drop activity here</p>
+                    )}
+                    {slotItems.map(item => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={e => handleDragStart(e, item.id)}
+                        onDragOver={e => handleDragOver(e, item.id)}
+                        onDrop={e => handleDrop(e, item.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-start gap-3 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-colors ${
+                          dragOverId === item.id
+                            ? 'bg-blue-50 border-2 border-blue-300'
+                            : 'bg-white'
+                        }`}
+                      >
+                        <span className="text-xl mt-0.5 select-none">⠿</span>
+                        <span className="text-xl mt-0.5">{typeIcons[item.proposal.type] || '📌'}</span>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.proposal.title}</p>
+                          <p className="text-sm text-gray-600">{item.proposal.description}</p>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-xs text-gray-400">{item.proposal.city}</span>
+                            {item.proposal.durationMinutes && (
+                              <span className="text-xs text-gray-400">⏱ {item.proposal.durationMinutes}min</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-            {timeBlockOrder.every(tb => !byDay[day]?.[tb]?.length) && (
-              <div
-                data-testid={`empty-day-dropzone-${day}`}
-                onDragOver={e => handleDragOver(e, `empty-day-${day}`)}
-                onDrop={e => handleDrop(e, `empty-day-${day}`, { day, timeBlock: 'morning' })}
-                className={`rounded-lg border border-dashed p-4 transition-colors ${
-                  dragOverId === `empty-day-${day}`
-                    ? 'border-blue-300 bg-blue-50'
-                    : 'border-gray-300 bg-gray-50'
-                }`}
-              >
+              );
+            })}
+            {ITINERARY_TIME_BLOCKS.every(tb => !byDay[day]?.[tb]?.length) && (
+              <div>
                 <p className="text-sm text-gray-500">No items planned for this day yet</p>
                 {onDeleteEmptyDay && (
                   <button

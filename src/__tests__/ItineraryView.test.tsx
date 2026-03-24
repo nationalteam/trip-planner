@@ -85,10 +85,22 @@ describe('ItineraryView', () => {
     expect(screen.getByText(/Afternoon/i)).toBeInTheDocument();
   });
 
-  it('renders the correct time block label for dinner/evening', () => {
+  it('renders the correct time block label for lunch', () => {
+    const items = [makeItem({ timeBlock: 'lunch' })];
+    render(<ItineraryView items={items} />);
+    expect(screen.getByText(/Lunch/i)).toBeInTheDocument();
+  });
+
+  it('renders the correct time block label for dinner', () => {
     const items = [makeItem({ timeBlock: 'dinner' })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText(/Evening/i)).toBeInTheDocument();
+  });
+
+  it('renders the correct time block label for night', () => {
+    const items = [makeItem({ timeBlock: 'night' })];
+    render(<ItineraryView items={items} />);
+    expect(screen.getByText(/Night/i)).toBeInTheDocument();
   });
 
   it('groups multiple time blocks within the same day', () => {
@@ -168,6 +180,26 @@ describe('ItineraryView', () => {
 });
 
 describe('ItineraryView drag-and-drop', () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  let requestAnimationFrameSpy: jest.SpyInstance;
+  let cancelAnimationFrameSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    rafCallbacks = [];
+    requestAnimationFrameSpy = jest
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => {
+        rafCallbacks.push(callback);
+        return rafCallbacks.length;
+      });
+    cancelAnimationFrameSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
+  });
+
   const makeDndItems = () => [
     makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', proposalTitle: 'Eiffel Tower' }),
     makeItem({ id: 'item-2', day: 1, timeBlock: 'morning', proposalTitle: 'Louvre Museum' }),
@@ -187,7 +219,10 @@ describe('ItineraryView drag-and-drop', () => {
     const source = draggables[0];
     const target = draggables[1];
 
-    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragStart(source, {
+      clientY: window.innerHeight - 2,
+      dataTransfer: { setData: jest.fn(), effectAllowed: '' },
+    });
     fireEvent.dragOver(target, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
     fireEvent.drop(target, { preventDefault: jest.fn() });
 
@@ -204,7 +239,10 @@ describe('ItineraryView drag-and-drop', () => {
     const draggables = document.querySelectorAll('[draggable="true"]');
     const source = draggables[0];
 
-    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragStart(source, {
+      clientY: window.innerHeight - 2,
+      dataTransfer: { setData: jest.fn(), effectAllowed: '' },
+    });
     fireEvent.dragOver(source, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
     fireEvent.drop(source, { preventDefault: jest.fn() });
 
@@ -231,7 +269,7 @@ describe('ItineraryView drag-and-drop', () => {
     render(<ItineraryView items={items} schedule={{ durationDays: 2 }} onReorder={onReorder} />);
 
     const source = document.querySelector('[draggable="true"]') as Element;
-    const emptyDayDropzone = screen.getByTestId('empty-day-dropzone-2');
+    const emptyDayDropzone = screen.getByTestId('timeblock-dropzone-2-lunch');
 
     fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
     fireEvent.dragOver(emptyDayDropzone, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
@@ -242,9 +280,61 @@ describe('ItineraryView drag-and-drop', () => {
       {
         id: 'item-1',
         day: 2,
-        timeBlock: 'morning',
+        timeBlock: 'lunch',
         order: 0,
       },
     ]);
+  });
+
+  it('keeps auto-scrolling across frames while dragging near viewport edge', () => {
+    render(<ItineraryView items={makeDndItems()} schedule={{ durationDays: 2 }} onReorder={jest.fn()} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+    const target = draggables[1];
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(target, {
+      preventDefault: jest.fn(),
+      clientY: window.innerHeight - 2,
+      dataTransfer: { dropEffect: '' },
+    });
+
+    expect(requestAnimationFrameSpy).toHaveBeenCalled();
+    expect(rafCallbacks.length).toBeGreaterThan(0);
+
+    const firstFrame = rafCallbacks.shift();
+    firstFrame?.(0);
+    expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(2);
+
+    const secondFrame = rafCallbacks.shift();
+    secondFrame?.(16);
+    expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops auto-scroll loop on drag end', () => {
+    render(<ItineraryView items={makeDndItems()} schedule={{ durationDays: 2 }} onReorder={jest.fn()} />);
+
+    const draggables = document.querySelectorAll('[draggable="true"]');
+    const source = draggables[0];
+    const target = draggables[1];
+
+    fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
+    fireEvent.dragOver(target, {
+      preventDefault: jest.fn(),
+      clientY: window.innerHeight - 2,
+      dataTransfer: { dropEffect: '' },
+    });
+
+    const frame = rafCallbacks.shift();
+    frame?.(0);
+    const beforeDragEndRafCalls = requestAnimationFrameSpy.mock.calls.length;
+
+    fireEvent.dragEnd(source);
+    expect(cancelAnimationFrameSpy).toHaveBeenCalled();
+
+    const maybeNextFrame = rafCallbacks.shift();
+    maybeNextFrame?.(16);
+    expect(requestAnimationFrameSpy.mock.calls.length).toBe(beforeDragEndRafCalls);
   });
 });

@@ -10,4 +10,7 @@
 2026-03-24 | feat(itinerary): support manual empty-day add/delete and persisted visible days without trip duration (#local)
 2026-03-24 | fix(itinerary): narrow delete day payload and inline max-day query to satisfy strict build typing (#72)
 2026-03-24 | fix(itinerary): allow dragging activities into empty days (#0)
+2026-03-24 | feat(itinerary): support cross-day drag with direct morning/lunch/afternoon/dinner/night slot targeting (#local)
+2026-03-24 | fix(itinerary): auto-scroll while dragging so off-screen days are reachable (#local)
+2026-03-24 | fix(itinerary): run continuous drag auto-scroll loop for stronger off-screen day reachability (#local)
 2026-03-24 | fix(deploy): fallback google maps secrets for public key env in deploy workflow (#0)

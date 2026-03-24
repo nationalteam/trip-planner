@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { organizeItinerary, type OrganizedItineraryItem } from '@/lib/llm';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
+import { ITINERARY_TIME_BLOCKS, isItineraryTimeBlock } from '@/lib/time-block';
 
 type ItemWithId = { id: string };
 
@@ -44,14 +45,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const organized = await organizeItinerary(items);
     const itemIds = new Set(items.map((item: ItemWithId) => item.id));
-    const validTimeBlocks = new Set(['morning', 'afternoon', 'dinner']);
     const normalized = organized.filter(
       (item): item is OrganizedItineraryItem =>
         typeof item?.id === 'string' &&
         itemIds.has(item.id) &&
         Number.isInteger(item.day) &&
         item.day >= 1 &&
-        validTimeBlocks.has(item.timeBlock)
+        isItineraryTimeBlock(item.timeBlock)
     );
 
     if (normalized.length !== items.length) {
@@ -96,7 +96,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const existingItems = await prisma.itineraryItem.findMany({ where: { tripId: id } });
     const existingIds = new Set(existingItems.map((item: ItemWithId) => item.id));
-    const validTimeBlocks = new Set(['morning', 'afternoon', 'dinner']);
+    const validTimeBlocks = new Set<string>(ITINERARY_TIME_BLOCKS);
 
     for (const item of body) {
       if (typeof item.id !== 'string' || !existingIds.has(item.id)) {
@@ -105,7 +105,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (!Number.isInteger(item.day) || item.day < 1) {
         return NextResponse.json({ error: 'Invalid day' }, { status: 400 });
       }
-      if (!validTimeBlocks.has(item.timeBlock)) {
+      if (typeof item.timeBlock !== 'string' || !validTimeBlocks.has(item.timeBlock)) {
         return NextResponse.json({ error: 'Invalid timeBlock' }, { status: 400 });
       }
       if (!Number.isInteger(item.order) || item.order < 0) {

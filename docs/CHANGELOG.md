@@ -4,3 +4,5 @@
 2026-03-24 | fix(home): guard trips list parsing to prevent map crash (#0)
 2026-03-24 | feat(trip): allow editing trip start date and duration after creation (#0)
 2026-03-24 | refactor(api): move isValidDateOnly to shared lib/dates and harden PATCH body parsing (#66)
+2026-03-24 | feat(proposals): collapse manual proposal form with advanced details toggle (#0)
+2026-03-24 | test(proposals): cover advanced details toggle aria state on manual form (#0)

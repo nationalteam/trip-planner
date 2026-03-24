@@ -76,6 +76,8 @@ export default function TripDetailPage() {
   const [manualDurationMinutes, setManualDurationMinutes] = useState('');
   const [manualLat, setManualLat] = useState('');
   const [manualLng, setManualLng] = useState('');
+  const [isManualFormOpen, setIsManualFormOpen] = useState(false);
+  const [isManualAdvancedOpen, setIsManualAdvancedOpen] = useState(false);
   const [creatingManual, setCreatingManual] = useState(false);
   const [fillingDetails, setFillingDetails] = useState(false);
   const [mapProvider, setMapProvider] = useState<'google' | 'leaflet'>('google');
@@ -171,6 +173,8 @@ export default function TripDetailPage() {
         setManualDurationMinutes('');
         setManualLat('');
         setManualLng('');
+        setIsManualAdvancedOpen(false);
+        setIsManualFormOpen(false);
       } else {
         const data = await res.json().catch(() => ({}));
         alert(data.error || 'Failed to create proposal. Please check the form and try again.');
@@ -619,91 +623,126 @@ export default function TripDetailPage() {
           </div>
 
           {canEdit && (
-            <form onSubmit={handleCreateManualProposal} className="mb-6 border border-gray-200 rounded-xl p-4 bg-gray-50">
-              <p className="text-sm font-semibold text-gray-700 mb-3">✍️ Add proposal manually</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  value={manualTitle}
-                  onChange={e => setManualTitle(e.target.value)}
-                  required
-                  placeholder="Title"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-                <input
-                  value={manualCity}
-                  onChange={e => setManualCity(e.target.value)}
-                  required
-                  placeholder="City"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-                <textarea
-                  value={manualDescription}
-                  onChange={e => setManualDescription(e.target.value)}
-                  required
-                  placeholder="Description"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2 text-gray-900"
-                  rows={2}
-                />
-                <select
-                  value={manualType}
-                  onChange={e => setManualType(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                >
-                  <option value="place">place</option>
-                  <option value="food">food</option>
-                </select>
-                <select
-                  value={manualSuggestedTime}
-                  onChange={e => setManualSuggestedTime(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                >
-                  <option value="morning">morning</option>
-                  <option value="lunch">lunch</option>
-                  <option value="afternoon">afternoon</option>
-                  <option value="dinner">dinner</option>
-                  <option value="night">night</option>
-                </select>
-                <input
-                  type="number"
-                  min={1}
-                  value={manualDurationMinutes}
-                  onChange={e => setManualDurationMinutes(e.target.value)}
-                  placeholder="Duration (minutes, optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-                <input
-                  type="number"
-                  step="any"
-                  value={manualLat}
-                  onChange={e => setManualLat(e.target.value)}
-                  placeholder="Latitude (optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-                <input
-                  type="number"
-                  step="any"
-                  value={manualLng}
-                  onChange={e => setManualLng(e.target.value)}
-                  placeholder="Longitude (optional)"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={creatingManual}
-                className="mt-3 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50"
-              >
-                {creatingManual ? 'Saving...' : 'Add Manual Proposal'}
-              </button>
+            <div className="mb-6 border border-gray-200 rounded-xl bg-gray-50">
               <button
                 type="button"
-                onClick={handleFillWithAI}
-                disabled={fillingDetails || !manualTitle}
-                className="mt-3 ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                onClick={() => setIsManualFormOpen(prev => !prev)}
+                aria-expanded={isManualFormOpen}
+                aria-controls="manual-proposal-form"
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-100 rounded-xl transition-colors"
               >
-                {fillingDetails ? '⏳ Filling...' : '✨ Fill with AI'}
+                <span>
+                  <span className="block text-sm font-semibold text-gray-700">✍️ Add proposal manually</span>
+                  <span className="block text-xs text-gray-500 mt-0.5">Quick add a place idea</span>
+                </span>
+                <span className="text-sm text-gray-500">{isManualFormOpen ? '▾' : '▸'}</span>
               </button>
-            </form>
+              {isManualFormOpen && (
+                <form
+                  id="manual-proposal-form"
+                  onSubmit={handleCreateManualProposal}
+                  className="px-4 pb-4 pt-1 border-t border-gray-200"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      value={manualTitle}
+                      onChange={e => setManualTitle(e.target.value)}
+                      required
+                      placeholder="Title"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                    />
+                    <input
+                      value={manualCity}
+                      onChange={e => setManualCity(e.target.value)}
+                      required
+                      placeholder="City"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                    />
+                    <textarea
+                      value={manualDescription}
+                      onChange={e => setManualDescription(e.target.value)}
+                      required
+                      placeholder="Description"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm md:col-span-2 text-gray-900"
+                      rows={2}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualAdvancedOpen(prev => !prev)}
+                    aria-expanded={isManualAdvancedOpen}
+                    aria-controls="manual-proposal-advanced"
+                    className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    {isManualAdvancedOpen ? 'Hide advanced details' : 'Show advanced details'}
+                  </button>
+                  {isManualAdvancedOpen && (
+                    <div id="manual-proposal-advanced" className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <select
+                        value={manualType}
+                        onChange={e => setManualType(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                      >
+                        <option value="place">place</option>
+                        <option value="food">food</option>
+                      </select>
+                      <select
+                        value={manualSuggestedTime}
+                        onChange={e => setManualSuggestedTime(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                      >
+                        <option value="morning">morning</option>
+                        <option value="lunch">lunch</option>
+                        <option value="afternoon">afternoon</option>
+                        <option value="dinner">dinner</option>
+                        <option value="night">night</option>
+                      </select>
+                      <input
+                        type="number"
+                        min={1}
+                        value={manualDurationMinutes}
+                        onChange={e => setManualDurationMinutes(e.target.value)}
+                        placeholder="Duration (minutes, optional)"
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                      />
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualLat}
+                        onChange={e => setManualLat(e.target.value)}
+                        placeholder="Latitude (optional)"
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                      />
+                      <input
+                        type="number"
+                        step="any"
+                        value={manualLng}
+                        onChange={e => setManualLng(e.target.value)}
+                        placeholder="Longitude (optional)"
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      disabled={creatingManual}
+                      className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50"
+                    >
+                      {creatingManual ? 'Saving...' : 'Add Manual Proposal'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleFillWithAI}
+                      disabled={fillingDetails || !manualTitle}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      {fillingDetails ? '⏳ Filling...' : '✨ Fill with AI'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
           {filteredProposals.length === 0 ? (

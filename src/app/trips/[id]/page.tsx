@@ -7,6 +7,7 @@ import Link from 'next/link';
 import ProposalCard from '@/components/ProposalCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import { compareItineraryTimeBlock } from '@/lib/time-block';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 const GoogleMapView = dynamic(() => import('@/components/GoogleMapView'), { ssr: false });
@@ -250,7 +251,12 @@ export default function TripDetailPage() {
         const u = updatesById.get(item.id);
         return u ? { ...item, day: u.day, timeBlock: u.timeBlock, order: u.order } : item;
       })
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        const timeBlockCmp = compareItineraryTimeBlock(a.timeBlock, b.timeBlock);
+        if (timeBlockCmp !== 0) return timeBlockCmp;
+        return a.order - b.order;
+      });
     setItinerary(reordered);
     try {
       const res = await fetch(`/api/trips/${tripId}/itinerary`, {

@@ -1,4 +1,5 @@
 import OpenAI, { AzureOpenAI } from 'openai';
+import { ITINERARY_TIME_BLOCKS, type ItineraryTimeBlock } from '@/lib/time-block';
 
 type Provider = 'openai' | 'azure' | 'bifrost';
 
@@ -116,7 +117,7 @@ export interface ItineraryItemForLLM {
 export interface OrganizedItineraryItem {
   id: string;
   day: number;
-  timeBlock: 'morning' | 'afternoon' | 'dinner';
+  timeBlock: ItineraryTimeBlock;
 }
 
 export async function generateProposals(preferences: object[], city: string, existingProposals: ProposalLike[] = []) {
@@ -271,7 +272,7 @@ Return a JSON array with the exact same ids, each appearing exactly once, in thi
 
 Rules:
 - day must be an integer >= 1
-- timeBlock must be one of "morning", "afternoon", "dinner"
+- timeBlock must be one of ${ITINERARY_TIME_BLOCKS.map((block) => `"${block}"`).join(', ')}
 - return ONLY valid JSON (no markdown, no extra text).`;
 
   let response;

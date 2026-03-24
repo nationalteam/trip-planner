@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import {
+  ITINERARY_TIME_BLOCK_LABELS,
+  ITINERARY_TIME_BLOCKS,
+  type ItineraryTimeBlock,
+} from '@/lib/time-block';
 
 interface ItineraryItem {
   id: string;
@@ -30,13 +35,6 @@ interface ItinerarySchedule {
   durationDays?: number | null;
   itineraryVisibleDays?: number | null;
 }
-
-const timeBlockOrder = ['morning', 'afternoon', 'dinner'];
-const timeBlockLabels: Record<string, string> = {
-  morning: '🌅 Morning',
-  afternoon: '🌤 Afternoon',
-  dinner: '🌙 Evening / Dinner',
-};
 
 const typeIcons: Record<string, string> = {
   food: '🍽️',
@@ -161,9 +159,21 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
 
     // Move sourceItem to just after targetItem, adopting its day/timeBlock
     const withoutSource = items.filter(i => i.id !== sourceId);
-    const targetIndex = targetItem
-      ? withoutSource.findIndex(i => i.id === targetId)
-      : withoutSource.length - 1;
+    let targetIndex: number;
+    if (targetItem) {
+      targetIndex = withoutSource.findIndex(i => i.id === targetId);
+    } else {
+      targetIndex = -1;
+      for (let i = withoutSource.length - 1; i >= 0; i--) {
+        if (withoutSource[i].day === targetDay && withoutSource[i].timeBlock === targetTimeBlock) {
+          targetIndex = i;
+          break;
+        }
+      }
+      if (targetIndex === -1) {
+        targetIndex = withoutSource.length - 1;
+      }
+    }
     const reordered = [
       ...withoutSource.slice(0, targetIndex + 1),
       sourceItem,
@@ -205,54 +215,63 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
             </div>
           </div>
           <div className="p-6 space-y-6">
-            {timeBlockOrder.filter(tb => byDay[day]?.[tb]?.length > 0).map(timeBlock => (
-              <div key={timeBlock}>
+            {ITINERARY_TIME_BLOCKS.map((timeBlock: ItineraryTimeBlock) => {
+              const slotId = `timeblock-dropzone-${day}-${timeBlock}`;
+              const slotItems = byDay[day]?.[timeBlock] ?? [];
+              return (
+                <div key={timeBlock}>
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  {timeBlockLabels[timeBlock]}
+                  {ITINERARY_TIME_BLOCK_LABELS[timeBlock]}
                 </h4>
-                <div className="space-y-3">
-                  {byDay[day][timeBlock].map(item => (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={e => handleDragStart(e, item.id)}
-                      onDragOver={e => handleDragOver(e, item.id)}
-                      onDrop={e => handleDrop(e, item.id)}
-                      onDragEnd={handleDragEnd}
-                      className={`flex items-start gap-3 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-colors ${
-                        dragOverId === item.id
-                          ? 'bg-blue-50 border-2 border-blue-300'
-                          : 'bg-gray-50'
-                      }`}
-                    >
-                      <span className="text-xl mt-0.5 select-none">⠿</span>
-                      <span className="text-xl mt-0.5">{typeIcons[item.proposal.type] || '📌'}</span>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.proposal.title}</p>
-                        <p className="text-sm text-gray-600">{item.proposal.description}</p>
-                        <div className="flex gap-3 mt-1">
-                          <span className="text-xs text-gray-400">{item.proposal.city}</span>
-                          {item.proposal.durationMinutes && (
-                            <span className="text-xs text-gray-400">⏱ {item.proposal.durationMinutes}min</span>
-                          )}
+                <div
+                  data-testid={slotId}
+                  onDragOver={e => handleDragOver(e, slotId)}
+                  onDrop={e => handleDrop(e, slotId, { day, timeBlock })}
+                  className={`rounded-lg border border-dashed p-3 transition-colors ${
+                    dragOverId === slotId
+                      ? 'border-blue-300 bg-blue-50'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {slotItems.length === 0 && (
+                      <p className="text-xs text-gray-400">Drop activity here</p>
+                    )}
+                    {slotItems.map(item => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={e => handleDragStart(e, item.id)}
+                        onDragOver={e => handleDragOver(e, item.id)}
+                        onDrop={e => handleDrop(e, item.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-start gap-3 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-colors ${
+                          dragOverId === item.id
+                            ? 'bg-blue-50 border-2 border-blue-300'
+                            : 'bg-white'
+                        }`}
+                      >
+                        <span className="text-xl mt-0.5 select-none">⠿</span>
+                        <span className="text-xl mt-0.5">{typeIcons[item.proposal.type] || '📌'}</span>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.proposal.title}</p>
+                          <p className="text-sm text-gray-600">{item.proposal.description}</p>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-xs text-gray-400">{item.proposal.city}</span>
+                            {item.proposal.durationMinutes && (
+                              <span className="text-xs text-gray-400">⏱ {item.proposal.durationMinutes}min</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-            {timeBlockOrder.every(tb => !byDay[day]?.[tb]?.length) && (
-              <div
-                data-testid={`empty-day-dropzone-${day}`}
-                onDragOver={e => handleDragOver(e, `empty-day-${day}`)}
-                onDrop={e => handleDrop(e, `empty-day-${day}`, { day, timeBlock: 'morning' })}
-                className={`rounded-lg border border-dashed p-4 transition-colors ${
-                  dragOverId === `empty-day-${day}`
-                    ? 'border-blue-300 bg-blue-50'
-                    : 'border-gray-300 bg-gray-50'
-                }`}
-              >
+              );
+            })}
+            {ITINERARY_TIME_BLOCKS.every(tb => !byDay[day]?.[tb]?.length) && (
+              <div>
                 <p className="text-sm text-gray-500">No items planned for this day yet</p>
                 {onDeleteEmptyDay && (
                   <button

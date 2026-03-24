@@ -133,6 +133,54 @@ describe('POST /api/proposals/[id]/approve', () => {
     );
     expect(data.itineraryItem.day).toBe(2);
   });
+
+  it('maps suggestedTime lunch directly to itinerary timeBlock lunch', async () => {
+    const lunchProposal = { ...baseProposal, id: 'p-lunch', suggestedTime: 'lunch' };
+    const updatedProposal = { ...lunchProposal, status: 'approved' };
+    const newItem = { id: 'ii-lunch', tripId: 'trip-1', proposalId: 'p-lunch', day: 1, timeBlock: 'lunch' };
+    const fullItem = { ...newItem, proposal: updatedProposal };
+
+    (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(lunchProposal);
+    (mockPrisma.proposal.update as jest.Mock).mockResolvedValue(updatedProposal);
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.itineraryItem.create as jest.Mock).mockResolvedValue(newItem);
+    (mockPrisma.itineraryItem.findUnique as jest.Mock).mockResolvedValue(fullItem);
+
+    const req = new NextRequest('http://localhost/api/proposals/p-lunch/approve', { method: 'POST' });
+    const context = { params: Promise.resolve({ id: 'p-lunch' }) };
+    const res = await approve(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.itineraryItem.timeBlock).toBe('lunch');
+    expect(mockPrisma.itineraryItem.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ timeBlock: 'lunch' }) })
+    );
+  });
+
+  it('maps suggestedTime night directly to itinerary timeBlock night', async () => {
+    const nightProposal = { ...baseProposal, id: 'p-night', suggestedTime: 'night' };
+    const updatedProposal = { ...nightProposal, status: 'approved' };
+    const newItem = { id: 'ii-night', tripId: 'trip-1', proposalId: 'p-night', day: 1, timeBlock: 'night' };
+    const fullItem = { ...newItem, proposal: updatedProposal };
+
+    (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(nightProposal);
+    (mockPrisma.proposal.update as jest.Mock).mockResolvedValue(updatedProposal);
+    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.itineraryItem.create as jest.Mock).mockResolvedValue(newItem);
+    (mockPrisma.itineraryItem.findUnique as jest.Mock).mockResolvedValue(fullItem);
+
+    const req = new NextRequest('http://localhost/api/proposals/p-night/approve', { method: 'POST' });
+    const context = { params: Promise.resolve({ id: 'p-night' }) };
+    const res = await approve(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.itineraryItem.timeBlock).toBe('night');
+    expect(mockPrisma.itineraryItem.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ timeBlock: 'night' }) })
+    );
+  });
 });
 
 describe('POST /api/proposals/[id]/reject', () => {

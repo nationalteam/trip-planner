@@ -85,10 +85,22 @@ describe('ItineraryView', () => {
     expect(screen.getByText(/Afternoon/i)).toBeInTheDocument();
   });
 
-  it('renders the correct time block label for dinner/evening', () => {
+  it('renders the correct time block label for lunch', () => {
+    const items = [makeItem({ timeBlock: 'lunch' })];
+    render(<ItineraryView items={items} />);
+    expect(screen.getByText(/Lunch/i)).toBeInTheDocument();
+  });
+
+  it('renders the correct time block label for dinner', () => {
     const items = [makeItem({ timeBlock: 'dinner' })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText(/Evening/i)).toBeInTheDocument();
+  });
+
+  it('renders the correct time block label for night', () => {
+    const items = [makeItem({ timeBlock: 'night' })];
+    render(<ItineraryView items={items} />);
+    expect(screen.getByText(/Night/i)).toBeInTheDocument();
   });
 
   it('groups multiple time blocks within the same day', () => {
@@ -231,7 +243,7 @@ describe('ItineraryView drag-and-drop', () => {
     render(<ItineraryView items={items} schedule={{ durationDays: 2 }} onReorder={onReorder} />);
 
     const source = document.querySelector('[draggable="true"]') as Element;
-    const emptyDayDropzone = screen.getByTestId('empty-day-dropzone-2');
+    const emptyDayDropzone = screen.getByTestId('timeblock-dropzone-2-lunch');
 
     fireEvent.dragStart(source, { dataTransfer: { setData: jest.fn(), effectAllowed: '' } });
     fireEvent.dragOver(emptyDayDropzone, { preventDefault: jest.fn(), dataTransfer: { dropEffect: '' } });
@@ -242,7 +254,7 @@ describe('ItineraryView drag-and-drop', () => {
       {
         id: 'item-1',
         day: 2,
-        timeBlock: 'morning',
+        timeBlock: 'lunch',
         order: 0,
       },
     ]);

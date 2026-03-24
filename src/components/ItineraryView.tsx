@@ -28,6 +28,7 @@ interface ReorderPayload {
 interface ItinerarySchedule {
   startDate?: string | null;
   durationDays?: number | null;
+  itineraryVisibleDays?: number | null;
 }
 
 const timeBlockOrder = ['morning', 'afternoon', 'dinner'];
@@ -47,6 +48,8 @@ interface Props {
   items: ItineraryItem[];
   schedule?: ItinerarySchedule;
   onReorder?: (updates: ReorderPayload[]) => void;
+  onDeleteEmptyDay?: (day: number) => void;
+  deletingDay?: number | null;
 }
 
 function deriveDateLabel(startDate: string, day: number): string | null {
@@ -89,11 +92,22 @@ function buildDayHeading(day: number, schedule?: ItinerarySchedule): string {
   return `Day ${day}`;
 }
 
-export default function ItineraryView({ items, schedule, onReorder }: Props) {
+export default function ItineraryView({ items, schedule, onReorder, onDeleteEmptyDay, deletingDay }: Props) {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragItemId = useRef<string | null>(null);
 
-  if (items.length === 0) {
+  const maxItemDay = items.reduce((max, item) => Math.max(max, item.day), 0);
+  const plannedDays = typeof schedule?.durationDays === 'number' && schedule.durationDays > 0
+    ? schedule.durationDays
+    : null;
+  const manualVisibleDays = typeof schedule?.itineraryVisibleDays === 'number' && schedule.itineraryVisibleDays > 0
+    ? schedule.itineraryVisibleDays
+    : 0;
+  const visibleDays = plannedDays != null
+    ? Math.max(plannedDays, maxItemDay)
+    : Math.max(manualVisibleDays, maxItemDay);
+
+  if (visibleDays <= 0) {
     return (
       <div className="text-center py-16">
         <div className="text-5xl mb-3">📋</div>
@@ -110,7 +124,7 @@ export default function ItineraryView({ items, schedule, onReorder }: Props) {
     return acc;
   }, {} as Record<number, Record<string, ItineraryItem[]>>);
 
-  const days = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  const days = Array.from({ length: visibleDays }, (_, idx) => idx + 1);
 
   function handleDragStart(e: React.DragEvent, itemId: string) {
     dragItemId.current = itemId;
@@ -181,7 +195,7 @@ export default function ItineraryView({ items, schedule, onReorder }: Props) {
             </div>
           </div>
           <div className="p-6 space-y-6">
-            {timeBlockOrder.filter(tb => byDay[day][tb]?.length > 0).map(timeBlock => (
+            {timeBlockOrder.filter(tb => byDay[day]?.[tb]?.length > 0).map(timeBlock => (
               <div key={timeBlock}>
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
                   {timeBlockLabels[timeBlock]}
@@ -218,6 +232,21 @@ export default function ItineraryView({ items, schedule, onReorder }: Props) {
                 </div>
               </div>
             ))}
+            {timeBlockOrder.every(tb => !byDay[day]?.[tb]?.length) && (
+              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+                <p className="text-sm text-gray-500">No items planned for this day yet</p>
+                {onDeleteEmptyDay && (
+                  <button
+                    type="button"
+                    onClick={() => onDeleteEmptyDay(day)}
+                    disabled={deletingDay === day}
+                    className="mt-3 text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                  >
+                    {deletingDay === day ? 'Deleting...' : 'Delete day'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}

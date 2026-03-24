@@ -10,8 +10,7 @@ on:
       - main
 
 jobs:
-  test:
-    name: Lint, Test & Build
+  ci:
     runs-on: ubuntu-latest
 
     steps:

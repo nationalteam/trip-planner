@@ -40,6 +40,6 @@ jobs:
           docker compose down --remove-orphans
           docker compose up -d --build
 
-      # - name: Remove environment file
-      #   if: always()
-      #   run: rm -f .env
+      - name: Remove environment file
+        if: always()
+        run: rm -f .env

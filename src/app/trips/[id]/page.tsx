@@ -47,6 +47,7 @@ export default function TripDetailPage() {
   const [creatingManual, setCreatingManual] = useState(false);
   const [fillingDetails, setFillingDetails] = useState(false);
   const [mapProvider, setMapProvider] = useState<'google' | 'leaflet'>('google');
+  const [mapFocusTrigger, setMapFocusTrigger] = useState(0);
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleStartDateInput, setScheduleStartDateInput] = useState('');
   const [scheduleDurationDaysInput, setScheduleDurationDaysInput] = useState('');
@@ -477,6 +478,13 @@ export default function TripDetailPage() {
     }
   }
 
+  function handleTabChange(tab: Tab) {
+    setActiveTab(tab);
+    if (tab === 'map') {
+      setMapFocusTrigger((prev) => prev + 1);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -628,7 +636,7 @@ export default function TripDetailPage() {
         {(['proposals', 'itinerary', 'map', ...(canEdit ? (['ai'] as Tab[]) : [])] as Tab[]).map(tab => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             className={`px-5 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
               activeTab === tab
                 ? 'bg-white text-blue-600 shadow-sm'
@@ -906,7 +914,7 @@ export default function TripDetailPage() {
             Showing {arrangedMapCount} arranged and {mapProposals.length - arrangedMapCount} unarranged activities (rejected hidden)
           </p>
           {mapProvider === 'google' ? (
-            <GoogleMapView proposals={mapProposals} canEdit={canEdit} onAddPlace={handleAddGooglePlace} />
+            <GoogleMapView proposals={mapProposals} canEdit={canEdit} onAddPlace={handleAddGooglePlace} focusTrigger={mapFocusTrigger} />
           ) : (
             mapProposals.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">

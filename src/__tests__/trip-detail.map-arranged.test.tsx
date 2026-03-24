@@ -152,11 +152,88 @@ describe('Trip detail map arranged state', () => {
     });
 
     const lastCall = mockGoogleMapView.mock.calls.at(-1);
-    const props = lastCall?.[0] as { proposals?: Array<{ id: string; isArranged: boolean; status: string }> };
+    const props = lastCall?.[0] as { proposals?: Array<{ id: string; isArranged: boolean; status: string }>; focusTrigger?: number };
     expect(props.proposals).toEqual([
       expect.objectContaining({ id: 'p-arranged', isArranged: true, status: 'pending' }),
       expect.objectContaining({ id: 'p-unarranged', isArranged: false, status: 'approved' }),
     ]);
     expect(props.proposals?.find((proposal) => proposal.id === 'p-rejected')).toBeUndefined();
+    expect(typeof props.focusTrigger).toBe('number');
+  });
+
+  it('increments map focus trigger when entering map tab', async () => {
+    const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+
+      if (url === '/api/trips/trip-1' && method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: 'trip-1',
+            name: 'Japan Trip',
+            cities: '["Tokyo"]',
+            createdAt: '2026-03-24T00:00:00.000Z',
+            currentRole: 'owner',
+          }),
+        } as Response;
+      }
+
+      if (url.startsWith('/api/trips/trip-1/proposals?') && method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ([
+            {
+              id: 'p-1',
+              type: 'place',
+              title: 'Senso-ji',
+              description: 'Temple',
+              reason: '',
+              lat: 35.7148,
+              lng: 139.7967,
+              city: 'Tokyo',
+              suggestedTime: 'morning',
+              durationMinutes: 90,
+              status: 'pending',
+            },
+          ]),
+        } as Response;
+      }
+
+      if (url === '/api/trips/trip-1/itinerary' && method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ([]),
+        } as Response;
+      }
+
+      throw new Error(`Unexpected fetch call: ${method} ${url}`);
+    });
+
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<TripDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Japan Trip')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /map/i }));
+    await waitFor(() => {
+      expect(mockGoogleMapView).toHaveBeenCalled();
+    });
+    const firstTrigger = (mockGoogleMapView.mock.calls.at(-1)?.[0] as { focusTrigger?: number }).focusTrigger;
+    expect(typeof firstTrigger).toBe('number');
+
+    await userEvent.click(screen.getByRole('button', { name: /proposals/i }));
+    await userEvent.click(screen.getByRole('button', { name: /map/i }));
+    await waitFor(() => {
+      const nextTrigger = (mockGoogleMapView.mock.calls.at(-1)?.[0] as { focusTrigger?: number }).focusTrigger;
+      expect(typeof nextTrigger).toBe('number');
+      expect((nextTrigger as number) > (firstTrigger as number)).toBe(true);
+    });
   });
 });

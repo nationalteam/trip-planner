@@ -6,14 +6,25 @@ import { render, waitFor } from '@testing-library/react';
 import GoogleMapView from '@/components/GoogleMapView';
 
 type MarkerConstructor = jest.MockedFunction<(options: { icon: { fillColor: string } }) => unknown>;
+type MapInstance = {
+  addListener: jest.Mock;
+  panTo: jest.Mock;
+  setZoom: jest.Mock;
+  fitBounds: jest.Mock;
+  getZoom: jest.Mock;
+};
 type GoogleMapsMock = {
   maps: {
     Marker: MarkerConstructor;
+    Map: jest.MockedFunction<() => MapInstance>;
+    LatLngBounds: jest.MockedFunction<() => { extend: jest.Mock }>;
   };
 };
 
 describe('GoogleMapView', () => {
   const originalFetch = global.fetch;
+  let mapFactory: jest.MockedFunction<() => MapInstance>;
+  let latLngBoundsFactory: jest.MockedFunction<() => { extend: jest.Mock }>;
 
   beforeEach(() => {
     const markerFactory = jest.fn(() => ({
@@ -21,11 +32,14 @@ describe('GoogleMapView', () => {
       addListener: jest.fn(),
     }));
 
-    const mapFactory = jest.fn(() => ({
+    mapFactory = jest.fn(() => ({
       addListener: jest.fn(),
       panTo: jest.fn(),
       setZoom: jest.fn(),
+      fitBounds: jest.fn(),
+      getZoom: jest.fn(() => 12),
     }));
+    latLngBoundsFactory = jest.fn(() => ({ extend: jest.fn() }));
 
     const autocompleteFactory = jest.fn(() => ({
       bindTo: jest.fn(),
@@ -42,6 +56,7 @@ describe('GoogleMapView', () => {
         SymbolPath: { CIRCLE: 'CIRCLE' },
         Map: mapFactory,
         Marker: markerFactory,
+        LatLngBounds: latLngBoundsFactory,
         InfoWindow: infoWindowFactory,
         places: {
           Autocomplete: autocompleteFactory,
@@ -89,7 +104,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} />);
+    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={1} />);
 
     await waitFor(() => {
       const marker = ((window.google as unknown as GoogleMapsMock).maps.Marker);
@@ -99,5 +114,33 @@ describe('GoogleMapView', () => {
     const marker = (window.google as unknown as GoogleMapsMock).maps.Marker;
     expect(marker.mock.calls[0][0].icon.fillColor).toBe('#16a34a');
     expect(marker.mock.calls[1][0].icon.fillColor).toBe('#2563eb');
+
+    const mapInstance = mapFactory.mock.results[0]?.value;
+    expect(mapInstance.fitBounds).toHaveBeenCalled();
+  });
+
+  it('pans and zooms when only one proposal is shown', async () => {
+    const proposals = [
+      {
+        id: 'p-single',
+        title: 'Solo spot',
+        description: 'single',
+        type: 'place',
+        lat: 35.3,
+        lng: 139.3,
+        city: 'Tokyo',
+        status: 'pending',
+        isArranged: true,
+      },
+    ];
+
+    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={2} />);
+
+    await waitFor(() => {
+      const mapInstance = mapFactory.mock.results[0]?.value;
+      expect(mapInstance.panTo).toHaveBeenCalledWith({ lat: 35.3, lng: 139.3 });
+      expect(mapInstance.setZoom).toHaveBeenCalledWith(15);
+    });
+    expect(latLngBoundsFactory).not.toHaveBeenCalled();
   });
 });

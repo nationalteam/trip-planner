@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 describe('deploy workflow Google Maps env wiring', () => {
-  it('sets NEXT_PUBLIC_GOOGLE_MAPS_API_KEY with secret fallbacks', () => {
+  it('sets Google Maps API keys with bidirectional secret fallbacks', () => {
     const workflowPath = path.join(process.cwd(), '.github/workflows/deploy.yml');
     const workflow = fs.readFileSync(workflowPath, 'utf8');
 

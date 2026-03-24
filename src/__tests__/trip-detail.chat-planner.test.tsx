@@ -131,6 +131,8 @@ describe('Trip detail chat planner', () => {
       expect(screen.getByText('Japan Trip')).toBeInTheDocument();
     });
 
+    await userEvent.click(screen.getByRole('button', { name: /ai/i }));
+
     await userEvent.type(screen.getByPlaceholderText(/ask chat planner/i), 'Add Senso-ji proposal');
     await userEvent.click(screen.getByRole('button', { name: /preview changes/i }));
 
@@ -139,6 +141,7 @@ describe('Trip detail chat planner', () => {
     });
 
     await userEvent.click(screen.getByRole('button', { name: /confirm apply/i }));
+    await userEvent.click(screen.getByRole('button', { name: /proposals/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Senso-ji')).toBeInTheDocument();

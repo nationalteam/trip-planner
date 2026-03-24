@@ -6,3 +6,4 @@
 2026-03-24 | refactor(api): move isValidDateOnly to shared lib/dates and harden PATCH body parsing (#66)
 2026-03-24 | feat(proposals): collapse manual proposal form with advanced details toggle (#0)
 2026-03-24 | test(proposals): cover advanced details toggle aria state on manual form (#0)
+2026-03-24 | feat(itinerary): show trip schedule context and over-range warning in itinerary day headers (#local)

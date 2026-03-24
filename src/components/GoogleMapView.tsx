@@ -66,6 +66,20 @@ function loadGoogleMapsApi(apiKey: string): Promise<void> {
   return mapsApiPromise;
 }
 
+async function resolveGoogleMapsApiKey(): Promise<string> {
+  const publicApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
+  if (publicApiKey) return publicApiKey;
+
+  try {
+    const res = await fetch('/api/maps/config', { cache: 'no-store' });
+    if (!res.ok) return '';
+    const data = (await res.json()) as { apiKey?: string | null };
+    return data.apiKey?.trim() || '';
+  } catch {
+    return '';
+  }
+}
+
 function getCityFromPlace(place: any): string {
   const components = place?.address_components as Array<{ long_name?: string; types?: string[] }> | undefined;
   if (!components) return '';
@@ -156,7 +170,8 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
     let cancelled = false;
 
     const initMap = async () => {
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const apiKey = await resolveGoogleMapsApiKey();
+      if (cancelled) return;
       if (!apiKey) {
         setLoadingError('Google Maps API key is missing. Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.');
         return;

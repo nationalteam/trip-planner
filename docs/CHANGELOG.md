@@ -14,3 +14,4 @@
 2026-03-24 | fix(itinerary): auto-scroll while dragging so off-screen days are reachable (#local)
 2026-03-24 | fix(itinerary): run continuous drag auto-scroll loop for stronger off-screen day reachability (#local)
 2026-03-24 | fix(deploy): fallback google maps secrets for public key env in deploy workflow (#0)
+2026-03-24 | fix(map): fallback to authenticated maps config API when NEXT_PUBLIC key is missing at runtime (#0)

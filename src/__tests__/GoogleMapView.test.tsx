@@ -18,6 +18,7 @@ type GoogleMapsMock = {
     Marker: MarkerConstructor;
     Map: jest.MockedFunction<() => MapInstance>;
     LatLngBounds: jest.MockedFunction<() => { extend: jest.Mock }>;
+    InfoWindow: jest.MockedFunction<(options: { content: string }) => { open: jest.Mock }>;
   };
 };
 
@@ -25,6 +26,7 @@ describe('GoogleMapView', () => {
   const originalFetch = global.fetch;
   let mapFactory: jest.MockedFunction<() => MapInstance>;
   let latLngBoundsFactory: jest.MockedFunction<() => { extend: jest.Mock }>;
+  let infoWindowFactory: jest.MockedFunction<(options: { content: string }) => { open: jest.Mock }>;
 
   beforeEach(() => {
     const markerFactory = jest.fn(() => ({
@@ -47,7 +49,7 @@ describe('GoogleMapView', () => {
       getPlace: jest.fn(),
     }));
 
-    const infoWindowFactory = jest.fn(() => ({
+    infoWindowFactory = jest.fn(() => ({
       open: jest.fn(),
     }));
 
@@ -142,5 +144,65 @@ describe('GoogleMapView', () => {
       expect(mapInstance.setZoom).toHaveBeenCalledWith(15);
     });
     expect(latLngBoundsFactory).not.toHaveBeenCalled();
+  });
+
+  it('renders practical info and Google Maps url in marker info window', async () => {
+    const proposals = [
+      {
+        id: 'p-info',
+        title: 'Shinjuku Gyoen',
+        description: 'garden',
+        type: 'place',
+        lat: 35.6852,
+        lng: 139.7100,
+        city: 'Tokyo',
+        status: 'approved',
+        isArranged: true,
+        suggestedTime: 'afternoon',
+        durationMinutes: 90,
+        formattedAddress: '11 Naitomachi, Shinjuku City, Tokyo',
+      },
+    ];
+
+    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={3} />);
+
+    await waitFor(() => {
+      expect(infoWindowFactory).toHaveBeenCalled();
+    });
+
+    const infoOptions = infoWindowFactory.mock.calls[0]?.[0];
+    expect(infoOptions.content).toContain('Shinjuku Gyoen');
+    expect(infoOptions.content).toContain('Place');
+    expect(infoOptions.content).toContain('Afternoon');
+    expect(infoOptions.content).toContain('~90 min');
+    expect(infoOptions.content).toContain('11 Naitomachi, Shinjuku City, Tokyo');
+    expect(infoOptions.content).toContain('Arranged');
+    expect(infoOptions.content).toContain('Open in Google Maps');
+    expect(infoOptions.content).toContain('https://www.google.com/maps/search/?api=1&query=Shinjuku%20Gyoen%2C%20Tokyo');
+  });
+
+  it('falls back to lat,lng google maps query when title/city are missing', async () => {
+    const proposals = [
+      {
+        id: 'p-fallback',
+        title: '',
+        description: 'fallback',
+        type: 'place',
+        lat: 35.6852,
+        lng: 139.71,
+        city: '',
+        status: 'pending',
+        isArranged: false,
+      },
+    ];
+
+    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={4} />);
+
+    await waitFor(() => {
+      expect(infoWindowFactory).toHaveBeenCalled();
+    });
+
+    const infoOptions = infoWindowFactory.mock.calls[0]?.[0];
+    expect(infoOptions.content).toContain('https://www.google.com/maps/search/?api=1&query=35.6852%2C139.71');
   });
 });

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const organized = await organizeItinerary(items);
-    const itemIds = new Set(items.map(item => item.id));
+    const itemIds = new Set(items.map((item: { id: string }) => item.id));
     const validTimeBlocks = new Set(['morning', 'afternoon', 'dinner']);
     const normalized = organized.filter(
       (item): item is OrganizedItineraryItem =>
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     );
 
     const updatedWithProposal = await prisma.itineraryItem.findMany({
-      where: { id: { in: updatedItems.map(item => item.id) } },
+      where: { id: { in: updatedItems.map((item: { id: string }) => item.id) } },
       include: { proposal: true },
       orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
     });
@@ -93,7 +93,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const existingItems = await prisma.itineraryItem.findMany({ where: { tripId: id } });
-    const existingIds = new Set(existingItems.map(item => item.id));
+    const existingIds = new Set(existingItems.map((item: { id: string }) => item.id));
     const validTimeBlocks = new Set(['morning', 'afternoon', 'dinner']);
 
     for (const item of body) {

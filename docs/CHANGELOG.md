@@ -8,3 +8,4 @@
 2026-03-24 | test(proposals): cover advanced details toggle aria state on manual form (#0)
 2026-03-24 | feat(itinerary): show trip schedule context and over-range warning in itinerary day headers (#local)
 2026-03-24 | feat(itinerary): support manual empty-day add/delete and persisted visible days without trip duration (#local)
+2026-03-24 | fix(itinerary): narrow delete day payload and inline max-day query to satisfy strict build typing (#72)

@@ -139,7 +139,11 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     }
   }
 
-  function handleDrop(e: React.DragEvent, targetId: string) {
+  function handleDrop(
+    e: React.DragEvent,
+    targetId: string,
+    dropTarget?: { day: number; timeBlock: string }
+  ) {
     e.preventDefault();
     setDragOverId(null);
     const sourceId = dragItemId.current;
@@ -148,12 +152,18 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     if (!sourceId || sourceId === targetId) return;
 
     const sourceItem = items.find(i => i.id === sourceId);
+    if (!sourceItem) return;
+
     const targetItem = items.find(i => i.id === targetId);
-    if (!sourceItem || !targetItem) return;
+    const targetDay = dropTarget?.day ?? targetItem?.day;
+    const targetTimeBlock = dropTarget?.timeBlock ?? targetItem?.timeBlock;
+    if (!targetDay || !targetTimeBlock) return;
 
     // Move sourceItem to just after targetItem, adopting its day/timeBlock
     const withoutSource = items.filter(i => i.id !== sourceId);
-    const targetIndex = withoutSource.findIndex(i => i.id === targetId);
+    const targetIndex = targetItem
+      ? withoutSource.findIndex(i => i.id === targetId)
+      : withoutSource.length - 1;
     const reordered = [
       ...withoutSource.slice(0, targetIndex + 1),
       sourceItem,
@@ -164,8 +174,8 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
     // Group items by their new day+timeBlock to assign sequential order within each group
     const groupCounters = new Map<string, number>();
     const updates: ReorderPayload[] = reordered.map(item => {
-      const newDay = item.id === sourceId ? targetItem.day : item.day;
-      const newTimeBlock = item.id === sourceId ? targetItem.timeBlock : item.timeBlock;
+      const newDay = item.id === sourceId ? targetDay : item.day;
+      const newTimeBlock = item.id === sourceId ? targetTimeBlock : item.timeBlock;
       const groupKey = `${newDay}:${newTimeBlock}`;
       const groupOrder = groupCounters.get(groupKey) ?? 0;
       groupCounters.set(groupKey, groupOrder + 1);
@@ -233,7 +243,16 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
               </div>
             ))}
             {timeBlockOrder.every(tb => !byDay[day]?.[tb]?.length) && (
-              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+              <div
+                data-testid={`empty-day-dropzone-${day}`}
+                onDragOver={e => handleDragOver(e, `empty-day-${day}`)}
+                onDrop={e => handleDrop(e, `empty-day-${day}`, { day, timeBlock: 'morning' })}
+                className={`rounded-lg border border-dashed p-4 transition-colors ${
+                  dragOverId === `empty-day-${day}`
+                    ? 'border-blue-300 bg-blue-50'
+                    : 'border-gray-300 bg-gray-50'
+                }`}
+              >
                 <p className="text-sm text-gray-500">No items planned for this day yet</p>
                 {onDeleteEmptyDay && (
                   <button

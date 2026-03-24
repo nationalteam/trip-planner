@@ -67,9 +67,6 @@ function loadGoogleMapsApi(apiKey: string): Promise<void> {
 }
 
 async function resolveGoogleMapsApiKey(): Promise<string> {
-  const publicApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
-  if (publicApiKey) return publicApiKey;
-
   try {
     const res = await fetch('/api/maps/config', { cache: 'no-store' });
     if (!res.ok) return '';
@@ -173,7 +170,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
       const apiKey = await resolveGoogleMapsApiKey();
       if (cancelled) return;
       if (!apiKey) {
-        setLoadingError('Google Maps API key is missing. Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.');
+        setLoadingError('Google Maps API key is missing. Set GOOGLE_MAPS_API_KEY.');
         return;
       }
       if (!mapRef.current || !inputRef.current) return;

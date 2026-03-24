@@ -49,11 +49,8 @@ OPENAI_MODEL=gpt-5-mini
 Optional: enable Google Maps picker (frontend) and Google Maps Geocoding (backend).
 
 ```env
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-google-maps-key
 GOOGLE_MAPS_API_KEY=your-google-maps-key
 ```
-
-Current setup keeps one key value for both frontend and backend variables.
 
 Optional: use Azure OpenAI instead of standard OpenAI.
 
@@ -81,8 +78,7 @@ Behavior:
 - If `BIFROST_BASE_URL` is not set, default is `http://127.0.0.1:8080/openai/v1`.
 - `BIFROST_API_KEY` is optional and defaults to an empty string when unset.
 - Bifrost model selection uses `OPENAI_MODEL` (default `gpt-5-mini`).
-- Proposal `lat/lng` are resolved via Google Maps Geocoding when `GOOGLE_MAPS_API_KEY` is set.
-- Google Maps map picker requires `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
+- Proposal `lat/lng` and Google Maps map picker use `GOOGLE_MAPS_API_KEY` when set.
 
 Provider-specific error handling:
 

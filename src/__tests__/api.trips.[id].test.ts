@@ -151,6 +151,54 @@ describe('PATCH /api/trips/[id]', () => {
     expect(data.currentRole).toBe('owner');
   });
 
+  it('updates trip name and cities for owner', async () => {
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+    (mockPrisma.trip.update as jest.Mock).mockResolvedValue({
+      id: 'trip-1',
+      name: 'Japan Adventure',
+      cities: '["Tokyo","Kyoto"]',
+      startDate: null,
+      durationDays: null,
+    });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ name: 'Japan Adventure', cities: ['Tokyo', 'Kyoto'] }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockPrisma.trip.update).toHaveBeenCalledWith({
+      where: { id: 'trip-1' },
+      data: expect.objectContaining({
+        name: 'Japan Adventure',
+        cities: '["Tokyo","Kyoto"]',
+      }),
+    });
+    expect(data.name).toBe('Japan Adventure');
+    expect(data.cities).toBe('["Tokyo","Kyoto"]');
+  });
+
+  it('returns 400 for invalid cities payload', async () => {
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1', {
+      method: 'PATCH',
+      body: JSON.stringify({ cities: ['Tokyo', ''] }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await PATCH(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/cities/i);
+    expect(mockPrisma.trip.update).not.toHaveBeenCalled();
+  });
+
   it('allows clearing schedule fields', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
     (mockPrisma.trip.update as jest.Mock).mockResolvedValue({

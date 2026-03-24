@@ -13,6 +13,7 @@ interface Proposal {
   lng: number;
   city: string;
   status: string;
+  isArranged: boolean;
 }
 
 interface SelectedPlace {
@@ -134,10 +135,8 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
     if (!google || !map) return;
 
     clearMarkers();
-    const approvedProposals = normalizedProposals.filter((proposal) => proposal.status === 'approved');
-    const toShow = approvedProposals.length > 0 ? approvedProposals : normalizedProposals;
-
-    toShow.forEach((proposal) => {
+    normalizedProposals.forEach((proposal) => {
+      const arrangedLabel = proposal.isArranged ? 'Arranged' : 'Unarranged';
       const marker = new google.maps.Marker({
         map,
         position: { lat: proposal.lat, lng: proposal.lng },
@@ -145,14 +144,14 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 8,
-          fillColor: proposal.status === 'approved' ? '#16a34a' : '#2563eb',
+          fillColor: proposal.isArranged ? '#16a34a' : '#2563eb',
           fillOpacity: 1,
           strokeColor: '#ffffff',
           strokeWeight: 2,
         },
       });
       const infoWindow = new google.maps.InfoWindow({
-        content: `<div style="min-width:180px"><strong>${proposal.title}</strong><p style="margin:4px 0;color:#555">${proposal.city}</p></div>`,
+        content: `<div style="min-width:180px"><strong>${proposal.title}</strong><p style="margin:4px 0;color:#555">${proposal.city}</p><span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${proposal.isArranged ? '#dcfce7' : '#dbeafe'};color:${proposal.isArranged ? '#166534' : '#1e40af'}">${arrangedLabel}</span></div>`,
       });
       marker.addListener('click', () => infoWindow.open({ anchor: marker, map }));
       markerInstancesRef.current.push(marker);
@@ -193,6 +192,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
       });
       mapInstanceRef.current = map;
       placesServiceRef.current = new google.maps.places.PlacesService(map);
+      renderProposalMarkers();
 
       const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
         fields: ['place_id', 'name', 'geometry', 'formatted_address', 'address_components', 'types'],
@@ -233,7 +233,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace }: Google
       mapInstanceRef.current = null;
       placesServiceRef.current = null;
     };
-  }, [clearMarkers]);
+  }, [clearMarkers, renderProposalMarkers]);
 
   const handleAdd = useCallback(async () => {
     if (!selectedPlace || adding || !canEdit) return;

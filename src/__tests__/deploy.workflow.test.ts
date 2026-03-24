@@ -10,3 +10,20 @@ describe('deploy workflow Google Maps env wiring', () => {
     expect(workflow).toContain('echo "GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}"');
   });
 });
+
+describe('bump version workflow', () => {
+  it('supports manual patch/minor/major input and uses PAT token', () => {
+    const workflowPath = path.join(process.cwd(), '.github/workflows/bump-version.yml');
+    const workflow = fs.readFileSync(workflowPath, 'utf8');
+
+    expect(workflow).toContain('name: Bump Version');
+    expect(workflow).toContain('workflow_dispatch:');
+    expect(workflow).toContain('bump:');
+    expect(workflow).toContain('default: "patch"');
+    expect(workflow).toContain('type: choice');
+    expect(workflow).toContain('- patch');
+    expect(workflow).toContain('- minor');
+    expect(workflow).toContain('- major');
+    expect(workflow).toContain('github-token: ${{ secrets.PAT_TOKEN }}');
+  });
+});

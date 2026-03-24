@@ -1,0 +1,46 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Verify GitHub token access
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            core.info(`Authenticated as ${context.actor}`);
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        run: npm version "${{ inputs.bump }}" -m "chore(release): bump version to %s"
+
+      - name: Push commit and tags
+        run: git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags

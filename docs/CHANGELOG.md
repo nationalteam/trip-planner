@@ -23,3 +23,4 @@
 2026-03-24 | feat(map): distinguish arranged vs unarranged activities on trip map and hide rejected items (#0)
 2026-03-24 | feat(map): auto-fit google map to trip activities on map tab entry (#0)
 2026-03-24 | feat(map): enrich google map marker cards with practical details and maps link (#0)
+2026-03-24 | feat(ci): add manual bump-version workflow with PAT token auth (#0)

@@ -51,3 +51,4 @@
 2026-03-25 | refactor(api): remove legacy by-id /api/proposals routes and make /api/activities handlers primary (#0)
 2026-03-25 | refactor(api): remove legacy trip-level /api/trips/[id]/proposals routes and deprecation helper (#0)
 2026-03-25 | docs(rename): align migration/auth docs with activities-only API state (#0)
+2026-03-25 | refactor(api): remove chat execute fallback from legacy proposals payload to activities (#0)

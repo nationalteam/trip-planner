@@ -85,6 +85,8 @@ describe('POST /api/proposals/[id]/approve', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Deprecation')).toBe('true');
     expect(res.headers.get('Link')).toContain('/api/activities/p-1/approve');
+    expect(res.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
+    expect(res.headers.get('X-Legacy-Endpoint')).toBe('proposals');
     expect(data.proposal.status).toBe('approved');
     expect(mockPrisma.proposal.update).toHaveBeenCalledWith({
       where: { id: 'p-1' },
@@ -217,6 +219,8 @@ describe('POST /api/proposals/[id]/reject', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Deprecation')).toBe('true');
     expect(res.headers.get('Link')).toContain('/api/activities/p-1/reject');
+    expect(res.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
+    expect(res.headers.get('X-Legacy-Endpoint')).toBe('proposals');
     expect(data.status).toBe('rejected');
     expect(mockPrisma.proposal.update).toHaveBeenCalledWith({
       where: { id: 'p-1' },

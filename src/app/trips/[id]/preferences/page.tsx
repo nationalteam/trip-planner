@@ -85,7 +85,7 @@ export default function PreferencesPage() {
       </Link>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Travel Preferences</h1>
-      <p className="text-gray-500 mb-2">Set preferences to get personalized AI proposals for your trip.</p>
+      <p className="text-gray-500 mb-2">Set preferences to get personalized AI activities for your trip.</p>
       {me && <p className="text-sm text-gray-400 mb-8">Current traveler: {me.name} ({me.email})</p>}
 
       <div className="bg-white rounded-xl border border-gray-200 p-6">

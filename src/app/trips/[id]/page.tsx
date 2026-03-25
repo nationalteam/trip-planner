@@ -8,7 +8,7 @@ import ActivityCard from '@/components/ActivityCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
-import { buildMapProposals } from '@/lib/map-proposals';
+import { buildMapProposals as buildMapActivities } from '@/lib/map-proposals';
 import { normalizeActivities, normalizeItineraryItems } from './adapters';
 import type { Activity, ChatPlanResponse, ItineraryItem, Tab, Trip } from './types';
 
@@ -23,7 +23,7 @@ export default function TripDetailPage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>('proposals');
+  const [activeTab, setActiveTab] = useState<Tab>('activities');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [organizing, setOrganizing] = useState(false);
@@ -63,18 +63,18 @@ export default function TripDetailPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [tripRes, proposalsRes, itineraryRes] = await Promise.all([
+      const [tripRes, activitiesRes, itineraryRes] = await Promise.all([
         fetch(`/api/trips/${tripId}`),
         fetch(`/api/trips/${tripId}/activities?sortBy=${sortBy}&order=${sortOrder}`),
         fetch(`/api/trips/${tripId}/itinerary`),
       ]);
-      const [tripData, proposalsData, itineraryData] = await Promise.all([
+      const [tripData, activitiesData, itineraryData] = await Promise.all([
         tripRes.json(),
-        proposalsRes.json(),
+        activitiesRes.json(),
         itineraryRes.json(),
       ]);
       setTrip(tripData);
-      setActivities(normalizeActivities(proposalsData));
+      setActivities(normalizeActivities(activitiesData));
       setItinerary(normalizeItineraryItems(itineraryData));
       if (tripData?.cities) {
         const cities = JSON.parse(tripData.cities);
@@ -103,7 +103,7 @@ export default function TripDetailPage() {
     setScheduleDurationDaysInput(trip.durationDays != null ? String(trip.durationDays) : '');
   }, [trip, editingSchedule]);
 
-  const mapProposals = useMemo(() => buildMapProposals(activities, itinerary), [activities, itinerary]);
+  const mapActivities = useMemo(() => buildMapActivities(activities, itinerary), [activities, itinerary]);
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -115,15 +115,15 @@ export default function TripDetailPage() {
         body: JSON.stringify({ city: selectedCity }),
       });
       if (res.ok) {
-        const newProposals = await res.json();
-        setActivities(prev => [...normalizeActivities(newProposals), ...prev]);
+        const newActivities = await res.json();
+        setActivities(prev => [...normalizeActivities(newActivities), ...prev]);
       }
     } finally {
       setGenerating(false);
     }
   }
 
-  async function handleCreateManualProposal(e: React.FormEvent) {
+  async function handleCreateManualActivity(e: React.FormEvent) {
     e.preventDefault();
     setCreatingManual(true);
     try {
@@ -154,7 +154,7 @@ export default function TripDetailPage() {
         setIsManualFormOpen(false);
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || 'Failed to create proposal. Please check the form and try again.');
+        alert(data.error || 'Failed to create activity. Please check the form and try again.');
       }
     } finally {
       setCreatingManual(false);
@@ -185,21 +185,21 @@ export default function TripDetailPage() {
     }
   }
 
-  async function handleApprove(proposalId: string) {
-    const res = await fetch(`/api/activities/${proposalId}/approve`, { method: 'POST' });
+  async function handleApprove(activityId: string) {
+    const res = await fetch(`/api/activities/${activityId}/approve`, { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
-      setActivities(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'approved' } : p));
+      setActivities(prev => prev.map(p => p.id === activityId ? { ...p, status: 'approved' } : p));
       if (data.itineraryItem) {
         setItinerary(prev => [...prev, ...normalizeItineraryItems([data.itineraryItem])]);
       }
     }
   }
 
-  async function handleReject(proposalId: string) {
-    const res = await fetch(`/api/activities/${proposalId}/reject`, { method: 'POST' });
+  async function handleReject(activityId: string) {
+    const res = await fetch(`/api/activities/${activityId}/reject`, { method: 'POST' });
     if (res.ok) {
-      setActivities(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'rejected' } : p));
+      setActivities(prev => prev.map(p => p.id === activityId ? { ...p, status: 'rejected' } : p));
     }
   }
 
@@ -297,15 +297,15 @@ export default function TripDetailPage() {
     });
   }
 
-  async function handleDeleteProposal(proposalId: string) {
+  async function handleDeleteActivity(activityId: string) {
     setConfirmDialog({
       message: 'Delete this activity? This action cannot be undone.',
       onConfirm: async () => {
         setConfirmDialog(null);
-        const res = await fetch(`/api/activities/${proposalId}`, { method: 'DELETE' });
+        const res = await fetch(`/api/activities/${activityId}`, { method: 'DELETE' });
         if (res.ok) {
-          setActivities(prev => prev.filter(p => p.id !== proposalId));
-          setItinerary(prev => prev.filter(item => item.activity.id !== proposalId));
+          setActivities(prev => prev.filter(p => p.id !== activityId));
+          setItinerary(prev => prev.filter(item => item.activity.id !== activityId));
         } else {
           alert('Failed to delete activity. Please try again.');
         }
@@ -512,7 +512,7 @@ export default function TripDetailPage() {
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
   const filteredActivities = filterStatus === 'all' ? activities : activities.filter((activity) => activity.status === filterStatus);
-  const arrangedMapCount = mapProposals.filter((proposal) => proposal.isArranged).length;
+  const arrangedMapCount = mapActivities.filter((activity) => activity.isArranged).length;
   const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
   const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;
 
@@ -634,7 +634,7 @@ export default function TripDetailPage() {
       )}
 
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
-        {(['proposals', 'itinerary', 'map', ...(canEdit ? (['ai'] as Tab[]) : [])] as Tab[]).map(tab => (
+        {(['activities', 'itinerary', 'map', ...(canEdit ? (['ai'] as Tab[]) : [])] as Tab[]).map(tab => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
@@ -644,12 +644,12 @@ export default function TripDetailPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            {tab === 'proposals' ? '💡 Activities' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
+            {tab === 'activities' ? '💡 Activities' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
           </button>
         ))}
       </div>
 
-      {activeTab === 'proposals' && (
+      {activeTab === 'activities' && (
         <div>
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <select
@@ -709,7 +709,7 @@ export default function TripDetailPage() {
                 type="button"
                 onClick={() => setIsManualFormOpen(prev => !prev)}
                 aria-expanded={isManualFormOpen}
-                aria-controls="manual-proposal-form"
+                aria-controls="manual-activity-form"
                 className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-100 rounded-xl transition-colors"
               >
                 <span>
@@ -720,8 +720,8 @@ export default function TripDetailPage() {
               </button>
               {isManualFormOpen && (
                 <form
-                  id="manual-proposal-form"
-                  onSubmit={handleCreateManualProposal}
+                  id="manual-activity-form"
+                  onSubmit={handleCreateManualActivity}
                   className="px-4 pb-4 pt-1 border-t border-gray-200"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -752,13 +752,13 @@ export default function TripDetailPage() {
                     type="button"
                     onClick={() => setIsManualAdvancedOpen(prev => !prev)}
                     aria-expanded={isManualAdvancedOpen}
-                    aria-controls="manual-proposal-advanced"
+                    aria-controls="manual-activity-advanced"
                     className="mt-3 text-xs text-blue-600 hover:text-blue-700 font-medium"
                   >
                     {isManualAdvancedOpen ? 'Hide advanced details' : 'Show advanced details'}
                   </button>
                   {isManualAdvancedOpen && (
-                    <div id="manual-proposal-advanced" className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div id="manual-activity-advanced" className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                       <select
                         value={manualType}
                         onChange={e => setManualType(e.target.value)}
@@ -840,7 +840,7 @@ export default function TripDetailPage() {
                   activity={activity}
                   onApprove={handleApprove}
                   onReject={handleReject}
-                  onDelete={canEdit ? handleDeleteProposal : undefined}
+                  onDelete={canEdit ? handleDeleteActivity : undefined}
                   canEdit={canEdit}
                 />
               ))}
@@ -912,18 +912,18 @@ export default function TripDetailPage() {
             </button>
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            Showing {arrangedMapCount} arranged and {mapProposals.length - arrangedMapCount} unarranged activities (rejected hidden)
+            Showing {arrangedMapCount} arranged and {mapActivities.length - arrangedMapCount} unarranged activities (rejected hidden)
           </p>
           {mapProvider === 'google' ? (
-            <GoogleMapView proposals={mapProposals} canEdit={canEdit} onAddPlace={handleAddGooglePlace} focusTrigger={mapFocusTrigger} />
+            <GoogleMapView proposals={mapActivities} canEdit={canEdit} onAddPlace={handleAddGooglePlace} focusTrigger={mapFocusTrigger} />
           ) : (
-            mapProposals.length === 0 ? (
+            mapActivities.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="text-5xl mb-3">🗺️</div>
                 <p className="text-gray-500">Generate activities to see them on the map</p>
               </div>
             ) : (
-              <MapView proposals={mapProposals} />
+              <MapView proposals={mapActivities} />
             )
           )}
         </div>

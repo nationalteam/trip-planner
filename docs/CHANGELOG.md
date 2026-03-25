@@ -46,3 +46,4 @@
 2026-03-25 | refactor(chat): switch action-plan prompt/contracts to activity-first naming with legacy normalization coverage (#0)
 2026-03-25 | test(api): consolidate legacy proposals deprecation header coverage across routes (#0)
 2026-03-25 | refactor(chat): align chatbot runtime error messages with activity terminology (#0)
+2026-03-25 | refactor(trip-detail): align internal tab/map/manual naming from proposals to activities (#0)

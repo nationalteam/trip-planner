@@ -1,4 +1,4 @@
-import { GET, POST } from '@/app/api/trips/[id]/proposals/route';
+import { GET, POST } from '@/app/api/trips/[id]/activities/route';
 import { NextRequest } from 'next/server';
 
 jest.mock('@/lib/prisma', () => ({
@@ -46,36 +46,34 @@ const mockGeocodeWithGoogleMaps = geocodeWithGoogleMaps as jest.Mock;
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockRequireTripRole = requireTripRole as jest.Mock;
 
-describe('GET /api/trips/[id]/proposals', () => {
+describe('GET /api/trips/[id]/activities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
     mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
   });
 
-  it('returns proposals for a trip', async () => {
+  it('returns activities for a trip', async () => {
     const fakeProposals = [
       { id: 'p-1', tripId: 'trip-1', title: 'Eiffel Tower', status: 'pending' },
     ];
     (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue(fakeProposals);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals');
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities');
     const context = { params: Promise.resolve({ id: 'trip-1' }) };
     const res = await GET(req, context);
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('Deprecation')).toBe('true');
-    expect(res.headers.get('Link')).toContain('/api/trips/trip-1/activities');
-    expect(res.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
-    expect(res.headers.get('X-Legacy-Endpoint')).toBe('proposals');
+    expect(res.headers.get('Deprecation')).toBeNull();
+    expect(res.headers.get('Link')).toBeNull();
     expect(data).toEqual(fakeProposals);
   });
 
-  it('supports sorting proposals by a specific field and direction', async () => {
+  it('supports sorting activities by a specific field and direction', async () => {
     (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals?sortBy=title&order=asc');
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities?sortBy=title&order=asc');
     const context = { params: Promise.resolve({ id: 'trip-1' }) };
     const res = await GET(req, context);
 
@@ -87,7 +85,7 @@ describe('GET /api/trips/[id]/proposals', () => {
   });
 });
 
-describe('POST /api/trips/[id]/proposals', () => {
+describe('POST /api/trips/[id]/activities', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGeocodeWithGoogleMaps.mockReset();
@@ -100,7 +98,7 @@ describe('POST /api/trips/[id]/proposals', () => {
   it('returns 404 when trip does not exist', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(null);
 
-    const req = new NextRequest('http://localhost/api/trips/bad-id/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/bad-id/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -113,7 +111,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     expect(data.error).toBe('Trip not found');
   });
 
-  it('creates a manual proposal without calling AI generation', async () => {
+  it('creates a manual activity without calling AI generation', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
     const savedProposal = {
       id: 'p-manual-1',
@@ -135,7 +133,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 48.8606, lng: 2.3376 });
     (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(savedProposal);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({
         mode: 'manual',
@@ -178,7 +176,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({
         mode: 'manual',
@@ -192,7 +190,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe('Manual proposal requires non-empty title, description, and city');
+    expect(data.error).toBe('Manual activity requires non-empty title, description, and city');
     expect(mockPrisma.proposal.create).not.toHaveBeenCalled();
     expect(mockGenerate).not.toHaveBeenCalled();
   });
@@ -218,7 +216,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
     (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(savedProposal);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({
         mode: 'manual',
@@ -268,7 +266,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(savedProposal);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({
         mode: 'google_place',
@@ -299,7 +297,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.proposal.findFirst as jest.Mock).mockResolvedValue({ id: 'existing' });
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({
         mode: 'google_place',
@@ -322,7 +320,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({
         mode: 'google_place',
@@ -363,7 +361,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockGenerate.mockResolvedValue(fakeGenerated);
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue(savedProposals);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -390,7 +388,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockGenerate.mockResolvedValue([]);
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -424,7 +422,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 136.7253, lng: 34.4548 });
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -490,7 +488,7 @@ describe('POST /api/trips/[id]/proposals', () => {
       .mockResolvedValueOnce({ lat: 2.2945, lng: 48.8584 });
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -527,7 +525,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 48.8606, lng: 2.3376 });
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -565,7 +563,7 @@ describe('POST /api/trips/[id]/proposals', () => {
     mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 48.8606, lng: 2.3376 });
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -606,7 +604,7 @@ describe('POST /api/trips/[id]/proposals', () => {
       .mockResolvedValueOnce({ lat: 48.8606, lng: 2.3376 });
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },

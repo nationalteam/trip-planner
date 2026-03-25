@@ -49,3 +49,4 @@
 2026-03-25 | refactor(trip-detail): align internal tab/map/manual naming from proposals to activities (#0)
 2026-03-25 | refactor(chatbot): remove legacy suggestProposalCreateActionFromTitle helper export (#0)
 2026-03-25 | refactor(api): remove legacy by-id /api/proposals routes and make /api/activities handlers primary (#0)
+2026-03-25 | refactor(api): remove legacy trip-level /api/trips/[id]/proposals routes and deprecation helper (#0)

@@ -33,7 +33,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const result = await executeTripActions(id, auth.id, actionPlan);
-    return NextResponse.json(result);
+    const activities = Array.isArray((result as { activities?: unknown }).activities)
+      ? (result as { activities: unknown[] }).activities
+      : (Array.isArray((result as { proposals?: unknown }).proposals)
+        ? (result as { proposals: unknown[] }).proposals
+        : []);
+    const payload = {
+      ...result,
+      activities,
+    } as Record<string, unknown>;
+    delete payload.proposals;
+    return NextResponse.json(payload);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to execute actions' },

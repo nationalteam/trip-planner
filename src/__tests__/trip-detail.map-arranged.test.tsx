@@ -58,7 +58,7 @@ describe('Trip detail map arranged state', () => {
         } as Response;
       }
 
-      if (url.startsWith('/api/trips/trip-1/proposals?') && method === 'GET') {
+      if (url.startsWith('/api/trips/trip-1/activities?') && method === 'GET') {
         return {
           ok: true,
           status: 200,
@@ -180,7 +180,7 @@ describe('Trip detail map arranged state', () => {
         } as Response;
       }
 
-      if (url.startsWith('/api/trips/trip-1/proposals?') && method === 'GET') {
+      if (url.startsWith('/api/trips/trip-1/activities?') && method === 'GET') {
         return {
           ok: true,
           status: 200,

@@ -57,6 +57,8 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     expect(res.status).toBe(200);
     expect(data.results).toEqual([{ type: 'proposal.create', status: 'success' }]);
     expect(data.trip?.name).toBe('Updated Trip');
+    expect(data.activities).toEqual([{ id: 'p-1', title: 'New Place' }]);
+    expect(data.proposals).toBeUndefined();
     expect(mockExecuteTripActions).toHaveBeenCalledWith(
       'trip-1',
       'owner-1',

@@ -35,3 +35,6 @@
 2026-03-25 | refactor(chat): adopt activity-first chat actions with legacy proposal aliases (#0)
 2026-03-25 | refactor(trip): normalize proposal payloads into activity-first trip detail state (#0)
 2026-03-25 | fix(ci): make bump-version output assignment bash-safe (#5)
+2026-03-25 | refactor(frontend): switch trip detail calls from proposals endpoints to activities aliases (#0)
+2026-03-25 | refactor(chat): unify execute response on activities and drop proposals fallback in trip detail (#0)
+2026-03-25 | test(api): add integration coverage for activities route behavior and non-deprecated headers (#0)

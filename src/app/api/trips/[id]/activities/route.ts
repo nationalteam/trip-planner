@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generateProposals } from '@/lib/llm';
+import { generateActivities } from '@/lib/llm';
 import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     existingActivities.filter((activity) => activity.city === city)
   );
 
-  const generated: GeneratedActivity[] = await generateProposals(allPreferences, city, existingActivities);
+  const generated: GeneratedActivity[] = await generateActivities(allPreferences, city, existingActivities);
   const withCoordinates = await Promise.all(generated.map(async (activity) => {
     const geocoded = await geocodeWithGoogleMaps(`${activity.title}, ${activity.city || city}`);
     return geocoded ? { ...activity, ...geocoded } : null;

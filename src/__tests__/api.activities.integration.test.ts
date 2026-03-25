@@ -29,7 +29,7 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 jest.mock('@/lib/llm', () => ({
-  generateProposals: jest.fn(),
+  generateActivities: jest.fn(),
 }));
 
 jest.mock('@/lib/geocoding', () => ({
@@ -43,12 +43,12 @@ jest.mock('@/lib/auth', () => ({
 }));
 
 import { prisma } from '@/lib/prisma';
-import { generateProposals } from '@/lib/llm';
+import { generateActivities } from '@/lib/llm';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
-const mockGenerateProposals = generateProposals as jest.Mock;
+const mockGenerateProposals = generateActivities as jest.Mock;
 const mockGeocodeWithGoogleMaps = geocodeWithGoogleMaps as jest.Mock;
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockRequireTripRole = requireTripRole as jest.Mock;

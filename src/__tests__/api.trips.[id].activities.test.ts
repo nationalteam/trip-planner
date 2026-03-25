@@ -22,7 +22,7 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 jest.mock('@/lib/llm', () => ({
-  generateProposals: jest.fn(),
+  generateActivities: jest.fn(),
 }));
 
 jest.mock('@/lib/geocoding', () => ({
@@ -36,12 +36,12 @@ jest.mock('@/lib/auth', () => ({
 }));
 
 import { prisma } from '@/lib/prisma';
-import { generateProposals } from '@/lib/llm';
+import { generateActivities } from '@/lib/llm';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
-const mockGenerate = generateProposals as jest.Mock;
+const mockGenerate = generateActivities as jest.Mock;
 const mockGeocodeWithGoogleMaps = geocodeWithGoogleMaps as jest.Mock;
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockRequireTripRole = requireTripRole as jest.Mock;
@@ -375,7 +375,7 @@ describe('POST /api/trips/[id]/activities', () => {
     expect(mockGenerate).toHaveBeenCalledWith([{ preferredLanguage: 'zh-TW' }], 'Paris', []);
   });
 
-  it('passes all existing proposals (including pending) to generateProposals to avoid duplicates', async () => {
+  it('passes all existing proposals (including pending) to generateActivities to avoid duplicates', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
     const existingProposals = [
       { id: 'p-0', tripId: 'trip-1', title: 'Eiffel Tower', status: 'pending' },

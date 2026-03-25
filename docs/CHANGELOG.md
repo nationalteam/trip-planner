@@ -57,5 +57,6 @@
 2026-03-25 | test(rename): align trip-detail manual/adapters test wording to activity terminology (#0)
 2026-03-25 | refactor(ui): make map component inputs activity-first with legacy proposals fallback (#0)
 2026-03-25 | test(rename): update trip detail map-arranged test ids to activity terminology (#0)
+2026-03-25 | refactor(llm): introduce activity-first helper names with proposal aliases for compatibility (#0)
+2026-03-25 | docs(rename): add Prisma activity migration design with phased rollback plan (#0)
 2026-03-25 | refactor(ui): adapt trips API counts to activity-first card counts model (#0)
-

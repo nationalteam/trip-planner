@@ -3,9 +3,9 @@ jest.mock('@/lib/prisma', () => ({
 }));
 
 jest.mock('@/lib/llm', () => ({
-  fillProposalDetails: jest.fn(),
+  fillActivityDetails: jest.fn(),
   generateChatActionPlan: jest.fn(),
-  generateProposals: jest.fn(),
+  generateActivities: jest.fn(),
   organizeItinerary: jest.fn(),
 }));
 

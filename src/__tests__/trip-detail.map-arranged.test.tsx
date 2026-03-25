@@ -228,7 +228,7 @@ describe('Trip detail map arranged state', () => {
     const firstTrigger = (mockGoogleMapView.mock.calls.at(-1)?.[0] as { focusTrigger?: number }).focusTrigger;
     expect(typeof firstTrigger).toBe('number');
 
-    await userEvent.click(screen.getByRole('button', { name: /proposals/i }));
+    await userEvent.click(screen.getByRole('button', { name: /activities/i }));
     await userEvent.click(screen.getByRole('button', { name: /map/i }));
     await waitFor(() => {
       const nextTrigger = (mockGoogleMapView.mock.calls.at(-1)?.[0] as { focusTrigger?: number }).focusTrigger;

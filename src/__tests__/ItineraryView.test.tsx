@@ -35,7 +35,7 @@ describe('ItineraryView', () => {
   it('shows an empty state message when there are no items', () => {
     render(<ItineraryView items={[]} />);
     expect(screen.getByText(/No itinerary items yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/Approve proposals to build your itinerary/i)).toBeInTheDocument();
+    expect(screen.getByText(/Approve activities to build your itinerary/i)).toBeInTheDocument();
   });
 
   it('renders a day heading for each day in the itinerary', () => {

@@ -68,7 +68,7 @@ export default function ProposalCard({ proposal, onApprove, onReject, onDelete, 
           {onDelete && canEdit && (
             <button
               onClick={() => onDelete(proposal.id)}
-              aria-label="Delete proposal"
+              aria-label="Delete activity"
               className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               🗑️

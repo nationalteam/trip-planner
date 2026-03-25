@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Trip Planner',
-  description: 'AI-powered trip planning with personalized proposals',
+  description: 'AI-powered trip planning with personalized activities',
 };
 
 export default function RootLayout({

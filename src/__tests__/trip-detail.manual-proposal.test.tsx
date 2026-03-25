@@ -101,10 +101,10 @@ describe('Trip detail manual proposal form', () => {
       expect(screen.getByText('Paris Trip')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /add proposal manually/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add activity manually/i })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Title')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /add proposal manually/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add activity manually/i }));
 
     expect(screen.getByPlaceholderText('Title')).toBeInTheDocument();
 
@@ -112,7 +112,7 @@ describe('Trip detail manual proposal form', () => {
     await userEvent.clear(screen.getByPlaceholderText('Description'));
     await userEvent.type(screen.getByPlaceholderText('Description'), 'Great museum');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add Manual Proposal' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add Manual Activity' }));
 
     await waitFor(() => {
       expect(screen.queryByPlaceholderText('Title')).not.toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('Trip detail manual proposal form', () => {
       expect(screen.getByText('Paris Trip')).toBeInTheDocument();
     });
 
-    await userEvent.click(screen.getByRole('button', { name: /add proposal manually/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add activity manually/i }));
 
     const advancedToggle = screen.getByRole('button', { name: /show advanced details/i });
     expect(advancedToggle).toHaveAttribute('aria-expanded', 'false');

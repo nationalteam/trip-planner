@@ -4,7 +4,7 @@ import { POST as approveActivity } from '@/app/api/activities/[id]/approve/route
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    proposal: {
+    activity: {
       findMany: jest.fn(),
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -62,7 +62,7 @@ describe('activities route integration', () => {
 
   it('GET /api/trips/[id]/activities returns data without deprecation headers', async () => {
     const fakeActivities = [{ id: 'a-1', tripId: 'trip-1', title: 'Senso-ji', status: 'pending' }];
-    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue(fakeActivities);
+    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(fakeActivities);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities?sortBy=title&order=asc');
     const res = await listActivities(req, { params: Promise.resolve({ id: 'trip-1' }) });
@@ -72,7 +72,7 @@ describe('activities route integration', () => {
     expect(data).toEqual(fakeActivities);
     expect(res.headers.get('Deprecation')).toBeNull();
     expect(res.headers.get('Link')).toBeNull();
-    expect(mockPrisma.proposal.findMany).toHaveBeenCalledWith({
+    expect(mockPrisma.activity.findMany).toHaveBeenCalledWith({
       where: { tripId: 'trip-1' },
       orderBy: { title: 'asc' },
     });
@@ -80,7 +80,7 @@ describe('activities route integration', () => {
 
   it('POST /api/trips/[id]/activities (manual) creates activity without deprecation headers', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1', name: 'Tokyo', cities: '["Tokyo"]' });
-    (mockPrisma.proposal.findMany as jest.Mock).mockResolvedValue([]);
+    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue([]);
     mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 35.7101, lng: 139.8107 });
     const saved = {
       id: 'a-1',
@@ -96,7 +96,7 @@ describe('activities route integration', () => {
       durationMinutes: null,
       status: 'pending',
     };
-    (mockPrisma.proposal.create as jest.Mock).mockResolvedValue(saved);
+    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(saved);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
@@ -133,13 +133,13 @@ describe('activities route integration', () => {
       suggestedTime: 'morning',
       durationMinutes: 90,
       status: 'pending',
-      itineraryItem: { id: 'ii-1', tripId: 'trip-1', proposalId: 'a-1', day: 1, timeBlock: 'morning' },
+      itineraryItem: { id: 'ii-1', tripId: 'trip-1', activityId: 'a-1', day: 1, timeBlock: 'morning' },
       createdAt: new Date(),
     };
     const updated = { ...baseProposal, status: 'approved' };
-    const fullItem = { ...baseProposal.itineraryItem, proposal: updated };
-    (mockPrisma.proposal.findUnique as jest.Mock).mockResolvedValue(baseProposal);
-    (mockPrisma.proposal.update as jest.Mock).mockResolvedValue(updated);
+    const fullItem = { ...baseProposal.itineraryItem, activity: updated };
+    (mockPrisma.activity.findUnique as jest.Mock).mockResolvedValue(baseProposal);
+    (mockPrisma.activity.update as jest.Mock).mockResolvedValue(updated);
     (mockPrisma.itineraryItem.findUnique as jest.Mock).mockResolvedValue(fullItem);
 
     const req = new NextRequest('http://localhost/api/activities/a-1/approve', { method: 'POST' });
@@ -147,7 +147,7 @@ describe('activities route integration', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.proposal.status).toBe('approved');
+    expect(data.activity.status).toBe('approved');
     expect(res.headers.get('Deprecation')).toBeNull();
     expect(res.headers.get('Link')).toBeNull();
   });

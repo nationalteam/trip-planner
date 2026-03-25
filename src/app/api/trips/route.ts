@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: 'desc' },
     include: {
       _count: {
-        select: { proposals: true, itineraryItems: true },
+        select: { activities: true, itineraryItems: true },
       },
     },
   });

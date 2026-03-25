@@ -14,7 +14,7 @@ model Trip {
   durationDays Int?
   itineraryVisibleDays Int?
   createdAt DateTime @default(now())
-  proposals Proposal[]
+  activities Activity[]
   itineraryItems ItineraryItem[]
   members   TripMember[]
 }
@@ -60,7 +60,7 @@ model TripMember {
   @@unique([tripId, userId])
 }
 
-model Proposal {
+model Activity {
   id              String          @id @default(cuid())
   tripId          String
   trip            Trip            @relation(fields: [tripId], references: [id])
@@ -87,8 +87,8 @@ model ItineraryItem {
   id         String   @id @default(cuid())
   tripId     String
   trip       Trip     @relation(fields: [tripId], references: [id])
-  proposalId String   @unique
-  proposal   Proposal @relation(fields: [proposalId], references: [id])
+  activityId String   @unique
+  activity   Activity @relation(fields: [activityId], references: [id])
   day        Int
   timeBlock  String
   order      Int      @default(0)

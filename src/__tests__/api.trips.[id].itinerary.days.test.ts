@@ -93,7 +93,7 @@ describe('DELETE /api/trips/[id]/itinerary/days', () => {
       itineraryVisibleDays: 5,
     };
     const shiftedItems = [
-      { id: 'ii-2', day: 2, timeBlock: 'morning', order: 0, proposal: { id: 'p-2', title: 'x' } },
+      { id: 'ii-2', day: 2, timeBlock: 'morning', order: 0, activity: { id: 'p-2', title: 'x' } },
     ];
 
     (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb) =>

@@ -37,6 +37,16 @@ describe('chatbot action validation with activity naming', () => {
     });
   });
 
+  it('rejects activity.create payload with legacy proposalType field', () => {
+    expect(() => validateChatAction({
+      type: 'activity.create',
+      title: 'Eiffel Tower',
+      description: 'Landmark',
+      city: 'Paris',
+      proposalType: 'place',
+    })).toThrow('Unsupported field "proposalType"');
+  });
+
   it('rejects legacy proposal.create payload', () => {
     expect(() => validateChatAction({
       type: 'proposal.create',
@@ -68,7 +78,7 @@ describe('chatbot action validation with activity naming', () => {
   it('rejects legacy itinerary.addProposal payload', () => {
     expect(() => validateChatAction({
       type: 'itinerary.addProposal',
-      proposalId: 'p-legacy',
+      activityId: 'p-legacy',
       day: 1,
       timeBlock: 'morning',
     })).toThrow('Unsupported action type.');
@@ -82,7 +92,7 @@ describe('chatbot action validation with activity naming', () => {
   it('rejects legacy action plan item types', () => {
     expect(() => validateChatActionPlan([
       { type: 'proposal.generate', city: 'Paris' },
-      { type: 'proposal.delete', proposalId: 'p-1' },
+      { type: 'proposal.delete', activityId: 'p-1' },
     ])).toThrow('Unsupported action type.');
   });
 });

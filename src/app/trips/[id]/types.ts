@@ -32,7 +32,6 @@ export interface ItineraryItem {
   timeBlock: string;
   order: number;
   activity: Activity;
-  proposal?: Activity;
 }
 
 export type Tab = 'activities' | 'itinerary' | 'map' | 'ai';

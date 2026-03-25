@@ -7,13 +7,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const proposal = await prisma.proposal.findUnique({ where: { id } });
-  if (!proposal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const activity = await prisma.activity.findUnique({ where: { id } });
+  if (!activity) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const access = await requireTripRole(proposal.tripId, auth.id, ['owner']);
+  const access = await requireTripRole(activity.tripId, auth.id, ['owner']);
   if (!access.ok) return buildForbiddenResponse();
 
-  const updated = await prisma.proposal.update({
+  const updated = await prisma.activity.update({
     where: { id },
     data: { status: 'rejected' },
   });

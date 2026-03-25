@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const items = await prisma.itineraryItem.findMany({
     where: { tripId: id },
-    include: { proposal: true },
+    include: { activity: true },
     orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
   });
   return NextResponse.json(items);
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const items = await prisma.itineraryItem.findMany({
       where: { tripId: id },
-      include: { proposal: true },
+      include: { activity: true },
       orderBy: [{ day: 'asc' }],
     });
     if (items.length === 0) {
@@ -67,13 +67,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       )
     );
 
-    const updatedWithProposal = await prisma.itineraryItem.findMany({
+    const updatedWithActivity = await prisma.itineraryItem.findMany({
       where: { id: { in: updatedItems.map((item: ItemWithId) => item.id) } },
-      include: { proposal: true },
+      include: { activity: true },
       orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
     });
 
-    return NextResponse.json(updatedWithProposal);
+    return NextResponse.json(updatedWithActivity);
   } catch (error) {
     console.error(`Failed to organize itinerary for trip ${id}`, error);
     return NextResponse.json({ error: 'Failed to organize itinerary' }, { status: 500 });
@@ -118,7 +118,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         prisma.itineraryItem.update({
           where: { id: item.id },
           data: { day: item.day, timeBlock: item.timeBlock, order: item.order },
-          include: { proposal: true },
+          include: { activity: true },
         })
       )
     );

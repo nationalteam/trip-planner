@@ -24,7 +24,9 @@ jest.mock('@/components/MapView', () => function MockMapView() {
   return <div data-testid="map-view" />;
 });
 
-const mockGoogleMapView = jest.fn(() => <div data-testid="google-map-view" />);
+const mockGoogleMapView: jest.MockedFunction<(props: unknown) => JSX.Element> = jest.fn(
+  () => <div data-testid="google-map-view" />
+);
 jest.mock('@/components/GoogleMapView', () => ({
   __esModule: true,
   default: (props: unknown) => mockGoogleMapView(props),
@@ -116,7 +118,7 @@ describe('Trip detail map arranged state', () => {
               day: 1,
               timeBlock: 'morning',
               order: 0,
-              proposal: {
+              activity: {
                 id: 'p-arranged',
                 type: 'place',
                 title: 'Senso-ji',
@@ -151,14 +153,17 @@ describe('Trip detail map arranged state', () => {
       expect(mockGoogleMapView).toHaveBeenCalled();
     });
 
-    const lastCall = mockGoogleMapView.mock.calls.at(-1);
-    const props = lastCall?.[0] as { activities?: Array<{ id: string; isArranged: boolean; status: string }>; focusTrigger?: number };
-    expect(props.activities).toEqual([
-      expect.objectContaining({ id: 'p-arranged', isArranged: true, status: 'pending' }),
-      expect.objectContaining({ id: 'p-unarranged', isArranged: false, status: 'approved' }),
-    ]);
-    expect(props.activities?.find((activity) => activity.id === 'p-rejected')).toBeUndefined();
-    expect(typeof props.focusTrigger).toBe('number');
+    await waitFor(() => {
+      const lastCall = mockGoogleMapView.mock.calls.at(-1);
+      expect(lastCall).toBeDefined();
+      const props = lastCall?.[0] as { activities?: Array<{ id: string; isArranged: boolean; status: string }>; focusTrigger?: number };
+      expect(props.activities).toEqual([
+        expect.objectContaining({ id: 'p-arranged', isArranged: true, status: 'pending' }),
+        expect.objectContaining({ id: 'p-unarranged', isArranged: false, status: 'approved' }),
+      ]);
+      expect(props.activities?.find((activity) => activity.id === 'p-rejected')).toBeUndefined();
+      expect(typeof props.focusTrigger).toBe('number');
+    });
   });
 
   it('increments map focus trigger when entering map tab', async () => {
@@ -225,7 +230,9 @@ describe('Trip detail map arranged state', () => {
     await waitFor(() => {
       expect(mockGoogleMapView).toHaveBeenCalled();
     });
-    const firstTrigger = (mockGoogleMapView.mock.calls.at(-1)?.[0] as { focusTrigger?: number }).focusTrigger;
+    const firstCall = mockGoogleMapView.mock.calls.at(-1);
+    expect(firstCall).toBeDefined();
+    const firstTrigger = (firstCall?.[0] as { focusTrigger?: number }).focusTrigger;
     expect(typeof firstTrigger).toBe('number');
 
     await userEvent.click(screen.getByRole('button', { name: /activities/i }));

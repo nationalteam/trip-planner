@@ -2,7 +2,6 @@ import type { Activity, ItineraryItem } from './types';
 
 type RawItineraryItem = Omit<ItineraryItem, 'activity'> & {
   activity?: Activity | null;
-  proposal?: Activity | null;
 };
 
 export function normalizeActivities(value: unknown): Activity[] {
@@ -15,12 +14,11 @@ export function normalizeItineraryItems(value: unknown): ItineraryItem[] {
 
   return (value as RawItineraryItem[])
     .map((item) => {
-      const activity = item.activity ?? item.proposal;
+      const activity = item.activity;
       if (!activity) return null;
-      const normalized: RawItineraryItem = { ...item, activity };
-      delete normalized.proposal;
       return {
-        ...normalized,
+        ...item,
+        activity,
       };
     })
     .filter((item): item is ItineraryItem => item !== null);

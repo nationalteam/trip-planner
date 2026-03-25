@@ -62,3 +62,4 @@
 2026-03-25 | docs(rename): add Prisma activity migration design with phased rollback plan (#0)
 2026-03-25 | refactor(rename)!: remove remaining app-layer proposal aliases and converge on activity-first naming (#0)
 2026-03-25 | refactor(ui): adapt trips API counts to activity-first card counts model (#0)
+2026-03-25 | refactor(server)!: hard-cut server/prisma naming from proposal to activity (#0)

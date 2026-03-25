@@ -98,7 +98,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const updatedItinerary = await tx.itineraryItem.findMany({
       where: { tripId: id },
-      include: { proposal: true },
+      include: { activity: true },
       orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
     });
 

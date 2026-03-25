@@ -10,23 +10,23 @@ const makeItem = (overrides: Partial<{
   day: number;
   timeBlock: string;
   order: number;
-  proposalType: string;
-  proposalTitle: string;
-  proposalDescription: string;
-  proposalCity: string;
-  proposalDuration: number | null;
+  activityType: string;
+  activityTitle: string;
+  activityDescription: string;
+  activityCity: string;
+  activityDuration: number | null;
 }> = {}) => ({
   id: overrides.id ?? 'item-1',
   day: overrides.day ?? 1,
   timeBlock: overrides.timeBlock ?? 'morning',
   order: overrides.order ?? 0,
-  proposal: {
-    id: 'proposal-1',
-    title: overrides.proposalTitle ?? 'Eiffel Tower',
-    description: overrides.proposalDescription ?? 'Iconic landmark',
-    type: overrides.proposalType ?? 'place',
-    city: overrides.proposalCity ?? 'Paris',
-    durationMinutes: overrides.proposalDuration === undefined ? 60 : overrides.proposalDuration,
+  activity: {
+    id: 'activity-1',
+    title: overrides.activityTitle ?? 'Eiffel Tower',
+    description: overrides.activityDescription ?? 'Iconic landmark',
+    type: overrides.activityType ?? 'place',
+    city: overrides.activityCity ?? 'Paris',
+    durationMinutes: overrides.activityDuration === undefined ? 60 : overrides.activityDuration,
     suggestedTime: 'morning',
   },
 });
@@ -48,27 +48,27 @@ describe('ItineraryView', () => {
     expect(screen.getByText('Day 2')).toBeInTheDocument();
   });
 
-  it('renders the proposal title and description', () => {
-    const items = [makeItem({ proposalTitle: 'Louvre Museum', proposalDescription: 'World famous art museum' })];
+  it('renders the activity title and description', () => {
+    const items = [makeItem({ activityTitle: 'Louvre Museum', activityDescription: 'World famous art museum' })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText('Louvre Museum')).toBeInTheDocument();
     expect(screen.getByText('World famous art museum')).toBeInTheDocument();
   });
 
-  it('renders the city name for a proposal', () => {
-    const items = [makeItem({ proposalCity: 'Paris' })];
+  it('renders the city name for a activity', () => {
+    const items = [makeItem({ activityCity: 'Paris' })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText('Paris')).toBeInTheDocument();
   });
 
   it('renders duration when present', () => {
-    const items = [makeItem({ proposalDuration: 120 })];
+    const items = [makeItem({ activityDuration: 120 })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText(/120min/)).toBeInTheDocument();
   });
 
   it('does not render duration when durationMinutes is null', () => {
-    const items = [makeItem({ proposalDuration: null })];
+    const items = [makeItem({ activityDuration: null })];
     render(<ItineraryView items={items} />);
     expect(screen.queryByText(/min/)).not.toBeInTheDocument();
   });
@@ -106,7 +106,7 @@ describe('ItineraryView', () => {
   it('groups multiple time blocks within the same day', () => {
     const items = [
       makeItem({ id: 'a', day: 1, timeBlock: 'morning' }),
-      makeItem({ id: 'b', day: 1, timeBlock: 'afternoon', proposalTitle: 'Afternoon café' }),
+      makeItem({ id: 'b', day: 1, timeBlock: 'afternoon', activityTitle: 'Afternoon café' }),
     ];
     render(<ItineraryView items={items} />);
     // Only one Day 1 heading
@@ -117,22 +117,22 @@ describe('ItineraryView', () => {
   });
 
   it('renders food type icon', () => {
-    const items = [makeItem({ proposalType: 'food' })];
+    const items = [makeItem({ activityType: 'food' })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText('🍽️')).toBeInTheDocument();
   });
 
   it('renders place type icon', () => {
-    const items = [makeItem({ proposalType: 'place' })];
+    const items = [makeItem({ activityType: 'place' })];
     render(<ItineraryView items={items} />);
     expect(screen.getByText('🏛️')).toBeInTheDocument();
   });
 
   it('sorts days in ascending order', () => {
     const items = [
-      makeItem({ id: 'c', day: 3, proposalTitle: 'Day 3 item' }),
-      makeItem({ id: 'a', day: 1, proposalTitle: 'Day 1 item' }),
-      makeItem({ id: 'b', day: 2, proposalTitle: 'Day 2 item' }),
+      makeItem({ id: 'c', day: 3, activityTitle: 'Day 3 item' }),
+      makeItem({ id: 'a', day: 1, activityTitle: 'Day 1 item' }),
+      makeItem({ id: 'b', day: 2, activityTitle: 'Day 2 item' }),
     ];
     render(<ItineraryView items={items} />);
     const days = screen.getAllByText(/^Day \d+$/);
@@ -142,19 +142,19 @@ describe('ItineraryView', () => {
   });
 
   it('renders derived calendar date in day heading when startDate is provided', () => {
-    const items = [makeItem({ id: 'item-1', day: 2, proposalTitle: 'Day 2 item' })];
+    const items = [makeItem({ id: 'item-1', day: 2, activityTitle: 'Day 2 item' })];
     render(<ItineraryView items={items} schedule={{ startDate: '2026-04-01' }} />);
     expect(screen.getByText(/Day 2 · 2026-04-02/)).toBeInTheDocument();
   });
 
   it('renders duration progress when durationDays is provided without startDate', () => {
-    const items = [makeItem({ id: 'item-1', day: 2, proposalTitle: 'Day 2 item' })];
+    const items = [makeItem({ id: 'item-1', day: 2, activityTitle: 'Day 2 item' })];
     render(<ItineraryView items={items} schedule={{ durationDays: 5 }} />);
     expect(screen.getByText('Day 2 / 5 days')).toBeInTheDocument();
   });
 
   it('renders over-range warning when day exceeds durationDays', () => {
-    const items = [makeItem({ id: 'item-1', day: 6, proposalTitle: 'Day 6 item' })];
+    const items = [makeItem({ id: 'item-1', day: 6, activityTitle: 'Day 6 item' })];
     render(<ItineraryView items={items} schedule={{ durationDays: 5 }} />);
     expect(screen.getByText('Over planned range')).toBeInTheDocument();
   });
@@ -201,8 +201,8 @@ describe('ItineraryView drag-and-drop', () => {
   });
 
   const makeDndItems = () => [
-    makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', proposalTitle: 'Eiffel Tower' }),
-    makeItem({ id: 'item-2', day: 1, timeBlock: 'morning', proposalTitle: 'Louvre Museum' }),
+    makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', activityTitle: 'Eiffel Tower' }),
+    makeItem({ id: 'item-2', day: 1, timeBlock: 'morning', activityTitle: 'Louvre Museum' }),
   ];
 
   it('renders items with draggable attribute', () => {
@@ -265,7 +265,7 @@ describe('ItineraryView drag-and-drop', () => {
 
   it('calls onReorder when dropping an item into an empty day', () => {
     const onReorder = jest.fn();
-    const items = [makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', proposalTitle: 'Eiffel Tower' })];
+    const items = [makeItem({ id: 'item-1', day: 1, timeBlock: 'morning', activityTitle: 'Eiffel Tower' })];
     render(<ItineraryView items={items} schedule={{ durationDays: 2 }} onReorder={onReorder} />);
 
     const source = document.querySelector('[draggable="true"]') as Element;

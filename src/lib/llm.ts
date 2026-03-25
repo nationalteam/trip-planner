@@ -104,7 +104,7 @@ export interface ItineraryItemForLLM {
   id: string;
   day: number;
   timeBlock: string;
-  proposal: {
+  activity: {
     title: string;
     description: string;
     type: string;

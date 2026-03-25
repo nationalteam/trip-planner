@@ -49,9 +49,11 @@ describe('GoogleMapView', () => {
       getPlace: jest.fn(),
     }));
 
-    infoWindowFactory = jest.fn(() => ({
-      open: jest.fn(),
-    }));
+    infoWindowFactory = jest.fn(
+      () => ({
+        open: jest.fn(),
+      })
+    ) as jest.MockedFunction<(options: { content: string }) => { open: jest.Mock }>;
 
     (global as unknown as { window: Window & { google?: unknown } }).window.google = {
       maps: {

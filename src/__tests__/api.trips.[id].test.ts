@@ -8,7 +8,7 @@ jest.mock('@/lib/prisma', () => ({
       update: jest.fn(),
       delete: jest.fn(),
     },
-    proposal: {
+    activity: {
       deleteMany: jest.fn(),
     },
     itineraryItem: {
@@ -87,7 +87,7 @@ describe('DELETE /api/trips/[id]', () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Adventure', cities: '["Paris"]', createdAt: new Date() };
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.itineraryItem.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
-    (mockPrisma.proposal.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+    (mockPrisma.activity.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
     (mockPrisma.trip.delete as jest.Mock).mockResolvedValue(fakeTrip);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1', { method: 'DELETE' });
@@ -96,7 +96,7 @@ describe('DELETE /api/trips/[id]', () => {
 
     expect(res.status).toBe(204);
     expect(mockPrisma.itineraryItem.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
-    expect(mockPrisma.proposal.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
+    expect(mockPrisma.activity.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.tripMember.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.trip.delete).toHaveBeenCalledWith({ where: { id: 'trip-1' } });
   });

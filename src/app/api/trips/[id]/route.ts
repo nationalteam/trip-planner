@@ -30,7 +30,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!trip) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   await prisma.itineraryItem.deleteMany({ where: { tripId: id } });
-  await prisma.proposal.deleteMany({ where: { tripId: id } });
+  await prisma.activity.deleteMany({ where: { tripId: id } });
   await prisma.tripMember.deleteMany({ where: { tripId: id } });
   await prisma.trip.delete({ where: { id } });
 

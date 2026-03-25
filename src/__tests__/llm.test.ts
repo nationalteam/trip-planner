@@ -32,8 +32,8 @@ describe('generateActivities', () => {
     process.env = originalEnv;
   });
 
-  it('returns parsed proposals from the LLM response', async () => {
-    const fakeProposals = [
+  it('returns parsed activities from the LLM response', async () => {
+    const fakeActivities = [
       {
         type: 'food',
         title: 'Le Bistro',
@@ -46,23 +46,23 @@ describe('generateActivities', () => {
     ];
 
     mockCreate.mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(fakeProposals) } }],
+      choices: [{ message: { content: JSON.stringify(fakeActivities) } }],
     });
 
     const result = await generateActivities([], 'Paris');
-    expect(result).toEqual(fakeProposals);
+    expect(result).toEqual(fakeActivities);
   });
 
   it('extracts JSON array from response that contains extra text', async () => {
-    const fakeProposals = [{ type: 'place', title: 'Louvre', description: 'Museum', reason: 'Art', lat: 48.86, lng: 2.33, city: 'Paris', suggestedTime: 'morning', durationMinutes: 120 }];
-    const responseWithExtraText = `Here are some proposals:\n${JSON.stringify(fakeProposals)}\nEnjoy!`;
+    const fakeActivities = [{ type: 'place', title: 'Louvre', description: 'Museum', reason: 'Art', lat: 48.86, lng: 2.33, city: 'Paris', suggestedTime: 'morning', durationMinutes: 120 }];
+    const responseWithExtraText = `Here are some activities:\n${JSON.stringify(fakeActivities)}\nEnjoy!`;
 
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: responseWithExtraText } }],
     });
 
     const result = await generateActivities([], 'Paris');
-    expect(result).toEqual(fakeProposals);
+    expect(result).toEqual(fakeActivities);
   });
 
   it('returns an empty array when JSON parsing fails entirely', async () => {

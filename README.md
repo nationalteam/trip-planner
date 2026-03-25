@@ -113,7 +113,7 @@ Open [http://localhost:9527](http://localhost:9527).
   - `/api/users/[id]/preferences`
   - Use `/api/me` and `/api/me/preferences` instead
 
-## API Migration: `proposals` -> `activities`
+## API Naming
 
 Primary endpoints use `activities` naming:
 
@@ -123,7 +123,7 @@ Primary endpoints use `activities` naming:
 - `POST /api/activities/[id]/approve`
 - `POST /api/activities/[id]/reject`
 
-Legacy `/proposals*` routes have been removed.
+Legacy `/proposals*` routes are removed.
 
 ## Scripts
 
@@ -191,8 +191,8 @@ prisma/
 | `Trip` | `name`, `cities` (JSON array) |
 | `User` | `name` |
 | `Preference` | `userId`, `likes`, `dislikes`, `budget` |
-| `Proposal` (legacy name) | `tripId`, `type`, `title`, `description`, `reason`, `lat/lng`, `city`, `suggestedTime`, `durationMinutes`, `status` |
-| `ItineraryItem` | `tripId`, `proposalId`, `day`, `timeBlock` (`morning`/`afternoon`/`dinner`) |
+| `Activity` | `tripId`, `type`, `title`, `description`, `reason`, `lat/lng`, `city`, `suggestedTime`, `durationMinutes`, `status` |
+| `ItineraryItem` | `tripId`, `activityId`, `day`, `timeBlock` (`morning`/`afternoon`/`dinner`) |
 
 ## Demo Site (GitHub Pages)
 

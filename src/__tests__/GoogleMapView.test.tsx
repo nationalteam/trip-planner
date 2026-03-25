@@ -83,7 +83,7 @@ describe('GoogleMapView', () => {
   });
 
   it('colors markers by itinerary arrangement state', async () => {
-    const proposals = [
+    const activities = [
       {
         id: 'p-arranged',
         title: 'Arranged spot',
@@ -108,7 +108,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={1} />);
+    render(<GoogleMapView activities={activities} canEdit onAddPlace={jest.fn()} focusTrigger={1} />);
 
     await waitFor(() => {
       const marker = ((window.google as unknown as GoogleMapsMock).maps.Marker);
@@ -123,8 +123,8 @@ describe('GoogleMapView', () => {
     expect(mapInstance.fitBounds).toHaveBeenCalled();
   });
 
-  it('pans and zooms when only one proposal is shown', async () => {
-    const proposals = [
+  it('pans and zooms when only one activity is shown', async () => {
+    const activities = [
       {
         id: 'p-single',
         title: 'Solo spot',
@@ -138,7 +138,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={2} />);
+    render(<GoogleMapView activities={activities} canEdit onAddPlace={jest.fn()} focusTrigger={2} />);
 
     await waitFor(() => {
       const mapInstance = mapFactory.mock.results[0]?.value;
@@ -149,7 +149,7 @@ describe('GoogleMapView', () => {
   });
 
   it('renders practical info and Google Maps url in marker info window', async () => {
-    const proposals = [
+    const activities = [
       {
         id: 'p-info',
         title: 'Shinjuku Gyoen',
@@ -166,7 +166,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={3} />);
+    render(<GoogleMapView activities={activities} canEdit onAddPlace={jest.fn()} focusTrigger={3} />);
 
     await waitFor(() => {
       expect(infoWindowFactory).toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe('GoogleMapView', () => {
   });
 
   it('falls back to lat,lng google maps query when title/city are missing', async () => {
-    const proposals = [
+    const activities = [
       {
         id: 'p-fallback',
         title: '',
@@ -198,7 +198,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={4} />);
+    render(<GoogleMapView activities={activities} canEdit onAddPlace={jest.fn()} focusTrigger={4} />);
 
     await waitFor(() => {
       expect(infoWindowFactory).toHaveBeenCalled();

@@ -22,15 +22,6 @@ interface ItineraryItem {
     durationMinutes: number | null;
     suggestedTime: string;
   };
-  proposal?: {
-    id: string;
-    title: string;
-    description: string;
-    type: string;
-    city: string;
-    durationMinutes: number | null;
-    suggestedTime: string;
-  };
 }
 
 interface ReorderPayload {
@@ -300,8 +291,6 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
                     )}
                     {slotItems.map(item => (
                       (() => {
-                        const activity = item.activity ?? item.proposal;
-                        if (!activity) return null;
                         return (
                       <div
                         key={item.id}
@@ -317,14 +306,14 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
                         }`}
                       >
                         <span className="text-xl mt-0.5 select-none">⠿</span>
-                        <span className="text-xl mt-0.5">{typeIcons[activity.type] || '📌'}</span>
+                        <span className="text-xl mt-0.5">{typeIcons[item.activity.type] || '📌'}</span>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{activity.title}</p>
-                          <p className="text-sm text-gray-600">{activity.description}</p>
+                          <p className="font-medium text-gray-900">{item.activity.title}</p>
+                          <p className="text-sm text-gray-600">{item.activity.description}</p>
                           <div className="flex gap-3 mt-1">
-                            <span className="text-xs text-gray-400">{activity.city}</span>
-                            {activity.durationMinutes && (
-                              <span className="text-xs text-gray-400">⏱ {activity.durationMinutes}min</span>
+                            <span className="text-xs text-gray-400">{item.activity.city}</span>
+                            {item.activity.durationMinutes && (
+                              <span className="text-xs text-gray-400">⏱ {item.activity.durationMinutes}min</span>
                             )}
                           </div>
                         </div>

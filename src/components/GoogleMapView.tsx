@@ -161,7 +161,7 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
   const [adding, setAdding] = useState(false);
 
   const mapActivities = activities;
-  const normalizedProposals = useMemo(
+  const normalizedActivities = useMemo(
     () => normalizeCoordinateBatch(mapActivities, { reference: DEFAULT_CENTER }),
     [mapActivities]
   );
@@ -171,53 +171,53 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
     markerInstancesRef.current = [];
   }, []);
 
-  const renderProposalMarkers = useCallback(() => {
+  const renderActivityMarkers = useCallback(() => {
     const google = window.google;
     const map = mapInstanceRef.current;
     if (!google || !map) return;
 
     clearMarkers();
-    normalizedProposals.forEach((proposal) => {
+    normalizedActivities.forEach((activity) => {
       const marker = new google.maps.Marker({
         map,
-        position: { lat: proposal.lat, lng: proposal.lng },
-        title: proposal.title,
+        position: { lat: activity.lat, lng: activity.lng },
+        title: activity.title,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 8,
-          fillColor: proposal.isArranged ? '#16a34a' : '#2563eb',
+          fillColor: activity.isArranged ? '#16a34a' : '#2563eb',
           fillOpacity: 1,
           strokeColor: '#ffffff',
           strokeWeight: 2,
         },
       });
       const infoWindow = new google.maps.InfoWindow({
-        content: buildInfoWindowContent(proposal),
+        content: buildInfoWindowContent(activity),
       });
       marker.addListener('click', () => infoWindow.open({ anchor: marker, map }));
       markerInstancesRef.current.push(marker);
     });
-  }, [clearMarkers, normalizedProposals]);
+  }, [clearMarkers, normalizedActivities]);
 
-  const autoFitMapToProposals = useCallback(() => {
+  const autoFitMapToActivities = useCallback(() => {
     const google = window.google;
     const map = mapInstanceRef.current;
     if (!google || !map) return;
 
-    const validProposals = normalizedProposals.filter(
-      (proposal) => Number.isFinite(proposal.lat) && Number.isFinite(proposal.lng)
+    const validActivities = normalizedActivities.filter(
+      (activity) => Number.isFinite(activity.lat) && Number.isFinite(activity.lng)
     );
-    if (validProposals.length === 0) return;
+    if (validActivities.length === 0) return;
 
-    if (validProposals.length === 1) {
-      const proposal = validProposals[0];
-      map.panTo({ lat: proposal.lat, lng: proposal.lng });
+    if (validActivities.length === 1) {
+      const activity = validActivities[0];
+      map.panTo({ lat: activity.lat, lng: activity.lng });
       map.setZoom(SINGLE_POINT_ZOOM);
       return;
     }
 
     const bounds = new google.maps.LatLngBounds();
-    validProposals.forEach((proposal) => bounds.extend({ lat: proposal.lat, lng: proposal.lng }));
+    validActivities.forEach((activity) => bounds.extend({ lat: activity.lat, lng: activity.lng }));
     map.fitBounds(bounds, {
       top: AUTO_FIT_PADDING_PX,
       right: AUTO_FIT_PADDING_PX,
@@ -228,15 +228,15 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
     if (typeof zoomAfterFit === 'number' && zoomAfterFit > AUTO_FIT_MAX_ZOOM) {
       map.setZoom(AUTO_FIT_MAX_ZOOM);
     }
-  }, [normalizedProposals]);
+  }, [normalizedActivities]);
 
   useEffect(() => {
-    renderProposalMarkers();
-  }, [renderProposalMarkers]);
+    renderActivityMarkers();
+  }, [renderActivityMarkers]);
 
   useEffect(() => {
-    autoFitMapToProposals();
-  }, [focusTrigger, autoFitMapToProposals]);
+    autoFitMapToActivities();
+  }, [focusTrigger, autoFitMapToActivities]);
 
   useEffect(() => {
     let cancelled = false;
@@ -268,8 +268,8 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
       });
       mapInstanceRef.current = map;
       placesServiceRef.current = new google.maps.places.PlacesService(map);
-      renderProposalMarkers();
-      autoFitMapToProposals();
+      renderActivityMarkers();
+      autoFitMapToActivities();
 
       const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
         fields: ['place_id', 'name', 'geometry', 'formatted_address', 'address_components', 'types'],
@@ -310,7 +310,7 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
       mapInstanceRef.current = null;
       placesServiceRef.current = null;
     };
-  }, [autoFitMapToProposals, clearMarkers, renderProposalMarkers]);
+  }, [autoFitMapToActivities, clearMarkers, renderActivityMarkers]);
 
   const handleAdd = useCallback(async () => {
     if (!selectedPlace || adding || !canEdit) return;

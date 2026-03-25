@@ -68,7 +68,7 @@ describe('MapView', () => {
     expect(container.firstChild).toBeTruthy();
   });
 
-  it('initialises the Leaflet map when proposals are provided', async () => {
+  it('initialises the Leaflet map when activities are provided', async () => {
     await act(async () => {
       render(<MapView activities={[baseProposal]} />);
     });
@@ -76,27 +76,27 @@ describe('MapView', () => {
     expect(mockMap).toHaveBeenCalledTimes(1);
   });
 
-  it('creates a marker for each valid approved proposal', async () => {
-    const proposals = [
+  it('creates a marker for each valid approved activity', async () => {
+    const activities = [
       { ...baseProposal, id: 'p-1' },
       { ...baseProposal, id: 'p-2', title: 'Toba Aquarium', lat: 34.4833, lng: 136.8333 },
     ];
 
     await act(async () => {
-      render(<MapView activities={proposals} />);
+      render(<MapView activities={activities} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(2);
   });
 
-  it('skips proposals with non-finite coordinates', async () => {
-    const proposals = [
+  it('skips activities with non-finite coordinates', async () => {
+    const activities = [
       baseProposal,
       { ...baseProposal, id: 'p-bad', lat: NaN, lng: NaN },
     ];
 
     await act(async () => {
-      render(<MapView activities={proposals} />);
+      render(<MapView activities={activities} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(1);
@@ -104,12 +104,12 @@ describe('MapView', () => {
   });
 
   it('normalizes obviously swapped latitude/longitude before rendering marker', async () => {
-    const proposals = [
+    const activities = [
       { ...baseProposal, id: 'p-swapped', lat: 136.7253, lng: 34.4548 },
     ];
 
     await act(async () => {
-      render(<MapView activities={proposals} />);
+      render(<MapView activities={activities} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(1);
@@ -119,13 +119,13 @@ describe('MapView', () => {
   it('normalizes ambiguously swapped coordinates using unambiguous batch anchors', async () => {
     // p-anchor has lng=-100 (|lng|>90) so its swapped form lat=-100 is invalid → unambiguous anchor
     // p-ambiguous-swapped has both values in [-90,90] → ambiguous; resolved via anchor centroid
-    const proposals = [
+    const activities = [
       { ...baseProposal, id: 'p-anchor', lat: 50, lng: -100 },
       { ...baseProposal, id: 'p-ambiguous-swapped', lat: -40, lng: 50 },
     ];
 
     await act(async () => {
-      render(<MapView activities={proposals} />);
+      render(<MapView activities={activities} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(2);
@@ -133,28 +133,28 @@ describe('MapView', () => {
     expect(mockMarker).toHaveBeenNthCalledWith(2, [50, -40], expect.anything());
   });
 
-  it('shows only approved proposals when some are approved', async () => {
-    const proposals = [
+  it('shows only approved activities when some are approved', async () => {
+    const activities = [
       { ...baseProposal, id: 'p-approved', status: 'approved' },
       { ...baseProposal, id: 'p-pending', status: 'pending', title: 'Pending Place' },
     ];
 
     await act(async () => {
-      render(<MapView activities={proposals} />);
+      render(<MapView activities={activities} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(1);
     expect(mockMarker).toHaveBeenCalledWith([34.4548, 136.7253], expect.anything());
   });
 
-  it('shows all valid proposals when none are approved', async () => {
-    const proposals = [
+  it('shows all valid activities when none are approved', async () => {
+    const activities = [
       { ...baseProposal, id: 'p-1', status: 'pending' },
       { ...baseProposal, id: 'p-2', status: 'pending', title: 'Another Place' },
     ];
 
     await act(async () => {
-      render(<MapView activities={proposals} />);
+      render(<MapView activities={activities} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(2);
@@ -175,7 +175,7 @@ describe('MapView', () => {
     expect(mockRemove).toHaveBeenCalledTimes(1);
   });
 
-  it('reinitialises the map when proposals change', async () => {
+  it('reinitialises the map when activities change', async () => {
     const { rerender } = render(<MapView activities={[baseProposal]} />);
 
     await act(async () => {
@@ -195,7 +195,7 @@ describe('MapView', () => {
     expect(mockMap).toHaveBeenCalledTimes(2);
   });
 
-  it('does not create markers when proposals list is empty', async () => {
+  it('does not create markers when activities list is empty', async () => {
     await act(async () => {
       render(<MapView activities={[]} />);
     });

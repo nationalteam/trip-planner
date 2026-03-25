@@ -123,20 +123,20 @@ just ci
 src/
   app/
     page.tsx                      # 首頁 – 列表與建立行程
-    trips/[id]/page.tsx           # 行程詳情（提案 / 行程 / 地圖 分頁）
+    trips/[id]/page.tsx           # 行程詳情（活動 / 行程 / 地圖 分頁）
     trips/[id]/preferences/       # 每位旅行者的偏好管理
     api/                          # REST API 路由
       trips/                      # 行程 CRUD
-      proposals/[id]/approve|reject
+      activities/[id]/approve|reject
       users/                      # 使用者與偏好 CRUD
   components/
-    ProposalCard.tsx              # 提案卡片（含核准/拒絕按鈕）
+    ActivityCard.tsx              # 活動卡片（含核准/拒絕按鈕）
     ItineraryView.tsx             # 依時段分組的每日行程視圖
     MapView.tsx                   # Leaflet 地圖（純客戶端）
     TripCard.tsx                  # 行程摘要卡片
   lib/
     prisma.ts                     # Prisma 客戶端單例
-    llm.ts                        # OpenAI/Azure OpenAI 提案生成
+    llm.ts                        # OpenAI/Azure OpenAI 活動生成
 prisma/
   schema.prisma                   # 資料模型定義
 ```
@@ -148,8 +148,8 @@ prisma/
 | `Trip` | `name`、`cities`（JSON 陣列） |
 | `User` | `name` |
 | `Preference` | `userId`、`likes`、`dislikes`、`budget` |
-| `Proposal` | `tripId`、`type`、`title`、`description`、`reason`、`lat/lng`、`city`、`suggestedTime`、`durationMinutes`、`status` |
-| `ItineraryItem` | `tripId`、`proposalId`、`day`、`timeBlock`（`morning`／`afternoon`／`dinner`） |
+| `Activity` | `tripId`、`type`、`title`、`description`、`reason`、`lat/lng`、`city`、`suggestedTime`、`durationMinutes`、`status` |
+| `ItineraryItem` | `tripId`、`activityId`、`day`、`timeBlock`（`morning`／`afternoon`／`dinner`） |
 
 ## 示範網站（GitHub Pages）
 

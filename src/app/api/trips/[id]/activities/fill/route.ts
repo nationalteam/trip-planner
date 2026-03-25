@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { fillProposalDetails } from '@/lib/llm';
+import { fillActivityDetails } from '@/lib/llm';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
 
   const [filled, geocoded] = await Promise.all([
-    fillProposalDetails(title, city),
+    fillActivityDetails(title, city),
     geocodeWithGoogleMaps(`${title}, ${city}`),
   ]);
 

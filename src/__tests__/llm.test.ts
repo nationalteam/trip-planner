@@ -16,10 +16,10 @@ jest.mock('openai', () => {
   };
 });
 
-import { generateProposals, organizeItinerary, fillProposalDetails, generateChatActionPlan } from '@/lib/llm';
+import { generateActivities, organizeItinerary, fillActivityDetails, generateChatActionPlan } from '@/lib/llm';
 import OpenAI from 'openai';
 
-describe('generateProposals', () => {
+describe('generateActivities', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -49,7 +49,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: JSON.stringify(fakeProposals) } }],
     });
 
-    const result = await generateProposals([], 'Paris');
+    const result = await generateActivities([], 'Paris');
     expect(result).toEqual(fakeProposals);
   });
 
@@ -61,7 +61,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: responseWithExtraText } }],
     });
 
-    const result = await generateProposals([], 'Paris');
+    const result = await generateActivities([], 'Paris');
     expect(result).toEqual(fakeProposals);
   });
 
@@ -70,7 +70,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: 'This is not JSON at all.' } }],
     });
 
-    const result = await generateProposals([], 'Paris');
+    const result = await generateActivities([], 'Paris');
     expect(result).toEqual([]);
   });
 
@@ -79,7 +79,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: null } }],
     });
 
-    const result = await generateProposals([], 'Paris');
+    const result = await generateActivities([], 'Paris');
     expect(result).toEqual([]);
   });
 
@@ -90,7 +90,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris', existingProposals);
+    await generateActivities([], 'Paris', existingProposals);
 
     const callArgs = mockCreate.mock.calls[0][0];
     const promptContent = callArgs.messages[0].content as string;
@@ -103,7 +103,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals(preferences, 'Tokyo');
+    await generateActivities(preferences, 'Tokyo');
 
     const callArgs = mockCreate.mock.calls[0][0];
     const promptContent = callArgs.messages[0].content as string;
@@ -118,7 +118,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const callArgs = mockCreate.mock.calls[0][0];
     const promptContent = callArgs.messages[0].content as string;
@@ -136,7 +136,7 @@ describe('generateProposals', () => {
     delete process.env.AZURE_OPENAI_API_KEY;
     delete process.env.BIFROST_API_KEY;
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.model).toBe('gpt-5-mini');
   });
@@ -149,7 +149,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     expect(mockCreate.mock.calls[0][0].model).toBe('gpt-5-mini');
   });
@@ -163,7 +163,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -181,7 +181,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -198,7 +198,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -215,7 +215,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -232,7 +232,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -248,7 +248,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -266,7 +266,7 @@ describe('generateProposals', () => {
       message: 'unauthorized',
     });
 
-    await expect(generateProposals([], 'Paris')).rejects.toThrow('Bifrost authentication failed. Check BIFROST_API_KEY.');
+    await expect(generateActivities([], 'Paris')).rejects.toThrow('Bifrost authentication failed. Check BIFROST_API_KEY.');
   });
 
   it('uses OpenAI first when LLM_PROVIDER is unset and multiple provider envs are present', async () => {
@@ -280,7 +280,7 @@ describe('generateProposals', () => {
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateProposals([], 'Paris');
+    await generateActivities([], 'Paris');
 
     const openAIMock = OpenAI as unknown as jest.Mock;
     expect(openAIMock).toHaveBeenCalledWith({
@@ -290,7 +290,7 @@ describe('generateProposals', () => {
 
   it('throws when LLM_PROVIDER is unsupported', async () => {
     process.env.LLM_PROVIDER = 'invalid-provider';
-    await expect(generateProposals([], 'Paris')).rejects.toThrow('Unsupported LLM_PROVIDER: invalid-provider');
+    await expect(generateActivities([], 'Paris')).rejects.toThrow('Unsupported LLM_PROVIDER: invalid-provider');
   });
 });
 
@@ -335,7 +335,7 @@ describe('organizeItinerary', () => {
   });
 });
 
-describe('fillProposalDetails', () => {
+describe('fillActivityDetails', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -360,7 +360,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: JSON.stringify(fakeFill) } }],
     });
 
-    const result = await fillProposalDetails('Tomamu Ski Resort', 'Hokkaido');
+    const result = await fillActivityDetails('Tomamu Ski Resort', 'Hokkaido');
     expect(result).toEqual(fakeFill);
   });
 
@@ -369,7 +369,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: '{}' } }],
     });
 
-    await fillProposalDetails('Tomamu Ski Resort', 'Hokkaido');
+    await fillActivityDetails('Tomamu Ski Resort', 'Hokkaido');
 
     const callArgs = mockCreate.mock.calls[0][0];
     const prompt = callArgs.messages[0].content as string;
@@ -385,7 +385,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: responseWithExtraText } }],
     });
 
-    const result = await fillProposalDetails('Tomamu', 'Hokkaido');
+    const result = await fillActivityDetails('Tomamu', 'Hokkaido');
     expect(result.description).toBe('Great ski resort');
     expect(result.type).toBe('place');
   });
@@ -395,7 +395,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: 'not valid json at all' } }],
     });
 
-    const result = await fillProposalDetails('Unknown', 'City');
+    const result = await fillActivityDetails('Unknown', 'City');
     expect(result).toEqual({
       description: '',
       type: 'place',
@@ -409,7 +409,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: JSON.stringify({ type: 'restaurant', suggestedTime: 'dinner', durationMinutes: 60, description: 'Nice' }) } }],
     });
 
-    const result = await fillProposalDetails('Some Place', 'City');
+    const result = await fillActivityDetails('Some Place', 'City');
     expect(result.type).toBe('place');
   });
 
@@ -418,7 +418,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: JSON.stringify({ type: 'food', suggestedTime: 'brunch', durationMinutes: 60, description: 'Nice' }) } }],
     });
 
-    const result = await fillProposalDetails('Some Place', 'City');
+    const result = await fillActivityDetails('Some Place', 'City');
     expect(result.suggestedTime).toBe('afternoon');
   });
 
@@ -427,7 +427,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: JSON.stringify({ type: 'place', suggestedTime: 'afternoon', durationMinutes: 'about an hour', description: 'Nice' }) } }],
     });
 
-    const result = await fillProposalDetails('Some Place', 'City');
+    const result = await fillActivityDetails('Some Place', 'City');
     expect(result.durationMinutes).toBeNull();
   });
 
@@ -436,7 +436,7 @@ describe('fillProposalDetails', () => {
       choices: [{ message: { content: JSON.stringify({ type: 'food', suggestedTime: 'dinner', durationMinutes: 90, description: 'Great restaurant' }) } }],
     });
 
-    const result = await fillProposalDetails('Le Bistro', 'Paris');
+    const result = await fillActivityDetails('Le Bistro', 'Paris');
     expect(result.type).toBe('food');
   });
 });

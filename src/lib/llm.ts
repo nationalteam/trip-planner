@@ -125,14 +125,14 @@ export interface ChatActionPlanResult {
   actionPlan: unknown[];
 }
 
-export async function generateProposals(preferences: object[], city: string, existingProposals: ProposalLike[] = []) {
+export async function generateActivities(preferences: object[], city: string, existingActivities: ProposalLike[] = []) {
   const provider = resolveProvider();
   const openai = createClient(provider);
   const prompt = `You are a travel planner. Generate restaurant and place proposals for a trip.
 
 City: ${city}
 User Preferences: ${JSON.stringify(preferences, null, 2)}
-${existingProposals.length > 0 ? `Already proposed (do not repeat these): ${JSON.stringify(existingProposals.map(p => p.title))}` : ''}
+${existingActivities.length > 0 ? `Already proposed (do not repeat these): ${JSON.stringify(existingActivities.map(p => p.title))}` : ''}
 
 Return a JSON array of 5-8 proposals with this exact format:
 [
@@ -181,14 +181,14 @@ Return ONLY valid JSON, no markdown.`;
   }
 }
 
-export interface ProposalFillResult {
+export interface ActivityFillResult {
   description: string;
   type: 'food' | 'place';
   suggestedTime: 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'night';
   durationMinutes: number | null;
 }
 
-export async function fillProposalDetails(title: string, city: string): Promise<ProposalFillResult> {
+export async function fillActivityDetails(title: string, city: string): Promise<ActivityFillResult> {
   const provider = resolveProvider();
   const openai = createClient(provider);
   const fallbackModel = process.env.OPENAI_MODEL ?? 'gpt-5-mini';
@@ -222,19 +222,19 @@ Return ONLY valid JSON, no markdown.`;
   }
 
   const content = response.choices[0].message.content || '{}';
-  const defaults: ProposalFillResult = {
+  const defaults: ActivityFillResult = {
     description: '',
     type: 'place',
     suggestedTime: 'afternoon',
     durationMinutes: null,
   };
 
-  function buildResult(parsed: Record<string, unknown>): ProposalFillResult {
+  function buildResult(parsed: Record<string, unknown>): ActivityFillResult {
     return {
       description: typeof parsed.description === 'string' ? parsed.description : defaults.description,
       type: parsed.type === 'food' ? 'food' : 'place',
       suggestedTime: ['morning', 'lunch', 'afternoon', 'dinner', 'night'].includes(parsed.suggestedTime as string)
-        ? (parsed.suggestedTime as ProposalFillResult['suggestedTime'])
+        ? (parsed.suggestedTime as ActivityFillResult['suggestedTime'])
         : defaults.suggestedTime,
       durationMinutes: typeof parsed.durationMinutes === 'number' ? parsed.durationMinutes : defaults.durationMinutes,
     };
@@ -252,6 +252,11 @@ Return ONLY valid JSON, no markdown.`;
     return defaults;
   }
 }
+
+// Legacy aliases kept for incremental migration and external compatibility.
+export const generateProposals = generateActivities;
+export type ProposalFillResult = ActivityFillResult;
+export const fillProposalDetails = fillActivityDetails;
 
 export async function organizeItinerary(items: ItineraryItemForLLM[]): Promise<OrganizedItineraryItem[]> {
   const provider = resolveProvider();

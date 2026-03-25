@@ -12,7 +12,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('@/components/ActivityCard', () => function MockActivityCard() {
-  return <div data-testid="proposal-card" />;
+  return <div data-testid="activity-card" />;
 });
 jest.mock('@/components/ItineraryView', () => function MockItineraryView() {
   return <div data-testid="itinerary-view" />;
@@ -27,7 +27,7 @@ jest.mock('@/components/GoogleMapView', () => function MockGoogleMapView() {
   return <div data-testid="google-map-view" />;
 });
 
-describe('Trip detail manual proposal form', () => {
+describe('Trip detail manual activity form', () => {
   const originalFetch = global.fetch;
 
   afterEach(() => {

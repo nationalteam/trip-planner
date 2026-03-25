@@ -2,15 +2,15 @@
 
 [繁體中文](README.zh-TW.md)
 
-AI-powered collaborative trip planning with proposal voting, auto itinerary scheduling, and map visualization.
+AI-powered collaborative trip planning with activity voting, auto itinerary scheduling, and map visualization.
 
 ## Features
 
 - Email/password authentication with secure cookie sessions
 - Per-trip access control (owner/viewer) with sharing by email
-- AI proposal generation for places and food based on traveler preferences
+- AI activity generation for places and food based on traveler preferences
 - Approve/reject flow for collaborative decision making
-- Automatic day-by-day itinerary construction from approved proposals
+- Automatic day-by-day itinerary construction from approved activities
 - Google Maps map view with place search + POI click-to-add (beta), plus legacy Leaflet fallback
 - Per-traveler preferences (likes, dislikes, budget)
 
@@ -78,7 +78,7 @@ Behavior:
 - If `BIFROST_BASE_URL` is not set, default is `http://127.0.0.1:8080/openai/v1`.
 - `BIFROST_API_KEY` is optional and defaults to an empty string when unset.
 - Bifrost model selection uses `OPENAI_MODEL` (default `gpt-5-mini`).
-- Proposal `lat/lng` and Google Maps map picker use `GOOGLE_MAPS_API_KEY` when set.
+- Activity `lat/lng` and Google Maps map picker use `GOOGLE_MAPS_API_KEY` when set.
 
 Provider-specific error handling:
 
@@ -113,6 +113,29 @@ Open [http://localhost:9527](http://localhost:9527).
   - `/api/users/[id]/preferences`
   - Use `/api/me` and `/api/me/preferences` instead
 
+## API Migration: `proposals` -> `activities`
+
+Primary endpoints now use `activities` naming:
+
+- `GET/POST /api/trips/[id]/activities`
+- `POST /api/trips/[id]/activities/fill`
+- `PATCH/DELETE /api/activities/[id]`
+- `POST /api/activities/[id]/approve`
+- `POST /api/activities/[id]/reject`
+
+Legacy `proposals` endpoints are still available during the compatibility window and return deprecation metadata:
+
+- `Deprecation: true`
+- `Sunset: Tue, 30 Jun 2026 23:59:59 GMT`
+- `Link: <.../activities...>; rel="successor-version"`
+- `X-Legacy-Endpoint: proposals`
+- `Warning: 299 - "Deprecated API: use /api/activities endpoints"`
+
+Operational observability:
+
+- Legacy `/proposals*` requests emit runtime warning logs once per path per process.
+- Use these logs and request metrics as migration signals before removing legacy routes.
+
 ## Scripts
 
 ```bash
@@ -146,21 +169,22 @@ just ci
 src/
   app/
     page.tsx                      # Home – list & create trips
-    trips/[id]/page.tsx           # Trip detail (Proposals / Itinerary / Map tabs)
+    trips/[id]/page.tsx           # Trip detail (Activities / Itinerary / Map tabs)
     trips/[id]/preferences/       # Per-traveler preference management
     api/                          # REST API routes
       trips/                      # CRUD for trips
-      proposals/[id]/approve|reject
+      activities/[id]/approve|reject
+      proposals/[id]/approve|reject # legacy alias (deprecated)
       users/                      # CRUD for users & preferences
   components/
     GoogleMapView.tsx             # Google Maps place picker + map markers
-    ProposalCard.tsx              # Proposal with approve/reject buttons
+    ProposalCard.tsx              # Activity card with approve/reject buttons
     ItineraryView.tsx             # Day-by-day itinerary grouped by time block
     MapView.tsx                   # Leaflet map (client-only)
     TripCard.tsx                  # Trip summary card
   lib/
     prisma.ts                     # Prisma client singleton
-    llm.ts                        # OpenAI/Azure OpenAI proposal generation
+    llm.ts                        # OpenAI/Azure OpenAI activity generation
 prisma/
   schema.prisma                   # Data model
 ```
@@ -172,7 +196,7 @@ prisma/
 | `Trip` | `name`, `cities` (JSON array) |
 | `User` | `name` |
 | `Preference` | `userId`, `likes`, `dislikes`, `budget` |
-| `Proposal` | `tripId`, `type`, `title`, `description`, `reason`, `lat/lng`, `city`, `suggestedTime`, `durationMinutes`, `status` |
+| `Proposal` (legacy name) | `tripId`, `type`, `title`, `description`, `reason`, `lat/lng`, `city`, `suggestedTime`, `durationMinutes`, `status` |
 | `ItineraryItem` | `tripId`, `proposalId`, `day`, `timeBlock` (`morning`/`afternoon`/`dinner`) |
 
 ## Demo Site (GitHub Pages)

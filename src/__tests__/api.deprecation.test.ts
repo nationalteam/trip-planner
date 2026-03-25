@@ -9,6 +9,8 @@ describe('withProposalDeprecationHeaders', () => {
 
     expect(decorated.headers.get('Deprecation')).toBe('true');
     expect(decorated.headers.get('Link')).toContain('/api/activities/p-1/approve');
+    expect(decorated.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
+    expect(decorated.headers.get('X-Legacy-Endpoint')).toBe('proposals');
   });
 
   it('does not add deprecation headers for activities routes', () => {

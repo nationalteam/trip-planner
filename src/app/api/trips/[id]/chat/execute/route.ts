@@ -33,13 +33,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const result = await executeTripActions(id, auth.id, actionPlan);
-    const activities = Array.isArray((result as { activities?: unknown }).activities)
-      ? (result as { activities: unknown[] }).activities
-      : (Array.isArray((result as { proposals?: unknown }).proposals)
-        ? (result as { proposals: unknown[] }).proposals
+    const resultWithLegacy = result as typeof result & { proposals?: unknown };
+    const activities = Array.isArray(resultWithLegacy.activities)
+      ? resultWithLegacy.activities
+      : (Array.isArray(resultWithLegacy.proposals)
+        ? resultWithLegacy.proposals
         : []);
     const payload = {
-      ...result,
+      ...resultWithLegacy,
       activities,
     } as Record<string, unknown>;
     delete payload.proposals;

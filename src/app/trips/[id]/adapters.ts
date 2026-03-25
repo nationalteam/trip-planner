@@ -17,10 +17,10 @@ export function normalizeItineraryItems(value: unknown): ItineraryItem[] {
     .map((item) => {
       const activity = item.activity ?? item.proposal;
       if (!activity) return null;
-      const { proposal, ...rest } = item;
+      const normalized: RawItineraryItem = { ...item, activity };
+      delete normalized.proposal;
       return {
-        ...rest,
-        activity,
+        ...normalized,
       };
     })
     .filter((item): item is ItineraryItem => item !== null);

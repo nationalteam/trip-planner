@@ -25,3 +25,5 @@
 2026-03-24 | feat(map): enrich google map marker cards with practical details and maps link (#0)
 2026-03-24 | feat(ci): add manual bump-version workflow with PAT token auth (#0)
 2026-03-25 | fix(ci): align bump workflow PAT auth and branch-only guardrails (#91)
+2026-03-25 | fix(ci): make bump-version workflow skip existing semver tags safely (#0)
+2026-03-25 | refactor(ci): extract bump workflow logic into scripts/bump-version.sh (#0)

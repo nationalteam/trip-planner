@@ -56,13 +56,7 @@ jobs:
 
       - name: Bump version
         run: |
-          set -euo pipefail
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Working tree is not clean before version bump."
-            git --no-pager status --short
-            exit 1
-          fi
-          npm version "${{ inputs.bump }}" -m "chore(release): bump version to %s"
+          ./scripts/bump-version.sh "${{ inputs.bump }}"
 
       - name: Push commit and tags
         env:

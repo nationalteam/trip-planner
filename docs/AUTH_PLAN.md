@@ -65,12 +65,12 @@
 - 入參：{ email }（被分享者需已註冊）
 - 行為：建立 TripMember(role=viewer)，已存在則回 200（idempotent）
 - 失敗：403（非 owner 或無權限）、404（user 不存在）
-- 權限規則（套用到既有 trips/proposals/itinerary/users-preferences API）
+- 權限規則（套用到既有 trips/activities/itinerary/users-preferences API）
 
 1. 未登入一律 401
 2. Trip 相關資源需 TripMember 存在才可讀
 3. 只有 owner 可做：刪 trip、分享 trip
-4. Viewer 可做：讀 trip、讀 proposals/itinerary/map（v1 不允許寫入）
+4. Viewer 可做：讀 trip、讀 activities/itinerary/map（v1 不允許寫入）
 5. /api/users、/api/users/[id]/preferences 舊路由改為 deprecated（410）；改走 /api/me 與 /api/me/preferences
 
 ## 實作步驟（依 TDD）
@@ -103,8 +103,8 @@
 - 登出後舊 cookie 無效（任何受保護 API 回 401）
 - Owner 可分享 trip 給已註冊 user
 - Viewer 可讀 trip，但不能刪 trip、不能分享
-- 非成員存取該 trip/proposals/itinerary 回 403 或 404（統一採 403）
-- 未登入打 GET /api/trips、POST /api/trips、POST /api/trips/[id]/proposals 皆回 401
+- 非成員存取該 trip/activities/itinerary 回 403 或 404（統一採 403）
+- 未登入打 GET /api/trips、POST /api/trips、POST /api/trips/[id]/activities 皆回 401
 
 ## 假設與預設
 

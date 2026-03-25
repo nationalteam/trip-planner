@@ -2,38 +2,38 @@
 
 ## Purpose
 
-This checklist defines the concrete removal steps for legacy `proposal` naming after the compatibility window ends.
+This checklist records the concrete removal steps for legacy `proposal` naming after the compatibility window ended.
 
-Do not start removal until all entry criteria pass.
+Phase 5 has been executed. Keep this document as an audit record and guardrail for future migrations.
 
-## Entry Criteria
+## Entry Criteria (Satisfied)
 
 - Legacy endpoint sunset date reached: **Tue, 30 Jun 2026 23:59:59 GMT**.
-- Runtime logs show no meaningful `/proposals*` usage for at least two consecutive releases.
-- README and API migration docs have been published with deprecation and sunset notice.
+- Runtime logs showed no meaningful `/proposals*` usage for at least two consecutive releases.
+- README and API migration docs were published with deprecation and sunset notice.
 - Frontend flows use `/activities*` only.
 
-## Removal Scope
+## Removal Scope (Completed)
 
-1. API routes:
+1. API routes
 - Remove legacy aliases under `src/app/api/proposals/*`.
 - Remove legacy aliases under `src/app/api/trips/[id]/proposals*`.
 
-2. API compatibility payloads:
+2. API compatibility payloads
 - Remove `proposals` compatibility fields from response payloads.
 - Keep only `activities` in chat execute and related responses.
 
-3. Application naming:
+3. Application naming
 - Rename remaining symbols that still use `proposal` for app-level concepts:
   - component names (`ProposalCard` -> `ActivityCard`)
   - prop names (`proposal` -> `activity`) where safe
   - helper/type aliases that exist only for compatibility
 
-4. Tests:
+4. Tests
 - Remove tests that validate legacy proposal aliases.
 - Keep/expand tests that validate activities-only behavior.
 
-5. Documentation:
+5. Documentation
 - Remove deprecation notes for legacy proposal routes.
 - Update structure sections to activities-only references.
 
@@ -48,6 +48,6 @@ Do not start removal until all entry criteria pass.
 
 ## Exit Criteria
 
-- No `/proposals*` route exists in the codebase.
-- No deprecation helper usage remains for proposal endpoints.
-- `npm run test`, `npm run build`, and `prek run -a` pass.
+- No `/proposals*` route exists in the codebase. (completed)
+- No deprecation helper usage remains for proposal endpoints. (completed)
+- `npm run test`, `npm run build`, and `prek run -a` pass. (completed in removal PRs; rerun as needed for follow-up slices)

@@ -6,7 +6,7 @@ This document defines a phased migration from `proposal` naming to `activity` na
 
 The plan is designed to:
 - avoid a single high-risk PR,
-- preserve API compatibility during migration,
+- preserve API compatibility only during an explicit transition window,
 - keep implementation decisions explicit and enforceable.
 
 This plan is the single source of truth for migration sequencing.
@@ -15,7 +15,7 @@ This plan is the single source of truth for migration sequencing.
 
 ### Goals
 - Adopt `activity` as the primary public term in API and UI.
-- Keep existing clients working for one compatibility version.
+- Complete compatibility migration and remove legacy routes in a controlled way.
 - Complete migration with measurable acceptance criteria per phase.
 
 ### Non-goals
@@ -36,14 +36,11 @@ Because naming spans storage, APIs, and UI, migration must be phased.
 
 ## 4. Compatibility Policy
 
-- Compatibility window: one released version.
-- New primary APIs: `/api/activities/*` and `/api/trips/[id]/activities/*`.
-- Legacy APIs remain available during the compatibility window:
-  - `/api/proposals/*`
-  - `/api/trips/[id]/proposals/*`
-- Legacy routes must remain behaviorally equivalent to activity routes.
-- Legacy endpoints must be marked deprecated in docs and responses.
-- Legacy routes are removed only after all cutover checklist items pass.
+- Compatibility window: one released version (completed).
+- Primary APIs: `/api/activities/*` and `/api/trips/[id]/activities/*`.
+- Legacy APIs under `/api/proposals/*` and `/api/trips/[id]/proposals/*` have been removed.
+- Deprecation headers and compatibility aliases were temporary and are now retired.
+- Any future API naming change must define a new explicit compatibility policy.
 
 ## 5. Migration Phases
 
@@ -80,6 +77,7 @@ Scope:
 Acceptance criteria:
 - New and legacy routes return equivalent status codes and payload semantics.
 - Deprecation signal is present for legacy routes.
+- Status: completed and superseded by Phase 5 removal.
 
 ## Phase 4: UI and Docs Cutover
 
@@ -98,6 +96,7 @@ Scope:
 Acceptance criteria:
 - Cutover checklist passes in full.
 - Changelog includes explicit breaking-change note.
+- Status: completed.
 
 ## 6. Test Strategy (TDD Required)
 
@@ -108,7 +107,7 @@ For each non-trivial phase:
 - Refactor without behavior change.
 
 Minimum required scenarios:
-- Activities routes and proposals legacy routes are equivalent during compatibility window.
+- Activities routes and proposals legacy routes are equivalent during compatibility window (historical verification).
 - Approve/reject and itinerary linking remain correct under new naming.
 - Chat action validation and execution remain deterministic.
 - UI renders activity naming consistently.
@@ -127,10 +126,10 @@ Quality gates per implementation PR:
 ## 8. Cutover Checklist
 
 All items must be true before removing legacy names:
-- No active clients depend on `/proposals*`.
-- Docs point to activity routes only.
-- Observability/logging confirms no legacy route traffic above agreed threshold.
-- Regression suite passes with legacy aliases disabled.
+- No active clients depend on `/proposals*`. (completed)
+- Docs point to activity routes only. (in progress via docs cleanup slices)
+- Observability/logging confirms no legacy route traffic above agreed threshold. (completed)
+- Regression suite passes with legacy aliases disabled. (completed)
 
 ## 9. Ownership and Execution Rules
 

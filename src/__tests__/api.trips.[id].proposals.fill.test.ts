@@ -65,6 +65,8 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
+    expect(res.headers.get('Deprecation')).toBe('true');
+    expect(res.headers.get('Link')).toContain('/api/trips/trip-1/activities/fill');
     expect(data).toEqual({ ...fakeFill, lat: 43.104, lng: 142.374 });
     expect(mockFill).toHaveBeenCalledWith('Tomamu Ski Resort', 'Hokkaido');
     expect(mockGeocode).toHaveBeenCalledWith('Tomamu Ski Resort, Hokkaido');

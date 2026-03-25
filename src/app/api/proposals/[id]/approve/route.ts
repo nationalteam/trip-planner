@@ -2,20 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
 import { normalizeSuggestedTimeToTimeBlock } from '@/lib/time-block';
+import { withProposalDeprecationHeaders } from '@/lib/api-deprecation';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deprecated = <T extends Response>(res: T) => withProposalDeprecationHeaders(req, res);
   const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof NextResponse) return deprecated(auth);
 
   const { id } = await params;
   const proposal = await prisma.proposal.findUnique({
     where: { id },
     include: { itineraryItem: true },
   });
-  if (!proposal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!proposal) return deprecated(NextResponse.json({ error: 'Not found' }, { status: 404 }));
 
   const access = await requireTripRole(proposal.tripId, auth.id, ['owner']);
-  if (!access.ok) return buildForbiddenResponse();
+  if (!access.ok) return deprecated(buildForbiddenResponse());
 
   const updated = await prisma.proposal.update({
     where: { id },
@@ -56,5 +58,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     include: { proposal: true },
   });
 
-  return NextResponse.json({ proposal: updated, itineraryItem: fullItineraryItem });
+  return deprecated(NextResponse.json({ proposal: updated, itineraryItem: fullItineraryItem }));
 }

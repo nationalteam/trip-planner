@@ -51,6 +51,8 @@ describe('DELETE /api/proposals/[id]', () => {
     const res = await DELETE(req, context);
 
     expect(res.status).toBe(204);
+    expect(res.headers.get('Deprecation')).toBe('true');
+    expect(res.headers.get('Link')).toContain('/api/activities/proposal-1');
     expect(mockPrisma.itineraryItem.deleteMany).toHaveBeenCalledWith({ where: { proposalId: 'proposal-1' } });
     expect(mockPrisma.proposal.delete).toHaveBeenCalledWith({ where: { id: 'proposal-1' } });
   });

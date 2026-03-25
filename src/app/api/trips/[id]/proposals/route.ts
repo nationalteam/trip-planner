@@ -4,6 +4,7 @@ import { generateProposals } from '@/lib/llm';
 import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
+import { withProposalDeprecationHeaders } from '@/lib/api-deprecation';
 
 interface GeneratedProposal {
   type?: string;
@@ -33,12 +34,13 @@ function mapGoogleTypesToProposalType(types: string[]): 'food' | 'hotel' | 'plac
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deprecated = <T extends Response>(res: T) => withProposalDeprecationHeaders(req, res);
   const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof NextResponse) return deprecated(auth);
 
   const { id } = await params;
   const access = await requireTripRole(id, auth.id, ['owner', 'viewer']);
-  if (!access.ok) return buildForbiddenResponse();
+  if (!access.ok) return deprecated(buildForbiddenResponse());
 
   const sortBy = req.nextUrl.searchParams.get('sortBy');
   const order = req.nextUrl.searchParams.get('order');
@@ -52,21 +54,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     where: { tripId: id },
     orderBy: { [resolvedSortBy]: resolvedOrder },
   });
-  return NextResponse.json(proposals);
+  return deprecated(NextResponse.json(proposals));
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deprecated = <T extends Response>(res: T) => withProposalDeprecationHeaders(req, res);
   const auth = await requireAuth(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof NextResponse) return deprecated(auth);
 
   const { id } = await params;
   const access = await requireTripRole(id, auth.id, ['owner']);
-  if (!access.ok) return buildForbiddenResponse();
+  if (!access.ok) return deprecated(buildForbiddenResponse());
 
   const body = await req.json();
 
   const trip = await prisma.trip.findUnique({ where: { id } });
-  if (!trip) return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
+  if (!trip) return deprecated(NextResponse.json({ error: 'Trip not found' }, { status: 404 }));
 
   if (body?.mode === 'manual') {
     const title = typeof body.title === 'string' ? body.title.trim() : '';
@@ -74,10 +77,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const city = typeof body.city === 'string' ? body.city.trim() : '';
 
     if (!title || !description || !city) {
-      return NextResponse.json(
+      return deprecated(NextResponse.json(
         { error: 'Manual proposal requires non-empty title, description, and city' },
         { status: 400 }
-      );
+      ));
     }
 
     const parsedLat = Number(body.lat);
@@ -87,10 +90,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ? { lat: parsedLat, lng: parsedLng }
       : await geocodeWithGoogleMaps(`${title}, ${city}`);
     if (!resolvedCoordinates) {
-      return NextResponse.json(
+      return deprecated(NextResponse.json(
         { error: 'Failed to resolve coordinates for this proposal. Please try again or provide valid lat/lng.' },
         { status: 400 }
-      );
+      ));
     }
 
     const normalized = normalizeCoordinateBatch([resolvedCoordinates])[0];
@@ -110,7 +113,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     });
 
-    return NextResponse.json(proposal, { status: 201 });
+    return deprecated(NextResponse.json(proposal, { status: 201 }));
   }
 
   if (body?.mode === 'google_place') {
@@ -131,10 +134,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       : [];
 
     if (!placeId || !title || !hasCoordinates) {
-      return NextResponse.json(
+      return deprecated(NextResponse.json(
         { error: 'Google place proposal requires non-empty placeId, title, lat, and lng' },
         { status: 400 }
-      );
+      ));
     }
 
     const duplicate = await prisma.proposal.findFirst({
@@ -145,7 +148,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       select: { id: true },
     });
     if (duplicate) {
-      return NextResponse.json({ error: 'This place is already added to the trip' }, { status: 409 });
+      return deprecated(NextResponse.json({ error: 'This place is already added to the trip' }, { status: 409 }));
     }
 
     const normalized = normalizeCoordinateBatch([{ lat: parsedLat, lng: parsedLng }])[0];
@@ -168,12 +171,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     });
 
-    return NextResponse.json(proposal, { status: 201 });
+    return deprecated(NextResponse.json(proposal, { status: 201 }));
   }
 
   const city = body?.city;
   if (!city) {
-    return NextResponse.json({ error: 'City is required' }, { status: 400 });
+    return deprecated(NextResponse.json({ error: 'City is required' }, { status: 400 }));
   }
 
   const members = await prisma.tripMember.findMany({
@@ -224,5 +227,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     )
   );
 
-  return NextResponse.json(proposals, { status: 201 });
+  return deprecated(NextResponse.json(proposals, { status: 201 }));
 }

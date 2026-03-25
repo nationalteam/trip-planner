@@ -48,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     : 'createdAt';
   const resolvedOrder: SortOrder = order === 'asc' ? 'asc' : 'desc';
 
-  const activities = await prisma.proposal.findMany({
+  const activities = await prisma.activity.findMany({
     where: { tripId: id },
     orderBy: { [resolvedSortBy]: resolvedOrder },
   });
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const normalized = normalizeCoordinateBatch([resolvedCoordinates])[0];
-    const activity = await prisma.proposal.create({
+    const activity = await prisma.activity.create({
       data: {
         tripId: id,
         type: body.type || 'place',
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       );
     }
 
-    const duplicate = await prisma.proposal.findFirst({
+    const duplicate = await prisma.activity.findFirst({
       where: {
         tripId: id,
         googlePlaceId: placeId,
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const normalized = normalizeCoordinateBatch([{ lat: parsedLat, lng: parsedLng }])[0];
-    const activity = await prisma.proposal.create({
+    const activity = await prisma.activity.create({
       data: {
         tripId: id,
         type: mapGoogleTypesToActivityType(types),
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     },
   });
-  const existingActivities = await prisma.proposal.findMany({
+  const existingActivities = await prisma.activity.findMany({
     where: { tripId: id },
   });
   const existingCenter = getCoordinateCentroid(
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const activities = await prisma.$transaction(
     normalizedGenerated.map((activity) =>
-      prisma.proposal.create({
+      prisma.activity.create({
         data: {
           tripId: id,
           type: activity.type || 'place',

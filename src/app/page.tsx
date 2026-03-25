@@ -23,7 +23,7 @@ interface TripApiResponse {
   createdAt: string;
   startDate?: string | null;
   durationDays?: number | null;
-  _count?: { proposals: number; itineraryItems: number };
+  _count?: { activities: number; itineraryItems: number };
 }
 
 export default function Home() {
@@ -58,7 +58,7 @@ export default function Home() {
           durationDays: trip.durationDays ?? null,
           counts: trip._count
             ? {
-              activitiesCount: trip._count.proposals,
+              activitiesCount: trip._count.activities,
               itineraryItemsCount: trip._count.itineraryItems,
             }
             : undefined,

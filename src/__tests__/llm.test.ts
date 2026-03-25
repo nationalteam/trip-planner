@@ -83,7 +83,7 @@ describe('generateActivities', () => {
     expect(result).toEqual([]);
   });
 
-  it('includes existing proposal titles in the prompt context to avoid duplicates', async () => {
+  it('includes existing activity titles in the prompt context to avoid duplicates', async () => {
     const existingProposals = [{ title: 'Eiffel Tower' }];
 
     mockCreate.mockResolvedValue({
@@ -311,7 +311,7 @@ describe('organizeItinerary', () => {
         id: 'ii-1',
         day: 1,
         timeBlock: 'morning',
-        proposal: {
+        activity: {
           title: 'Louvre',
           description: 'Museum',
           type: 'place',

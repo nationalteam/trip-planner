@@ -33,7 +33,7 @@ describe('GET /api/trips', () => {
 
   it('returns a list of trips as JSON', async () => {
     const fakeTrips = [
-      { id: '1', name: 'Trip A', cities: '["Paris"]', createdAt: '2024-01-01T00:00:00.000Z', _count: { proposals: 2, itineraryItems: 1 } },
+      { id: '1', name: 'Trip A', cities: '["Paris"]', createdAt: '2024-01-01T00:00:00.000Z', _count: { activities: 2, itineraryItems: 1 } },
     ];
     (mockPrisma.trip.findMany as jest.Mock).mockResolvedValue(fakeTrips);
 

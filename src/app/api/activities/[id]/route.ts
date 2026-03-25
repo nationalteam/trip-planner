@@ -8,14 +8,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const proposal = await prisma.proposal.findUnique({ where: { id } });
-  if (!proposal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const activity = await prisma.activity.findUnique({ where: { id } });
+  if (!activity) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const access = await requireTripRole(proposal.tripId, auth.id, ['owner']);
+  const access = await requireTripRole(activity.tripId, auth.id, ['owner']);
   if (!access.ok) return buildForbiddenResponse();
 
-  await prisma.itineraryItem.deleteMany({ where: { proposalId: id } });
-  await prisma.proposal.delete({ where: { id } });
+  await prisma.itineraryItem.deleteMany({ where: { activityId: id } });
+  await prisma.activity.delete({ where: { id } });
 
   return new NextResponse(null, { status: 204 });
 }
@@ -25,10 +25,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const proposal = await prisma.proposal.findUnique({ where: { id } });
-  if (!proposal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const activity = await prisma.activity.findUnique({ where: { id } });
+  if (!activity) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const access = await requireTripRole(proposal.tripId, auth.id, ['owner']);
+  const access = await requireTripRole(activity.tripId, auth.id, ['owner']);
   if (!access.ok) return buildForbiddenResponse();
 
   let body: unknown;
@@ -103,7 +103,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     data.lng = normalized.lng;
   }
 
-  const updated = await prisma.proposal.update({
+  const updated = await prisma.activity.update({
     where: { id },
     data,
   });

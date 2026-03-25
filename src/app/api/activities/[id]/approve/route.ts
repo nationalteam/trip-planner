@@ -8,29 +8,29 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
-  const proposal = await prisma.proposal.findUnique({
+  const activity = await prisma.activity.findUnique({
     where: { id },
     include: { itineraryItem: true },
   });
-  if (!proposal) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!activity) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const access = await requireTripRole(proposal.tripId, auth.id, ['owner']);
+  const access = await requireTripRole(activity.tripId, auth.id, ['owner']);
   if (!access.ok) return buildForbiddenResponse();
 
-  const updated = await prisma.proposal.update({
+  const updated = await prisma.activity.update({
     where: { id },
     data: { status: 'approved' },
   });
 
-  let itineraryItem = proposal.itineraryItem;
+  let itineraryItem = activity.itineraryItem;
 
   if (!itineraryItem) {
     const existingItems = await prisma.itineraryItem.findMany({
-      where: { tripId: proposal.tripId },
+      where: { tripId: activity.tripId },
       orderBy: { day: 'asc' },
     });
 
-    const timeBlock = normalizeSuggestedTimeToTimeBlock(proposal.suggestedTime);
+    const timeBlock = normalizeSuggestedTimeToTimeBlock(activity.suggestedTime);
 
     let day = 1;
     while (true) {
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     itineraryItem = await prisma.itineraryItem.create({
       data: {
-        tripId: proposal.tripId,
-        proposalId: proposal.id,
+        tripId: activity.tripId,
+        activityId: activity.id,
         day,
         timeBlock,
       },
@@ -53,8 +53,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const fullItineraryItem = await prisma.itineraryItem.findUnique({
     where: { id: itineraryItem.id },
-    include: { proposal: true },
+    include: { activity: true },
   });
 
-  return NextResponse.json({ proposal: updated, itineraryItem: fullItineraryItem });
+  return NextResponse.json({ activity: updated, itineraryItem: fullItineraryItem });
 }

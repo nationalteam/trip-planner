@@ -45,10 +45,10 @@ describe('GET /api/trips/[id]/itinerary', () => {
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 1,
         timeBlock: 'morning',
-        proposal: { id: 'p-1', title: 'Eiffel Tower', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel Tower', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
     ];
     (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(fakeItems);
@@ -116,22 +116,22 @@ describe('POST /api/trips/[id]/itinerary', () => {
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 1,
         timeBlock: 'morning',
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
     ];
     const organized = [{ id: 'ii-1', day: 2, timeBlock: 'afternoon' }];
-    const updatedItems = [{ id: 'ii-1', tripId: 'trip-1', proposalId: 'p-1', day: 2, timeBlock: 'afternoon' }];
+    const updatedItems = [{ id: 'ii-1', tripId: 'trip-1', activityId: 'p-1', day: 2, timeBlock: 'afternoon' }];
     const updatedWithProposal = [
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 2,
         timeBlock: 'afternoon',
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
     ];
 
@@ -159,10 +159,10 @@ describe('POST /api/trips/[id]/itinerary', () => {
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 1,
         timeBlock: 'morning',
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
     ];
 
@@ -184,10 +184,10 @@ describe('POST /api/trips/[id]/itinerary', () => {
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 1,
         timeBlock: 'morning',
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
     ];
 
@@ -209,10 +209,10 @@ describe('POST /api/trips/[id]/itinerary', () => {
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 1,
         timeBlock: 'morning',
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
     ];
 
@@ -238,8 +238,8 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
   });
 
   const existingItems = [
-    { id: 'ii-1', tripId: 'trip-1', proposalId: 'p-1', day: 1, timeBlock: 'morning', order: 0 },
-    { id: 'ii-2', tripId: 'trip-1', proposalId: 'p-2', day: 1, timeBlock: 'morning', order: 1 },
+    { id: 'ii-1', tripId: 'trip-1', activityId: 'p-1', day: 1, timeBlock: 'morning', order: 0 },
+    { id: 'ii-2', tripId: 'trip-1', activityId: 'p-2', day: 1, timeBlock: 'morning', order: 1 },
   ];
 
   it('returns 400 when body is not an array', async () => {
@@ -295,20 +295,20 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 2,
         timeBlock: 'lunch',
         order: 0,
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
       {
         id: 'ii-2',
         tripId: 'trip-1',
-        proposalId: 'p-2',
+        activityId: 'p-2',
         day: 2,
         timeBlock: 'night',
         order: 0,
-        proposal: { id: 'p-2', title: 'Louvre', description: 'Museum', type: 'place', city: 'Paris', durationMinutes: 90, suggestedTime: 'night' },
+        activity: { id: 'p-2', title: 'Louvre', description: 'Museum', type: 'place', city: 'Paris', durationMinutes: 90, suggestedTime: 'night' },
       },
     ];
     (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
@@ -349,25 +349,25 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
     expect(data.error).toMatch(/invalid/i);
   });
 
-  it('updates itinerary items and returns them with proposals', async () => {
+  it('updates itinerary items and returns them with activities', async () => {
     const updatedWithProposal = [
       {
         id: 'ii-1',
         tripId: 'trip-1',
-        proposalId: 'p-1',
+        activityId: 'p-1',
         day: 1,
         timeBlock: 'afternoon',
         order: 0,
-        proposal: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
+        activity: { id: 'p-1', title: 'Eiffel', description: 'Iconic', type: 'place', city: 'Paris', durationMinutes: 60, suggestedTime: 'morning' },
       },
       {
         id: 'ii-2',
         tripId: 'trip-1',
-        proposalId: 'p-2',
+        activityId: 'p-2',
         day: 1,
         timeBlock: 'morning',
         order: 0,
-        proposal: { id: 'p-2', title: 'Louvre', description: 'Museum', type: 'place', city: 'Paris', durationMinutes: 90, suggestedTime: 'morning' },
+        activity: { id: 'p-2', title: 'Louvre', description: 'Museum', type: 'place', city: 'Paris', durationMinutes: 90, suggestedTime: 'morning' },
       },
     ];
 

@@ -7,7 +7,7 @@ import { isValidDateOnly } from '@/lib/dates';
 
 type ActivityType = 'food' | 'place' | 'hotel';
 type SuggestedTime = 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'night';
-type GeneratedProposal = {
+type GeneratedActivity = {
   type?: string;
   title: string;
   description: string;
@@ -157,10 +157,8 @@ function normalizeActionType(value: unknown): ChatAction['type'] {
 
 function readActionId(raw: Record<string, unknown>, actionName: string): string {
   const activityId = normalizeOptionalString(raw.activityId, 'activityId');
-  const proposalId = normalizeOptionalString(raw.proposalId, 'proposalId');
-  const resolved = activityId ?? proposalId;
-  if (!resolved) throw new Error(`${actionName} requires activityId.`);
-  return resolved;
+  if (!activityId) throw new Error(`${actionName} requires activityId.`);
+  return activityId;
 }
 
 function normalizeTripStartDate(value: unknown): string | null | undefined {
@@ -191,14 +189,14 @@ export function validateChatAction(value: unknown): ChatAction {
   }
 
   if (type === 'activity.create') {
-    assertAllowedKeys(raw, ['type', 'title', 'description', 'city', 'activityType', 'proposalType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
+    assertAllowedKeys(raw, ['type', 'title', 'description', 'city', 'activityType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
     const title = normalizeOptionalString(raw.title, 'title');
     const description = normalizeOptionalString(raw.description, 'description');
     const city = normalizeOptionalString(raw.city, 'city');
     if (!title || !description || !city) {
       throw new Error('activity.create requires title, description, and city.');
     }
-    const activityType = normalizeOptionalActivityType(raw.activityType ?? raw.proposalType);
+    const activityType = normalizeOptionalActivityType(raw.activityType);
     return {
       type,
       title,
@@ -213,9 +211,9 @@ export function validateChatAction(value: unknown): ChatAction {
   }
 
   if (type === 'activity.update') {
-    assertAllowedKeys(raw, ['type', 'activityId', 'proposalId', 'title', 'description', 'city', 'activityType', 'proposalType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
+    assertAllowedKeys(raw, ['type', 'activityId', 'title', 'description', 'city', 'activityType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
     const activityId = readActionId(raw, 'activity.update');
-    const activityType = normalizeOptionalActivityType(raw.activityType ?? raw.proposalType);
+    const activityType = normalizeOptionalActivityType(raw.activityType);
     return {
       type,
       activityId,
@@ -231,7 +229,7 @@ export function validateChatAction(value: unknown): ChatAction {
   }
 
   if (type === 'activity.delete') {
-    assertAllowedKeys(raw, ['type', 'activityId', 'proposalId']);
+    assertAllowedKeys(raw, ['type', 'activityId']);
     const activityId = readActionId(raw, 'activity.delete');
     return { type, activityId };
   }
@@ -242,7 +240,7 @@ export function validateChatAction(value: unknown): ChatAction {
   }
 
   if (type === 'itinerary.addActivity') {
-    assertAllowedKeys(raw, ['type', 'activityId', 'proposalId', 'day', 'timeBlock', 'order']);
+    assertAllowedKeys(raw, ['type', 'activityId', 'day', 'timeBlock', 'order']);
     const activityId = readActionId(raw, 'itinerary.addActivity');
     const day = normalizeOptionalInteger(raw.day, 'day', 1);
     const order = normalizeOptionalInteger(raw.order, 'order', 0);
@@ -314,7 +312,7 @@ async function createActivityFromAction(tripId: string, action: Extract<ChatActi
     throw new Error(`Unable to resolve coordinates for activity "${action.title}".`);
   }
   const normalized = normalizeCoordinateBatch([resolvedCoordinates])[0];
-  return prisma.proposal.create({
+  return prisma.activity.create({
     data: {
       tripId,
       type: action.activityType ?? 'place',
@@ -347,21 +345,21 @@ export async function executeTripActions(tripId: string, userId: string, actionP
       const allPreferences = await prisma.preference.findMany({
         where: { userId: { in: members.map((member) => member.userId) } },
       });
-      const existingProposals = await prisma.proposal.findMany({ where: { tripId } });
-      const existingCenter = getCoordinateCentroid(existingProposals.filter((proposal) => proposal.city === action.city));
-      const generated = await generateActivities(allPreferences, action.city, existingProposals) as GeneratedProposal[];
-      const withCoordinates = await Promise.all(generated.map(async (proposal: GeneratedProposal) => {
-        const geocoded = await geocodeWithGoogleMaps(`${proposal.title}, ${proposal.city || action.city}`);
-        return geocoded ? { ...proposal, ...geocoded } : null;
+      const existingActivities = await prisma.activity.findMany({ where: { tripId } });
+      const existingCenter = getCoordinateCentroid(existingActivities.filter((activity) => activity.city === action.city));
+      const generated = await generateActivities(allPreferences, action.city, existingActivities) as GeneratedActivity[];
+      const withCoordinates = await Promise.all(generated.map(async (activity: GeneratedActivity) => {
+        const geocoded = await geocodeWithGoogleMaps(`${activity.title}, ${activity.city || action.city}`);
+        return geocoded ? { ...activity, ...geocoded } : null;
       }));
       const normalizedGenerated = normalizeCoordinateBatch(
-        withCoordinates.filter((proposal): proposal is NonNullable<typeof proposal> => proposal !== null),
+        withCoordinates.filter((activity): activity is NonNullable<typeof activity> => activity !== null),
         { reference: existingCenter ?? undefined }
       );
       if (normalizedGenerated.length > 0) {
         await prisma.$transaction(
           normalizedGenerated.map((p) =>
-            prisma.proposal.create({
+            prisma.activity.create({
               data: {
                 tripId,
                 type: normalizeOptionalActivityType(p.type) ?? 'place',
@@ -390,7 +388,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
     }
 
     if (action.type === 'activity.update') {
-      const existing = await prisma.proposal.findUnique({ where: { id: action.activityId } });
+      const existing = await prisma.activity.findUnique({ where: { id: action.activityId } });
       if (!existing || existing.tripId !== tripId) throw new Error('Activity not found');
 
       let normalizedLatLng:
@@ -403,7 +401,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
         normalizedLatLng = normalizeCoordinateBatch([{ lat: action.lat, lng: action.lng }])[0];
       }
 
-      await prisma.proposal.update({
+      await prisma.activity.update({
         where: { id: action.activityId },
         data: {
           type: action.activityType,
@@ -421,10 +419,10 @@ export async function executeTripActions(tripId: string, userId: string, actionP
     }
 
     if (action.type === 'activity.delete') {
-      const existing = await prisma.proposal.findUnique({ where: { id: action.activityId } });
+      const existing = await prisma.activity.findUnique({ where: { id: action.activityId } });
       if (!existing || existing.tripId !== tripId) throw new Error('Activity not found');
-      await prisma.itineraryItem.deleteMany({ where: { proposalId: action.activityId } });
-      await prisma.proposal.delete({ where: { id: action.activityId } });
+      await prisma.itineraryItem.deleteMany({ where: { activityId: action.activityId } });
+      await prisma.activity.delete({ where: { id: action.activityId } });
       results.push({ type: action.type, status: 'success' });
       continue;
     }
@@ -432,7 +430,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
     if (action.type === 'itinerary.organize') {
       const items = await prisma.itineraryItem.findMany({
         where: { tripId },
-        include: { proposal: true },
+        include: { activity: true },
         orderBy: [{ day: 'asc' }],
       });
       if (items.length > 0) {
@@ -463,13 +461,13 @@ export async function executeTripActions(tripId: string, userId: string, actionP
     }
 
     if (action.type === 'itinerary.addActivity') {
-      const proposal = await prisma.proposal.findUnique({ where: { id: action.activityId } });
-      if (!proposal || proposal.tripId !== tripId) throw new Error('Activity not found');
-      const existingItem = await prisma.itineraryItem.findUnique({ where: { proposalId: action.activityId } });
+      const activity = await prisma.activity.findUnique({ where: { id: action.activityId } });
+      if (!activity || activity.tripId !== tripId) throw new Error('Activity not found');
+      const existingItem = await prisma.itineraryItem.findUnique({ where: { activityId: action.activityId } });
       const day = action.day ?? (existingItem?.day ?? 1);
       const timeBlock = action.timeBlock ?? (existingItem?.timeBlock && isItineraryTimeBlock(existingItem.timeBlock)
         ? existingItem.timeBlock
-        : normalizeSuggestedTimeToTimeBlock(proposal.suggestedTime));
+        : normalizeSuggestedTimeToTimeBlock(activity.suggestedTime));
       const order = action.order ?? (existingItem?.order ?? 0);
       if (existingItem) {
         await prisma.itineraryItem.update({
@@ -480,7 +478,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
         await prisma.itineraryItem.create({
           data: {
             tripId,
-            proposalId: action.activityId,
+            activityId: action.activityId,
             day,
             timeBlock,
             order,
@@ -533,12 +531,12 @@ export async function executeTripActions(tripId: string, userId: string, actionP
     }
   }
 
-  const [updatedTrip, proposals, itinerary] = await Promise.all([
+  const [updatedTrip, activities, itinerary] = await Promise.all([
     prisma.trip.findUnique({ where: { id: tripId } }),
-    prisma.proposal.findMany({ where: { tripId }, orderBy: { createdAt: 'desc' } }),
+    prisma.activity.findMany({ where: { tripId }, orderBy: { createdAt: 'desc' } }),
     prisma.itineraryItem.findMany({
       where: { tripId },
-      include: { proposal: true },
+      include: { activity: true },
       orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
     }),
   ]);
@@ -546,7 +544,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
   return {
     results,
     trip: updatedTrip,
-    activities: proposals,
+    activities,
     itinerary,
   };
 }

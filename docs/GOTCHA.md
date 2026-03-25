@@ -81,3 +81,16 @@
   Use `--body-file` (or single-quoted safe text) to avoid shell interpolation.
 - Preventive rule:
   For multiline PR bodies containing Markdown backticks, always write to a temp file and pass `--body-file`.
+
+## SQLite migration can partially apply before failing on unsupported `ALTER INDEX ... RENAME`
+
+- Context:
+  Hard-cut rename from `Proposal`/`proposalId` to `Activity`/`activityId` in a Prisma SQLite migration.
+- Symptom:
+  `prisma migrate deploy` fails with `near "INDEX": syntax error`, but schema is already partially changed (table/column renamed).
+- Root cause:
+  SQLite in this environment does not support `ALTER INDEX ... RENAME TO ...`; earlier statements in the same migration had already executed.
+- Fix:
+  Remove index-rename statements from the migration SQL, then reconcile migration state with `prisma migrate resolve --applied <migration_name>`.
+- Preventive rule:
+  For SQLite rename migrations, avoid index renames; keep old index names or recreate indexes via explicit `DROP INDEX` + `CREATE INDEX` in a verified compatible SQL script.

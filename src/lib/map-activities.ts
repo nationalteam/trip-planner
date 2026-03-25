@@ -7,9 +7,6 @@ type ItineraryItemLike = {
   activity?: {
     id: string;
   };
-  proposal?: {
-    id: string;
-  };
 };
 
 export type MapActivity<T extends ActivityLike> = T & {
@@ -22,7 +19,7 @@ export function buildMapActivities<T extends ActivityLike>(
 ): Array<MapActivity<T>> {
   const arrangedActivityIds = new Set(
     itinerary
-      .map((item) => item.activity?.id ?? item.proposal?.id)
+      .map((item) => item.activity?.id)
       .filter((id): id is string => Boolean(id))
   );
   return activities

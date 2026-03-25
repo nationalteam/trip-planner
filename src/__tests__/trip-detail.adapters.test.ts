@@ -19,14 +19,14 @@ describe('trip detail adapters', () => {
     ]);
   });
 
-  it('normalizes legacy itinerary proposal field into activity field', () => {
+  it('keeps itinerary items with activity field', () => {
     const input = [
       {
         id: 'ii-1',
         day: 1,
         timeBlock: 'morning',
         order: 0,
-        proposal: {
+        activity: {
           id: 'p-1',
           title: 'Eiffel Tower',
           description: 'Iconic landmark',
@@ -49,21 +49,16 @@ describe('trip detail adapters', () => {
     ]);
   });
 
-  it('prefers existing activity field when both activity and proposal are present', () => {
+  it('drops itinerary items when activity field is missing', () => {
     const input = [
       {
         id: 'ii-1',
         day: 1,
         timeBlock: 'morning',
         order: 0,
-        proposal: { id: 'p-proposal', title: 'Proposal version' },
-        activity: { id: 'p-activity', title: 'Activity version' },
       },
     ];
 
-    expect(normalizeItineraryItems(input)[0]?.activity).toEqual({
-      id: 'p-activity',
-      title: 'Activity version',
-    });
+    expect(normalizeItineraryItems(input)).toEqual([]);
   });
 });

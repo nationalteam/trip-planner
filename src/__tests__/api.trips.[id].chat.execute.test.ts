@@ -32,7 +32,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     mockExecuteTripActions.mockResolvedValue({
       results: [{ type: 'activity.create', status: 'success' }],
       trip: { id: 'trip-1', name: 'Updated Trip' },
-      proposals: [{ id: 'p-1', title: 'New Place' }],
+      activities: [{ id: 'p-1', title: 'New Place' }],
       itinerary: [],
     });
 
@@ -111,6 +111,37 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     ]);
     expect(data.results).toEqual([{ type: 'activity.create', status: 'success' }]);
     expect(data.activities).toEqual([{ id: 'a-1', title: 'Legacy Place' }]);
+  });
+
+  it('does not map legacy proposals payload into activities', async () => {
+    mockExecuteTripActions.mockResolvedValueOnce({
+      results: [{ type: 'activity.create', status: 'success' }],
+      trip: { id: 'trip-1', name: 'Updated Trip' },
+      proposals: [{ id: 'p-legacy', title: 'Legacy Place' }],
+      itinerary: [],
+    });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/chat/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actionPlan: [
+          {
+            type: 'activity.create',
+            title: 'Legacy Place',
+            description: 'Converted',
+            city: 'Tokyo',
+          },
+        ],
+      }),
+    });
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'trip-1' }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.activities).toEqual([]);
+    expect(data.proposals).toBeUndefined();
   });
 
   it('rejects invalid action payload', async () => {

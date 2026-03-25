@@ -31,6 +31,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   await prisma.itineraryItem.deleteMany({ where: { tripId: id } });
   await prisma.activity.deleteMany({ where: { tripId: id } });
+  await prisma.accommodation.deleteMany({ where: { tripId: id } });
   await prisma.tripMember.deleteMany({ where: { tripId: id } });
   await prisma.trip.delete({ where: { id } });
 

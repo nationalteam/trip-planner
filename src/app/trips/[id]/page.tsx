@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -7,6 +6,7 @@ import Link from 'next/link';
 import ActivityCard from '@/components/ActivityCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import AccommodationPanel from '@/components/AccommodationPanel';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
 import { buildMapActivities } from '@/lib/map-activities';
 import { normalizeActivities, normalizeItineraryItems } from './adapters';
@@ -14,7 +14,6 @@ import type { Activity, ChatPlanResponse, ItineraryItem, Tab, Trip } from './typ
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 const GoogleMapView = dynamic(() => import('@/components/GoogleMapView'), { ssr: false });
-
 export default function TripDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -60,7 +59,6 @@ export default function TripDetailPage() {
   const [executingChat, setExecutingChat] = useState(false);
   const [chatError, setChatError] = useState('');
   const [chatPreview, setChatPreview] = useState<ChatPlanResponse | null>(null);
-
   const fetchAll = useCallback(async () => {
     try {
       const [tripRes, activitiesRes, itineraryRes] = await Promise.all([
@@ -90,7 +88,6 @@ export default function TripDetailPage() {
       fetchAll();
     }
   }, [tripId, fetchAll]);
-
   useEffect(() => {
     if (!manualCity && selectedCity) {
       setManualCity(selectedCity);
@@ -851,6 +848,12 @@ export default function TripDetailPage() {
 
       {activeTab === 'itinerary' && (
         <div>
+          <AccommodationPanel
+            tripId={tripId}
+            canEdit={canEdit}
+            startDate={trip.startDate}
+            durationDays={trip.durationDays}
+          />
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <button
               onClick={handleOrganizeItinerary}

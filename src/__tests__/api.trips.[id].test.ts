@@ -11,6 +11,9 @@ jest.mock('@/lib/prisma', () => ({
     activity: {
       deleteMany: jest.fn(),
     },
+    accommodation: {
+      deleteMany: jest.fn(),
+    },
     itineraryItem: {
       deleteMany: jest.fn(),
     },
@@ -97,6 +100,7 @@ describe('DELETE /api/trips/[id]', () => {
     expect(res.status).toBe(204);
     expect(mockPrisma.itineraryItem.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.activity.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
+    expect(mockPrisma.accommodation.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.tripMember.deleteMany).toHaveBeenCalledWith({ where: { tripId: 'trip-1' } });
     expect(mockPrisma.trip.delete).toHaveBeenCalledWith({ where: { id: 'trip-1' } });
   });

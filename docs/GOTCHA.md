@@ -107,3 +107,16 @@
   Keep legacy names in historical migration SQL unchanged and only rename current schema/runtime code.
 - Preventive rule:
   During terminology refactors, exclude `prisma/migrations/*` and keep prior migration snapshots verbatim.
+
+## `bash -lc` heredoc can corrupt code that contains JavaScript template literals
+
+- Context:
+  Writing TypeScript/TSX files via shell heredoc inside a double-quoted `bash -lc "..."` command.
+- Symptom:
+  Written files contain broken tokens around backticks (for example malformed `if (...)` expressions or partial template strings).
+- Root cause:
+  Backticks in JS template literals are interpreted by shell command substitution before heredoc content is written.
+- Fix:
+  Rewrite affected files using `apply_patch` (or another write path that does not pass template literals through shell command substitution).
+- Preventive rule:
+  When file content includes backticks/template literals, avoid `bash -lc` heredoc writes; prefer `apply_patch` to preserve exact source text.

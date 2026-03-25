@@ -25,6 +25,7 @@ describe('bump version workflow', () => {
     expect(workflow).toContain('- minor');
     expect(workflow).toContain('- major');
     expect(workflow).toContain('github-token: ${{ secrets.PAT_TOKEN }}');
+    expect(workflow).toContain('token: ${{ secrets.PAT_TOKEN }}');
     expect(workflow).toContain("if (refType !== 'branch') {");
     expect(workflow).toContain('if [ "${GITHUB_REF_TYPE}" != "branch" ]; then');
     expect(workflow).toContain('PAT_TOKEN: ${{ secrets.PAT_TOKEN }}');

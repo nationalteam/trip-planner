@@ -9,7 +9,7 @@ export interface Trip {
   currentRole?: 'owner' | 'viewer';
 }
 
-export interface Proposal {
+export interface Activity {
   id: string;
   type: string;
   title: string;
@@ -31,8 +31,11 @@ export interface ItineraryItem {
   day: number;
   timeBlock: string;
   order: number;
-  proposal: Proposal;
+  activity: Activity;
+  proposal?: Activity;
 }
+
+export type Proposal = Activity;
 
 export type Tab = 'proposals' | 'itinerary' | 'map' | 'ai';
 export type ChatPlanAction = { type: string; [key: string]: unknown };

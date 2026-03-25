@@ -9,7 +9,8 @@ import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
 import { buildMapProposals } from '@/lib/map-proposals';
-import type { ChatPlanResponse, ItineraryItem, Proposal, Tab, Trip } from './types';
+import { normalizeActivities, normalizeItineraryItems } from './adapters';
+import type { Activity, ChatPlanResponse, ItineraryItem, Tab, Trip } from './types';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 const GoogleMapView = dynamic(() => import('@/components/GoogleMapView'), { ssr: false });
@@ -20,7 +21,7 @@ export default function TripDetailPage() {
   const tripId = params.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [itinerary, setItinerary] = useState<ItineraryItem[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('proposals');
   const [loading, setLoading] = useState(true);
@@ -73,8 +74,8 @@ export default function TripDetailPage() {
         itineraryRes.json(),
       ]);
       setTrip(tripData);
-      setProposals(proposalsData);
-      setItinerary(itineraryData);
+      setActivities(normalizeActivities(proposalsData));
+      setItinerary(normalizeItineraryItems(itineraryData));
       if (tripData?.cities) {
         const cities = JSON.parse(tripData.cities);
         if (cities.length > 0) setSelectedCity(cities[0]);
@@ -102,7 +103,7 @@ export default function TripDetailPage() {
     setScheduleDurationDaysInput(trip.durationDays != null ? String(trip.durationDays) : '');
   }, [trip, editingSchedule]);
 
-  const mapProposals = useMemo(() => buildMapProposals(proposals, itinerary), [proposals, itinerary]);
+  const mapProposals = useMemo(() => buildMapProposals(activities, itinerary), [activities, itinerary]);
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -115,7 +116,7 @@ export default function TripDetailPage() {
       });
       if (res.ok) {
         const newProposals = await res.json();
-        setProposals(prev => [...newProposals, ...prev]);
+        setActivities(prev => [...normalizeActivities(newProposals), ...prev]);
       }
     } finally {
       setGenerating(false);
@@ -143,7 +144,7 @@ export default function TripDetailPage() {
       });
       if (res.ok) {
         const created = await res.json();
-        setProposals(prev => [created, ...prev]);
+        setActivities(prev => [created, ...prev]);
         setManualTitle('');
         setManualDescription('');
         setManualDurationMinutes('');
@@ -188,9 +189,9 @@ export default function TripDetailPage() {
     const res = await fetch(`/api/proposals/${proposalId}/approve`, { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
-      setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'approved' } : p));
+      setActivities(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'approved' } : p));
       if (data.itineraryItem) {
-        setItinerary(prev => [...prev, data.itineraryItem]);
+        setItinerary(prev => [...prev, ...normalizeItineraryItems([data.itineraryItem])]);
       }
     }
   }
@@ -198,7 +199,7 @@ export default function TripDetailPage() {
   async function handleReject(proposalId: string) {
     const res = await fetch(`/api/proposals/${proposalId}/reject`, { method: 'POST' });
     if (res.ok) {
-      setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'rejected' } : p));
+      setActivities(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'rejected' } : p));
     }
   }
 
@@ -303,8 +304,8 @@ export default function TripDetailPage() {
         setConfirmDialog(null);
         const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' });
         if (res.ok) {
-          setProposals(prev => prev.filter(p => p.id !== proposalId));
-          setItinerary(prev => prev.filter(item => item.proposal.id !== proposalId));
+          setActivities(prev => prev.filter(p => p.id !== proposalId));
+          setItinerary(prev => prev.filter(item => item.activity.id !== proposalId));
         } else {
           alert('Failed to delete proposal. Please try again.');
         }
@@ -360,7 +361,7 @@ export default function TripDetailPage() {
 
     if (res.ok) {
       const created = await res.json();
-      setProposals((prev) => [created, ...prev]);
+      setActivities((prev) => [created, ...prev]);
       return;
     }
 
@@ -411,8 +412,9 @@ export default function TripDetailPage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         if (data.trip) setTrip((prev) => (prev ? { ...prev, ...data.trip } : prev));
-        if (Array.isArray(data.proposals)) setProposals(data.proposals);
-        if (Array.isArray(data.itinerary)) setItinerary(data.itinerary);
+        if (Array.isArray(data.activities)) setActivities(normalizeActivities(data.activities));
+        else if (Array.isArray(data.proposals)) setActivities(normalizeActivities(data.proposals));
+        if (Array.isArray(data.itinerary)) setItinerary(normalizeItineraryItems(data.itinerary));
         setChatPreview(null);
       } else {
         setChatError(data.error || 'Failed to apply chat actions.');
@@ -510,7 +512,7 @@ export default function TripDetailPage() {
     ].filter(Boolean).join(' · ')
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
-  const filteredProposals = filterStatus === 'all' ? proposals : proposals.filter(p => p.status === filterStatus);
+  const filteredProposals = filterStatus === 'all' ? activities : activities.filter(p => p.status === filterStatus);
   const arrangedMapCount = mapProposals.filter((proposal) => proposal.isArranged).length;
   const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
   const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;

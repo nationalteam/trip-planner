@@ -3,8 +3,10 @@ name: Deploy demo site to GitHub Pages
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: read

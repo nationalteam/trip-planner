@@ -9,7 +9,10 @@ interface Trip {
   createdAt: string;
   startDate?: string | null;
   durationDays?: number | null;
-  _count?: { proposals: number; itineraryItems: number };
+  counts?: {
+    activitiesCount: number;
+    itineraryItemsCount: number;
+  };
 }
 
 interface TripCardProps {
@@ -48,10 +51,10 @@ export default function TripCard({ trip }: TripCardProps) {
               {trip.durationDays ? <span>{trip.durationDays} days</span> : null}
             </div>
           </div>
-          {trip._count && (
+          {trip.counts && (
             <div className="flex gap-3">
-              <span>{trip._count.proposals} activities</span>
-              <span>{trip._count.itineraryItems} planned</span>
+              <span>{trip.counts.activitiesCount} activities</span>
+              <span>{trip.counts.itineraryItemsCount} planned</span>
             </div>
           )}
         </div>

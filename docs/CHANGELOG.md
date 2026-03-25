@@ -28,3 +28,4 @@
 2026-03-25 | fix(ci): make bump-version workflow skip existing semver tags safely (#0)
 2026-03-25 | refactor(ci): extract bump workflow logic into scripts/bump-version.sh (#0)
 2026-03-25 | feat(ci): make bump-version workflow open version PRs to main (#0)
+2026-03-25 | feat(ci): add merge-to-main workflow to create release tags (#0)

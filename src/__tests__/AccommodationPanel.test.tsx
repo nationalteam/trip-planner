@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import AccommodationPanel from '@/components/AccommodationPanel';
 
 describe('AccommodationPanel', () => {
@@ -49,5 +50,18 @@ describe('AccommodationPanel', () => {
 
     await waitFor(() => expect(screen.getAllByText('Hotel A').length).toBeGreaterThan(0));
     expect(screen.getByText(/Set trip start date and duration/i)).toBeInTheDocument();
+  });
+
+  it('shows validation error instead of silently blocking when required dates are missing', async () => {
+    const user = userEvent.setup();
+    render(<AccommodationPanel tripId="trip-1" canEdit startDate={null} durationDays={null} />);
+
+    await waitFor(() => expect(screen.getAllByText('Hotel A').length).toBeGreaterThan(0));
+    await user.type(screen.getByPlaceholderText('Accommodation name'), 'Hotel B');
+    await user.type(screen.getByPlaceholderText('Address'), 'Address B');
+    await user.click(screen.getByRole('button', { name: 'Add stay' }));
+
+    expect(screen.getByText('name, address, checkInDate, and checkOutDate are required.')).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });

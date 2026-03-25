@@ -69,3 +69,4 @@
 2026-03-25 | refactor(rename): remove remaining editable proposal tokens and keep only historical migration/changelog records (#0)
 2026-03-25 | docs(rename): remove completed activity migration planning docs and retain lessons in GOTCHA (#0)
 2026-03-25 | feat(accommodation): add independent stay segments API and daily-stay UI panel (#0)
+2026-03-26 | fix(accommodation): show explicit validation error when Add stay misses required fields (#129)

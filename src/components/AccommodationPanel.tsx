@@ -91,14 +91,25 @@ export default function AccommodationPanel({ tripId, canEdit, startDate, duratio
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError('');
+
+    const normalizedName = name.trim();
+    const normalizedAddress = address.trim();
+    const normalizedCheckInDate = checkInDate.trim();
+    const normalizedCheckOutDate = checkOutDate.trim();
+
+    if (!normalizedName || !normalizedAddress || !normalizedCheckInDate || !normalizedCheckOutDate) {
+      setError('name, address, checkInDate, and checkOutDate are required.');
+      return;
+    }
+
+    setSaving(true);
     try {
       const payload = {
-        name,
-        address,
-        checkInDate,
-        checkOutDate,
+        name: normalizedName,
+        address: normalizedAddress,
+        checkInDate: normalizedCheckInDate,
+        checkOutDate: normalizedCheckOutDate,
         notes: notes.trim() ? notes.trim() : null,
         lat: lat.trim() ? Number(lat) : null,
         lng: lng.trim() ? Number(lng) : null,
@@ -151,33 +162,29 @@ export default function AccommodationPanel({ tripId, canEdit, startDate, duratio
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
       {canEdit && (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-gray-200 rounded-lg p-3 mb-4">
+        <form noValidate onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3 border border-gray-200 rounded-lg p-3 mb-4">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Accommodation name"
-            required
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
           />
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Address"
-            required
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
           />
           <input
             type="date"
             value={checkInDate}
             onChange={(e) => setCheckInDate(e.target.value)}
-            required
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
           />
           <input
             type="date"
             value={checkOutDate}
             onChange={(e) => setCheckOutDate(e.target.value)}
-            required
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
           />
           <input

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-describe('bump-version workflow tag conflict handling', () => {
+describe('bump-version workflow PR flow', () => {
   it('uses the shared bump-version bash script', () => {
     const workflowPath = path.join(
       process.cwd(),
@@ -14,15 +14,25 @@ describe('bump-version workflow tag conflict handling', () => {
     );
   });
 
-  it('handles existing tags by bumping until an available version is found', () => {
+  it('runs bump script in no-tag mode for PR-based version bump', () => {
     const scriptPath = path.join(process.cwd(), 'scripts/bump-version.sh');
     const script = fs.readFileSync(scriptPath, 'utf8');
 
-    expect(script).toContain(
-      'while git rev-parse --verify --quiet "refs/tags/v${next_version}"',
+    expect(script).toContain('skip_tag=false');
+    expect(script).toContain('--no-tag');
+    expect(script).toContain('npm version "${next_version}" --no-git-tag-version');
+  });
+
+  it('creates a pull request instead of pushing commit and tags directly', () => {
+    const workflowPath = path.join(
+      process.cwd(),
+      '.github/workflows/bump-version.yml',
     );
-    expect(script).toContain(
-      'Tag v${next_version} already exists; bumping ${bump_type} again.',
-    );
+    const workflow = fs.readFileSync(workflowPath, 'utf8');
+
+    expect(workflow).toContain('pull-requests: write');
+    expect(workflow).toContain('./scripts/bump-version.sh "${{ inputs.bump }}" --no-tag');
+    expect(workflow).toContain('uses: peter-evans/create-pull-request@v7');
+    expect(workflow).not.toContain('--follow-tags');
   });
 });

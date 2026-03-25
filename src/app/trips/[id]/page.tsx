@@ -915,7 +915,7 @@ export default function TripDetailPage() {
             Showing {arrangedMapCount} arranged and {mapActivities.length - arrangedMapCount} unarranged activities (rejected hidden)
           </p>
           {mapProvider === 'google' ? (
-            <GoogleMapView proposals={mapActivities} canEdit={canEdit} onAddPlace={handleAddGooglePlace} focusTrigger={mapFocusTrigger} />
+            <GoogleMapView activities={mapActivities} canEdit={canEdit} onAddPlace={handleAddGooglePlace} focusTrigger={mapFocusTrigger} />
           ) : (
             mapActivities.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
@@ -923,7 +923,7 @@ export default function TripDetailPage() {
                 <p className="text-gray-500">Generate activities to see them on the map</p>
               </div>
             ) : (
-              <MapView proposals={mapActivities} />
+              <MapView activities={mapActivities} />
             )
           )}
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { normalizeCoordinateBatch } from '@/lib/coordinates';
 
-interface Proposal {
+interface MapActivity {
   id: string;
   title: string;
   description: string;
@@ -15,14 +15,16 @@ interface Proposal {
 }
 
 interface MapViewProps {
-  proposals: Proposal[];
+  activities?: MapActivity[];
+  proposals?: MapActivity[];
 }
 
 const DEFAULT_CENTER = { lat: 48.8566, lng: 2.3522 };
 
-export default function MapView({ proposals }: MapViewProps) {
+export default function MapView({ activities, proposals }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const mapActivities = activities ?? proposals ?? [];
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -47,18 +49,18 @@ export default function MapView({ proposals }: MapViewProps) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const validProposals = normalizeCoordinateBatch(proposals, { reference: DEFAULT_CENTER });
-      const approvedProposals = validProposals.filter(p => p.status === 'approved');
+      const validActivities = normalizeCoordinateBatch(mapActivities, { reference: DEFAULT_CENTER });
+      const approvedActivities = validActivities.filter((activity) => activity.status === 'approved');
 
       let centerLat = DEFAULT_CENTER.lat;
       let centerLng = DEFAULT_CENTER.lng;
 
-      if (approvedProposals.length > 0) {
-        centerLat = approvedProposals.reduce((sum, p) => sum + p.lat, 0) / approvedProposals.length;
-        centerLng = approvedProposals.reduce((sum, p) => sum + p.lng, 0) / approvedProposals.length;
-      } else if (validProposals.length > 0) {
-        centerLat = validProposals.reduce((sum, p) => sum + p.lat, 0) / validProposals.length;
-        centerLng = validProposals.reduce((sum, p) => sum + p.lng, 0) / validProposals.length;
+      if (approvedActivities.length > 0) {
+        centerLat = approvedActivities.reduce((sum, activity) => sum + activity.lat, 0) / approvedActivities.length;
+        centerLng = approvedActivities.reduce((sum, activity) => sum + activity.lng, 0) / approvedActivities.length;
+      } else if (validActivities.length > 0) {
+        centerLat = validActivities.reduce((sum, activity) => sum + activity.lat, 0) / validActivities.length;
+        centerLng = validActivities.reduce((sum, activity) => sum + activity.lng, 0) / validActivities.length;
       }
 
       const map = L.map(mapRef.current).setView([centerLat, centerLng], 12);
@@ -74,12 +76,12 @@ export default function MapView({ proposals }: MapViewProps) {
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
 
-      const toShow = approvedProposals.length > 0 ? approvedProposals : validProposals;
+      const toShow = approvedActivities.length > 0 ? approvedActivities : validActivities;
 
-      toShow.forEach(proposal => {
+      toShow.forEach((activity) => {
         const icon = L.divIcon({
-          html: `<div style="background:${proposal.status === 'approved' ? '#16a34a' : '#2563eb'};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-            ${proposal.type === 'food' ? '🍽' : proposal.type === 'hotel' ? '🏨' : '🏛'}
+          html: `<div style="background:${activity.status === 'approved' ? '#16a34a' : '#2563eb'};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+            ${activity.type === 'food' ? '🍽' : activity.type === 'hotel' ? '🏨' : '🏛'}
           </div>`,
           className: '',
           iconSize: [32, 32],
@@ -87,14 +89,14 @@ export default function MapView({ proposals }: MapViewProps) {
           popupAnchor: [0, -16],
         });
 
-        L.marker([proposal.lat, proposal.lng], { icon })
+        L.marker([activity.lat, activity.lng], { icon })
           .addTo(map)
           .bindPopup(`
             <div style="min-width:180px">
-              <strong style="font-size:14px">${proposal.title}</strong>
-              <p style="font-size:12px;margin:4px 0;color:#555">${proposal.city}</p>
-              <p style="font-size:12px;color:#374151">${proposal.description}</p>
-              <span style="font-size:11px;background:${proposal.status === 'approved' ? '#dcfce7' : '#dbeafe'};color:${proposal.status === 'approved' ? '#166534' : '#1e40af'};padding:2px 8px;border-radius:12px;">${proposal.status}</span>
+              <strong style="font-size:14px">${activity.title}</strong>
+              <p style="font-size:12px;margin:4px 0;color:#555">${activity.city}</p>
+              <p style="font-size:12px;color:#374151">${activity.description}</p>
+              <span style="font-size:11px;background:${activity.status === 'approved' ? '#dcfce7' : '#dbeafe'};color:${activity.status === 'approved' ? '#166534' : '#1e40af'};padding:2px 8px;border-radius:12px;">${activity.status}</span>
             </div>
           `);
       });
@@ -109,7 +111,7 @@ export default function MapView({ proposals }: MapViewProps) {
         mapInstanceRef.current = null;
       }
     };
-  }, [proposals]);
+  }, [mapActivities]);
 
   return (
     <div ref={mapRef} className="w-full h-[500px] rounded-xl overflow-hidden shadow-sm border border-gray-200" />

@@ -64,13 +64,13 @@ describe('MapView', () => {
   });
 
   it('renders the map container div', () => {
-    const { container } = render(<MapView proposals={[]} />);
+    const { container } = render(<MapView activities={[]} />);
     expect(container.firstChild).toBeTruthy();
   });
 
   it('initialises the Leaflet map when proposals are provided', async () => {
     await act(async () => {
-      render(<MapView proposals={[baseProposal]} />);
+      render(<MapView activities={[baseProposal]} />);
     });
 
     expect(mockMap).toHaveBeenCalledTimes(1);
@@ -83,7 +83,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      render(<MapView proposals={proposals} />);
+      render(<MapView activities={proposals} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(2);
@@ -96,7 +96,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      render(<MapView proposals={proposals} />);
+      render(<MapView activities={proposals} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(1);
@@ -109,7 +109,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      render(<MapView proposals={proposals} />);
+      render(<MapView activities={proposals} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(1);
@@ -125,7 +125,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      render(<MapView proposals={proposals} />);
+      render(<MapView activities={proposals} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(2);
@@ -140,7 +140,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      render(<MapView proposals={proposals} />);
+      render(<MapView activities={proposals} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(1);
@@ -154,7 +154,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      render(<MapView proposals={proposals} />);
+      render(<MapView activities={proposals} />);
     });
 
     expect(mockMarker).toHaveBeenCalledTimes(2);
@@ -164,7 +164,7 @@ describe('MapView', () => {
     let unmount!: () => void;
 
     await act(async () => {
-      const result = render(<MapView proposals={[baseProposal]} />);
+      const result = render(<MapView activities={[baseProposal]} />);
       unmount = result.unmount;
     });
 
@@ -176,7 +176,7 @@ describe('MapView', () => {
   });
 
   it('reinitialises the map when proposals change', async () => {
-    const { rerender } = render(<MapView proposals={[baseProposal]} />);
+    const { rerender } = render(<MapView activities={[baseProposal]} />);
 
     await act(async () => {
       await Promise.resolve();
@@ -188,7 +188,7 @@ describe('MapView', () => {
     ];
 
     await act(async () => {
-      rerender(<MapView proposals={updated} />);
+      rerender(<MapView activities={updated} />);
     });
 
     expect(mockRemove).toHaveBeenCalled();
@@ -197,9 +197,17 @@ describe('MapView', () => {
 
   it('does not create markers when proposals list is empty', async () => {
     await act(async () => {
-      render(<MapView proposals={[]} />);
+      render(<MapView activities={[]} />);
     });
 
     expect(mockMarker).not.toHaveBeenCalled();
+  });
+
+  it('keeps legacy proposals prop as compatibility fallback', async () => {
+    await act(async () => {
+      render(<MapView proposals={[baseProposal]} />);
+    });
+
+    expect(mockMap).toHaveBeenCalledTimes(1);
   });
 });

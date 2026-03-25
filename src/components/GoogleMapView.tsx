@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeCoordinateBatch } from '@/lib/coordinates';
 
-interface Proposal {
+interface MapActivity {
   id: string;
   title: string;
   description: string;
@@ -30,7 +30,8 @@ interface SelectedPlace {
 }
 
 interface GoogleMapViewProps {
-  proposals: Proposal[];
+  activities?: MapActivity[];
+  proposals?: MapActivity[];
   canEdit: boolean;
   onAddPlace: (place: SelectedPlace) => Promise<void>;
   focusTrigger?: number;
@@ -122,35 +123,35 @@ function toLabel(value: string): string {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
-function buildGoogleMapsSearchUrl(proposal: Proposal): string {
-  const placeQuery = [proposal.title.trim(), proposal.city.trim()].filter(Boolean).join(', ');
-  const query = placeQuery || `${proposal.lat},${proposal.lng}`;
+function buildGoogleMapsSearchUrl(activity: MapActivity): string {
+  const placeQuery = [activity.title.trim(), activity.city.trim()].filter(Boolean).join(', ');
+  const query = placeQuery || `${activity.lat},${activity.lng}`;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
-function buildInfoWindowContent(proposal: Proposal): string {
-  const arrangedLabel = proposal.isArranged ? 'Arranged' : 'Unarranged';
-  const typeLabel = toLabel(proposal.type);
-  const timeLabel = proposal.suggestedTime ? toLabel(proposal.suggestedTime) : '';
-  const durationLabel = typeof proposal.durationMinutes === 'number' && proposal.durationMinutes > 0
-    ? `~${proposal.durationMinutes} min`
+function buildInfoWindowContent(activity: MapActivity): string {
+  const arrangedLabel = activity.isArranged ? 'Arranged' : 'Unarranged';
+  const typeLabel = toLabel(activity.type);
+  const timeLabel = activity.suggestedTime ? toLabel(activity.suggestedTime) : '';
+  const durationLabel = typeof activity.durationMinutes === 'number' && activity.durationMinutes > 0
+    ? `~${activity.durationMinutes} min`
     : '';
-  const address = proposal.formattedAddress?.trim() || proposal.city.trim();
-  const googleMapsUrl = buildGoogleMapsSearchUrl(proposal);
+  const address = activity.formattedAddress?.trim() || activity.city.trim();
+  const googleMapsUrl = buildGoogleMapsSearchUrl(activity);
 
   return `<div style="min-width:220px;max-width:280px">
-    <strong style="font-size:14px;color:#111827">${proposal.title || 'Untitled place'}</strong>
+    <strong style="font-size:14px;color:#111827">${activity.title || 'Untitled place'}</strong>
     <p style="margin:6px 0 0;color:#374151;font-size:12px">${[typeLabel, timeLabel].filter(Boolean).join(' · ')}</p>
     ${durationLabel ? `<p style="margin:4px 0 0;color:#6b7280;font-size:12px">${durationLabel}</p>` : ''}
     ${address ? `<p style="margin:4px 0 0;color:#6b7280;font-size:12px">${address}</p>` : ''}
     <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${proposal.isArranged ? '#dcfce7' : '#dbeafe'};color:${proposal.isArranged ? '#166534' : '#1e40af'}">${arrangedLabel}</span>
+      <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;background:${activity.isArranged ? '#dcfce7' : '#dbeafe'};color:${activity.isArranged ? '#166534' : '#1e40af'}">${arrangedLabel}</span>
       <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#2563eb;text-decoration:underline">Open in Google Maps</a>
     </div>
   </div>`;
 }
 
-export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
+export default function GoogleMapView({ activities, proposals, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -160,9 +161,10 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTri
   const [loadingError, setLoadingError] = useState('');
   const [adding, setAdding] = useState(false);
 
+  const mapActivities = activities ?? proposals ?? [];
   const normalizedProposals = useMemo(
-    () => normalizeCoordinateBatch(proposals, { reference: DEFAULT_CENTER }),
-    [proposals]
+    () => normalizeCoordinateBatch(mapActivities, { reference: DEFAULT_CENTER }),
+    [mapActivities]
   );
 
   const clearMarkers = useCallback(() => {

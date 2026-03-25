@@ -16,7 +16,7 @@ jest.mock('openai', () => {
   };
 });
 
-import { generateProposals, organizeItinerary, fillProposalDetails } from '@/lib/llm';
+import { generateProposals, organizeItinerary, fillProposalDetails, generateChatActionPlan } from '@/lib/llm';
 import OpenAI from 'openai';
 
 describe('generateProposals', () => {
@@ -438,5 +438,43 @@ describe('fillProposalDetails', () => {
 
     const result = await fillProposalDetails('Le Bistro', 'Paris');
     expect(result.type).toBe('food');
+  });
+});
+
+describe('generateChatActionPlan', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    mockCreate.mockReset();
+    (OpenAI as unknown as jest.Mock).mockClear();
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  it('uses activity-first action types in prompt contract', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ summary: '', actionPlan: [] }) } }],
+    });
+
+    await generateChatActionPlan('Add one spot', {
+      tripId: 'trip-1',
+      userId: 'user-1',
+    });
+
+    const callArgs = mockCreate.mock.calls[0][0];
+    const prompt = callArgs.messages[0].content as string;
+    expect(prompt).toContain('"type": "activity.generate"');
+    expect(prompt).toContain('"type": "activity.create"');
+    expect(prompt).toContain('"type": "activity.update"');
+    expect(prompt).toContain('"type": "activity.delete"');
+    expect(prompt).toContain('"type": "itinerary.addActivity"');
+    expect(prompt).toContain('"activityId": "activity-id"');
+    expect(prompt).toContain('"activityType": "place"');
+    expect(prompt).not.toContain('"type": "proposal.generate"');
+    expect(prompt).not.toContain('"type": "proposal.create"');
+    expect(prompt).not.toContain('"type": "itinerary.addProposal"');
   });
 });

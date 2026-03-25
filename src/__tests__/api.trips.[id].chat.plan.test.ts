@@ -27,9 +27,9 @@ describe('POST /api/trips/[id]/chat/plan', () => {
 
   it('returns action plan preview for owner', async () => {
     mockPlanTripActions.mockResolvedValue({
-      summary: 'Will generate proposals and organize itinerary.',
+      summary: 'Will generate activities and organize itinerary.',
       actionPlan: [
-        { type: 'proposal.generate', city: 'Tokyo' },
+        { type: 'activity.generate', city: 'Tokyo' },
         { type: 'itinerary.organize' },
       ],
     });
@@ -37,20 +37,20 @@ describe('POST /api/trips/[id]/chat/plan', () => {
     const req = new NextRequest('http://localhost/api/trips/trip-1/chat/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Generate Tokyo proposals and organize itinerary' }),
+      body: JSON.stringify({ message: 'Generate Tokyo activities and organize itinerary' }),
     });
 
     const res = await POST(req, { params: Promise.resolve({ id: 'trip-1' }) });
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.summary).toMatch(/generate proposals/i);
+    expect(data.summary).toMatch(/generate activities/i);
     expect(data.actionPlan).toEqual([
-      { type: 'proposal.generate', city: 'Tokyo' },
+      { type: 'activity.generate', city: 'Tokyo' },
       { type: 'itinerary.organize' },
     ]);
     expect(mockPlanTripActions).toHaveBeenCalledWith(
-      'Generate Tokyo proposals and organize itinerary',
+      'Generate Tokyo activities and organize itinerary',
       expect.objectContaining({ tripId: 'trip-1', userId: 'owner-1' })
     );
   });

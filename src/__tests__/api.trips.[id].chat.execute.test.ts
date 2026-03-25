@@ -30,7 +30,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
 
   it('executes validated actions for owner', async () => {
     mockExecuteTripActions.mockResolvedValue({
-      results: [{ type: 'proposal.create', status: 'success' }],
+      results: [{ type: 'activity.create', status: 'success' }],
       trip: { id: 'trip-1', name: 'Updated Trip' },
       proposals: [{ id: 'p-1', title: 'New Place' }],
       itinerary: [],
@@ -42,7 +42,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
       body: JSON.stringify({
         actionPlan: [
           {
-            type: 'proposal.create',
+            type: 'activity.create',
             title: 'New Place',
             description: 'Good',
             city: 'Tokyo',
@@ -55,7 +55,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.results).toEqual([{ type: 'proposal.create', status: 'success' }]);
+    expect(data.results).toEqual([{ type: 'activity.create', status: 'success' }]);
     expect(data.trip?.name).toBe('Updated Trip');
     expect(data.activities).toEqual([{ id: 'p-1', title: 'New Place' }]);
     expect(data.proposals).toBeUndefined();
@@ -64,6 +64,53 @@ describe('POST /api/trips/[id]/chat/execute', () => {
       'owner-1',
       expect.any(Array)
     );
+  });
+
+  it('accepts legacy proposal action type when validator normalizes to activity type', async () => {
+    mockValidateChatActionPlan.mockReturnValueOnce([
+      {
+        type: 'activity.create',
+        title: 'Legacy Place',
+        description: 'Converted',
+        city: 'Tokyo',
+      },
+    ]);
+    mockExecuteTripActions.mockResolvedValueOnce({
+      results: [{ type: 'activity.create', status: 'success' }],
+      trip: { id: 'trip-1', name: 'Updated Trip' },
+      activities: [{ id: 'a-1', title: 'Legacy Place' }],
+      itinerary: [],
+    });
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1/chat/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actionPlan: [
+          {
+            type: 'proposal.create',
+            title: 'Legacy Place',
+            description: 'Converted',
+            city: 'Tokyo',
+          },
+        ],
+      }),
+    });
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'trip-1' }) });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockExecuteTripActions).toHaveBeenCalledWith('trip-1', 'owner-1', [
+      {
+        type: 'activity.create',
+        title: 'Legacy Place',
+        description: 'Converted',
+        city: 'Tokyo',
+      },
+    ]);
+    expect(data.results).toEqual([{ type: 'activity.create', status: 'success' }]);
+    expect(data.activities).toEqual([{ id: 'a-1', title: 'Legacy Place' }]);
   });
 
   it('rejects invalid action payload', async () => {
@@ -76,8 +123,8 @@ describe('POST /api/trips/[id]/chat/execute', () => {
       body: JSON.stringify({
         actionPlan: [
           {
-            type: 'itinerary.addProposal',
-            proposalId: 'p-1',
+            type: 'itinerary.addActivity',
+            activityId: 'a-1',
             day: 0,
             timeBlock: 'morning',
           },

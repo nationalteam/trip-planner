@@ -325,24 +325,24 @@ Return ONLY strict JSON with this format:
 {
   "summary": "human readable summary",
   "actionPlan": [
-    { "type": "proposal.generate", "city": "Tokyo" },
-    { "type": "proposal.create", "title": "Senso-ji", "description": "Temple", "city": "Tokyo", "proposalType": "place", "suggestedTime": "morning", "durationMinutes": 90 },
-    { "type": "proposal.update", "proposalId": "proposal-id", "title": "New title" },
-    { "type": "proposal.delete", "proposalId": "proposal-id" },
+    { "type": "activity.generate", "city": "Tokyo" },
+    { "type": "activity.create", "title": "Senso-ji", "description": "Temple", "city": "Tokyo", "activityType": "place", "suggestedTime": "morning", "durationMinutes": 90 },
+    { "type": "activity.update", "activityId": "activity-id", "title": "New title" },
+    { "type": "activity.delete", "activityId": "activity-id" },
     { "type": "itinerary.organize" },
-    { "type": "itinerary.addProposal", "proposalId": "proposal-id", "day": 1, "timeBlock": "morning", "order": 0 },
+    { "type": "itinerary.addActivity", "activityId": "activity-id", "day": 1, "timeBlock": "morning", "order": 0 },
     { "type": "trip.update", "name": "New trip", "cities": ["Tokyo"], "startDate": "2026-04-01", "durationDays": 5 },
     { "type": "preference.updateMe", "likes": ["sushi"], "dislikes": [], "budget": "medium", "preferredLanguage": "ja-JP" }
   ]
 }
 
 Allowed action types are exactly:
-- proposal.generate
-- proposal.create
-- proposal.update
-- proposal.delete
+- activity.generate
+- activity.create
+- activity.update
+- activity.delete
 - itinerary.organize
-- itinerary.addProposal
+- itinerary.addActivity
 - trip.update
 - preference.updateMe
 

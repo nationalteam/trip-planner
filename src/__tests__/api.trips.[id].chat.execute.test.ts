@@ -58,7 +58,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     expect(data.results).toEqual([{ type: 'activity.create', status: 'success' }]);
     expect(data.trip?.name).toBe('Updated Trip');
     expect(data.activities).toEqual([{ id: 'p-1', title: 'New Place' }]);
-    expect(data.proposals).toBeUndefined();
+    expect(data.legacyActivities).toBeUndefined();
     expect(mockExecuteTripActions).toHaveBeenCalledWith(
       'trip-1',
       'owner-1',
@@ -66,7 +66,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     );
   });
 
-  it('rejects legacy proposal action type when validator reports unsupported type', async () => {
+  it('rejects legacy action-type alias when validator reports unsupported type', async () => {
     mockValidateChatActionPlan.mockImplementationOnce(() => {
       throw new Error('Unsupported action type.');
     });
@@ -77,7 +77,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
       body: JSON.stringify({
         actionPlan: [
           {
-            type: 'proposal.create',
+            type: 'legacy.create',
             title: 'Legacy Place',
             description: 'Converted',
             city: 'Tokyo',
@@ -94,11 +94,11 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     expect(mockExecuteTripActions).not.toHaveBeenCalled();
   });
 
-  it('does not map legacy proposals payload into activities', async () => {
+  it('does not include unknown legacy payload keys in response', async () => {
     mockExecuteTripActions.mockResolvedValueOnce({
       results: [{ type: 'activity.create', status: 'success' }],
       trip: { id: 'trip-1', name: 'Updated Trip' },
-      proposals: [{ id: 'p-legacy', title: 'Legacy Place' }],
+      legacyActivities: [{ id: 'x-legacy', title: 'Legacy Place' }],
       itinerary: [],
     });
 
@@ -122,7 +122,7 @@ describe('POST /api/trips/[id]/chat/execute', () => {
 
     expect(res.status).toBe(200);
     expect(data.activities).toEqual([]);
-    expect(data.proposals).toBeUndefined();
+    expect(data.legacyActivities).toBeUndefined();
   });
 
   it('rejects invalid action payload', async () => {

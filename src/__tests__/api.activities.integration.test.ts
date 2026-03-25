@@ -48,7 +48,7 @@ import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { requireAuth, requireTripRole } from '@/lib/auth';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
-const mockGenerateProposals = generateActivities as jest.Mock;
+const mockGenerateActivities = generateActivities as jest.Mock;
 const mockGeocodeWithGoogleMaps = geocodeWithGoogleMaps as jest.Mock;
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockRequireTripRole = requireTripRole as jest.Mock;
@@ -116,11 +116,11 @@ describe('activities route integration', () => {
     expect(data).toEqual(saved);
     expect(res.headers.get('Deprecation')).toBeNull();
     expect(res.headers.get('Link')).toBeNull();
-    expect(mockGenerateProposals).not.toHaveBeenCalled();
+    expect(mockGenerateActivities).not.toHaveBeenCalled();
   });
 
   it('POST /api/activities/[id]/approve returns approved payload without deprecation headers', async () => {
-    const baseProposal = {
+    const baseActivity = {
       id: 'a-1',
       tripId: 'trip-1',
       type: 'place',
@@ -136,9 +136,9 @@ describe('activities route integration', () => {
       itineraryItem: { id: 'ii-1', tripId: 'trip-1', activityId: 'a-1', day: 1, timeBlock: 'morning' },
       createdAt: new Date(),
     };
-    const updated = { ...baseProposal, status: 'approved' };
-    const fullItem = { ...baseProposal.itineraryItem, activity: updated };
-    (mockPrisma.activity.findUnique as jest.Mock).mockResolvedValue(baseProposal);
+    const updated = { ...baseActivity, status: 'approved' };
+    const fullItem = { ...baseActivity.itineraryItem, activity: updated };
+    (mockPrisma.activity.findUnique as jest.Mock).mockResolvedValue(baseActivity);
     (mockPrisma.activity.update as jest.Mock).mockResolvedValue(updated);
     (mockPrisma.itineraryItem.findUnique as jest.Mock).mockResolvedValue(fullItem);
 

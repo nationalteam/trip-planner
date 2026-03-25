@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Define a safe migration path from legacy Prisma naming (`Proposal`, `proposalId`) to activity-first naming while preserving data integrity and rollbackability.
+Define a safe migration path from legacy Prisma naming (`LegacyActivity`, `legacyActivityId`) to activity-first naming while preserving data integrity and rollbackability.
 
 This document is design-only. No schema or runtime implementation is performed in this phase.
 
 ## Current State
 
-- Prisma model name: `Proposal`
-- Itinerary foreign key field: `proposalId`
-- SQL table/column naming aligns with legacy `Proposal`
+- Prisma model name: `LegacyActivity`
+- Itinerary foreign key field: `legacyActivityId`
+- SQL table/column naming aligns with legacy `LegacyActivity`
 - App/API naming is already activity-first in most runtime paths
 
 ## Target State
@@ -34,9 +34,9 @@ Recommended default: Option A first, Option B later only if there is clear opera
 
 ### Phase A: Prisma Logical Rename (No Physical DB Rename)
 
-1. Rename Prisma model `Proposal` -> `Activity`.
-2. Rename relation fields (`proposalId` -> `activityId`) in schema.
-3. Use `@@map("Proposal")` and `@map("proposalId")` to keep DB objects unchanged.
+1. Rename Prisma model `LegacyActivity` -> `Activity`.
+2. Rename relation fields (`legacyActivityId` -> `activityId`) in schema.
+3. Use `@@map("LegacyActivity")` and `@map("legacyActivityId")` to keep DB objects unchanged.
 4. Regenerate Prisma Client and update compile-time call sites.
 
 Acceptance:
@@ -46,8 +46,8 @@ Acceptance:
 
 ### Phase B: Optional Physical DB Rename (Only If Needed)
 
-1. Add SQL migration to create/rename `Proposal` -> `Activity`.
-2. Rename foreign key columns/indexes (`proposalId` -> `activityId`) and constraints.
+1. Add SQL migration to create/rename `LegacyActivity` -> `Activity`.
+2. Rename foreign key columns/indexes (`legacyActivityId` -> `activityId`) and constraints.
 3. Update Prisma mapping to remove now-unnecessary `@map`/`@@map`.
 4. Re-run integration tests and data consistency checks.
 
@@ -93,7 +93,7 @@ Rollback exit checks:
 
 ## Risks and Mitigations
 
-- Risk: implicit raw SQL references still use `Proposal`.
+- Risk: implicit raw SQL references still use `LegacyActivity`.
   - Mitigation: run codebase scan for raw SQL/table names before Phase B.
 - Risk: relation rename breaks serializers or API payload builders.
   - Mitigation: add compile-time checks and integration tests before rollout.

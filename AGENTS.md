@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - Main code lives in `src/`.
-- Routes and API handlers use Next.js App Router under `src/app/` (for example `src/app/api/trips/[id]/proposals/route.ts`).
+- Routes and API handlers use Next.js App Router under `src/app/` (for example `src/app/api/trips/[id]/legacy-activities/route.ts`).
 - Reusable UI components are in `src/components/`.
 - Shared infrastructure code is in `src/lib/` (`prisma.ts`, `llm.ts`).
 - Database schema and migrations are in `prisma/`.

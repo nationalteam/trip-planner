@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document defines a phased migration from `proposal` naming to `activity` naming.
+This document defines a phased migration from `legacy-activity` naming to `activity` naming.
 
 The plan is designed to:
 - avoid a single high-risk PR,
@@ -25,9 +25,9 @@ This plan is the single source of truth for migration sequencing.
 
 ## 3. Current State Inventory
 
-The repository currently uses `proposal` broadly across:
-- Prisma model and relation fields (`Proposal`, `proposalId`),
-- API paths (`/api/proposals/*`, `/api/trips/[id]/proposals/*`),
+The repository currently uses `legacy-activity` broadly across:
+- Prisma model and relation fields (`LegacyActivity`, `legacyActivityId`),
+- API paths (`/api/legacy-activities/*`, `/api/trips/[id]/legacy-activities/*`),
 - chat action contracts (`activity.generate`, `activity.create`, ...),
 - UI labels and component types,
 - tests and fixtures.
@@ -38,7 +38,7 @@ Because naming spans storage, APIs, and UI, migration must be phased.
 
 - Compatibility window: one released version (completed).
 - Primary APIs: `/api/activities/*` and `/api/trips/[id]/activities/*`.
-- Legacy APIs under `/api/proposals/*` and `/api/trips/[id]/proposals/*` have been removed.
+- Legacy APIs under `/api/legacy-activities/*` and `/api/trips/[id]/legacy-activities/*` have been removed.
 - Deprecation headers and compatibility aliases were temporary and are now retired.
 - Any future API naming change must define a new explicit compatibility policy.
 
@@ -57,7 +57,7 @@ Acceptance criteria:
 ## Phase 2: Domain Naming in Application Layer
 
 Scope:
-- Move TypeScript domain naming from proposal-centric to activity-centric.
+- Move TypeScript domain naming from legacy-activity-centric to activity-centric.
 - Keep existing physical DB names via Prisma mapping (`@map`, `@@map`) where needed.
 
 Required decisions:
@@ -72,7 +72,7 @@ Acceptance criteria:
 
 Scope:
 - Add activities route tree.
-- Keep proposals route tree as compatibility alias.
+- Keep legacy-activities route tree as compatibility alias.
 
 Acceptance criteria:
 - New and legacy routes return equivalent status codes and payload semantics.
@@ -82,16 +82,16 @@ Acceptance criteria:
 ## Phase 4: UI and Docs Cutover
 
 Scope:
-- Replace user-facing wording from proposal(s) to activity/activities.
+- Replace user-facing wording from legacy-activity(s) to activity/activities.
 - Update README and API docs to activity-first wording.
 
 Acceptance criteria:
-- No proposal wording remains in user-visible product surfaces unless explicitly marked legacy.
+- No legacy-activity wording remains in user-visible product surfaces unless explicitly marked legacy.
 
 ## Phase 5: Compatibility Removal
 
 Scope:
-- Remove legacy proposals routes and compatibility aliases.
+- Remove legacy legacy-activities routes and compatibility aliases.
 
 Acceptance criteria:
 - Cutover checklist passes in full.
@@ -107,7 +107,7 @@ For each non-trivial phase:
 - Refactor without behavior change.
 
 Minimum required scenarios:
-- Activities routes and proposals legacy routes are equivalent during compatibility window (historical verification).
+- Activities routes and legacy-activities legacy routes are equivalent during compatibility window (historical verification).
 - Approve/reject and itinerary linking remain correct under new naming.
 - Chat action validation and execution remain deterministic.
 - UI renders activity naming consistently.
@@ -126,7 +126,7 @@ Quality gates per implementation PR:
 ## 8. Cutover Checklist
 
 All items must be true before removing legacy names:
-- No active clients depend on `/proposals*`. (completed)
+- No active clients depend on `/legacy-activities*`. (completed)
 - Docs point to activity routes only. (in progress via docs cleanup slices)
 - Observability/logging confirms no legacy route traffic above agreed threshold. (completed)
 - Regression suite passes with legacy aliases disabled. (completed)

@@ -54,10 +54,10 @@ describe('GET /api/trips/[id]/activities', () => {
   });
 
   it('returns activities for a trip', async () => {
-    const fakeProposals = [
+    const fakeActivities = [
       { id: 'p-1', tripId: 'trip-1', title: 'Eiffel Tower', status: 'pending' },
     ];
-    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(fakeProposals);
+    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(fakeActivities);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities');
     const context = { params: Promise.resolve({ id: 'trip-1' }) };
@@ -67,7 +67,7 @@ describe('GET /api/trips/[id]/activities', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Deprecation')).toBeNull();
     expect(res.headers.get('Link')).toBeNull();
-    expect(data).toEqual(fakeProposals);
+    expect(data).toEqual(fakeActivities);
   });
 
   it('supports sorting activities by a specific field and direction', async () => {
@@ -113,7 +113,7 @@ describe('POST /api/trips/[id]/activities', () => {
 
   it('creates a manual activity without calling AI generation', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
-    const savedProposal = {
+    const savedActivity = {
       id: 'p-manual-1',
       tripId: 'trip-1',
       type: 'place',
@@ -131,7 +131,7 @@ describe('POST /api/trips/[id]/activities', () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue([]);
     mockGeocodeWithGoogleMaps.mockResolvedValue({ lat: 48.8606, lng: 2.3376 });
-    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(savedProposal);
+    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(savedActivity);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
@@ -151,7 +151,7 @@ describe('POST /api/trips/[id]/activities', () => {
     const data = await res.json();
 
     expect(res.status).toBe(201);
-    expect(data).toEqual(savedProposal);
+    expect(data).toEqual(savedActivity);
     expect(mockGenerate).not.toHaveBeenCalled();
     expect(mockGeocodeWithGoogleMaps).toHaveBeenCalledWith('Louvre Museum, Paris');
     expect(mockPrisma.activity.create).toHaveBeenCalledWith({
@@ -197,7 +197,7 @@ describe('POST /api/trips/[id]/activities', () => {
 
   it('uses manual coordinates directly when lat/lng are provided', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
-    const savedProposal = {
+    const savedActivity = {
       id: 'p-manual-2',
       tripId: 'trip-1',
       type: 'place',
@@ -214,7 +214,7 @@ describe('POST /api/trips/[id]/activities', () => {
 
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue([]);
-    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(savedProposal);
+    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(savedActivity);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
@@ -233,7 +233,7 @@ describe('POST /api/trips/[id]/activities', () => {
     const data = await res.json();
 
     expect(res.status).toBe(201);
-    expect(data).toEqual(savedProposal);
+    expect(data).toEqual(savedActivity);
     expect(mockGeocodeWithGoogleMaps).not.toHaveBeenCalled();
     expect(mockPrisma.activity.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
@@ -245,7 +245,7 @@ describe('POST /api/trips/[id]/activities', () => {
 
   it('creates a activity from google place payload with hotel type mapping', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Tokyo Trip', cities: '["Tokyo"]' };
-    const savedProposal = {
+    const savedActivity = {
       id: 'p-google-1',
       tripId: 'trip-1',
       type: 'hotel',
@@ -264,7 +264,7 @@ describe('POST /api/trips/[id]/activities', () => {
     };
 
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
-    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(savedProposal);
+    (mockPrisma.activity.create as jest.Mock).mockResolvedValue(savedActivity);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
@@ -353,13 +353,13 @@ describe('POST /api/trips/[id]/activities', () => {
         durationMinutes: 120,
       },
     ];
-    const savedProposals = [{ id: 'p-1', ...fakeGenerated[0], tripId: 'trip-1', status: 'pending' }];
+    const savedActivities = [{ id: 'p-1', ...fakeGenerated[0], tripId: 'trip-1', status: 'pending' }];
 
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([{ preferredLanguage: 'zh-TW' }]);
     (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue([]);
     mockGenerate.mockResolvedValue(fakeGenerated);
-    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(savedProposals);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(savedActivities);
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/activities', {
       method: 'POST',
@@ -377,14 +377,14 @@ describe('POST /api/trips/[id]/activities', () => {
 
   it('passes all existing activities (including pending) to generateActivities to avoid duplicates', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
-    const existingProposals = [
+    const existingActivities = [
       { id: 'p-0', tripId: 'trip-1', title: 'Eiffel Tower', status: 'pending' },
       { id: 'p-1', tripId: 'trip-1', title: 'Louvre', status: 'approved' },
     ];
 
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
-    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(existingProposals);
+    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(existingActivities);
     mockGenerate.mockResolvedValue([]);
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue([]);
 
@@ -396,7 +396,7 @@ describe('POST /api/trips/[id]/activities', () => {
     const context = { params: Promise.resolve({ id: 'trip-1' }) };
     await POST(req, context);
 
-    expect(mockGenerate).toHaveBeenCalledWith([], 'Paris', existingProposals);
+    expect(mockGenerate).toHaveBeenCalledWith([], 'Paris', existingActivities);
   });
 
   it('normalizes obviously swapped latitude/longitude before saving activities', async () => {
@@ -438,7 +438,7 @@ describe('POST /api/trips/[id]/activities', () => {
 
   it('normalizes ambiguously swapped coordinates using existing activity reference centroid', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Paris Trip', cities: '["Paris"]' };
-    const existingProposals = [
+    const existingActivities = [
       {
         id: 'existing-1',
         tripId: 'trip-1',
@@ -481,7 +481,7 @@ describe('POST /api/trips/[id]/activities', () => {
 
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
     (mockPrisma.preference.findMany as jest.Mock).mockResolvedValue([]);
-    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(existingProposals);
+    (mockPrisma.activity.findMany as jest.Mock).mockResolvedValue(existingActivities);
     mockGenerate.mockResolvedValue(fakeGenerated);
     mockGeocodeWithGoogleMaps
       .mockResolvedValueOnce({ lat: 48.8606, lng: 2.3376 })

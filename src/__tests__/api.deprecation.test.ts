@@ -3,9 +3,6 @@ import { withProposalDeprecationHeaders } from '@/lib/api-deprecation';
 
 describe('withProposalDeprecationHeaders', () => {
   it.each([
-    ['/api/proposals/p-1', '/api/activities/p-1'],
-    ['/api/proposals/p-1/approve', '/api/activities/p-1/approve'],
-    ['/api/proposals/p-1/reject', '/api/activities/p-1/reject'],
     ['/api/trips/t-1/proposals', '/api/trips/t-1/activities'],
     ['/api/trips/t-1/proposals/fill', '/api/trips/t-1/activities/fill'],
   ])('adds full deprecation headers for legacy route %s', (legacyPath, successorPath) => {

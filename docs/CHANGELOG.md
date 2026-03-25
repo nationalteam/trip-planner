@@ -65,3 +65,5 @@
 2026-03-25 | refactor(server)!: hard-cut server/prisma naming from proposal to activity (#0)
 2026-03-25 | refactor(ui): remove remaining runtime proposal fallbacks in map/itinerary/chat execute (#123)
 2026-03-25 | docs(readme): converge architecture/data-model naming to activity-first terms (#123)
+2026-03-25 | docs(test): neutralize legacy proposal wording in readme and test descriptions (#124)
+2026-03-25 | refactor(rename): remove remaining editable proposal tokens and keep only historical migration/changelog records (#0)

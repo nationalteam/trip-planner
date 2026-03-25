@@ -17,8 +17,8 @@ import { validateChatAction, validateChatActionPlan } from '@/lib/chatbot';
 import * as chatbotModule from '@/lib/chatbot';
 
 describe('chatbot action validation with activity naming', () => {
-  it('does not expose legacy suggestProposalCreateActionFromTitle export', () => {
-    expect('suggestProposalCreateActionFromTitle' in chatbotModule).toBe(false);
+  it('exposes activity create suggestion helper', () => {
+    expect('suggestActivityCreateActionFromTitle' in chatbotModule).toBe(true);
   });
 
   it('accepts activity.create payload with activityType', () => {
@@ -37,23 +37,23 @@ describe('chatbot action validation with activity naming', () => {
     });
   });
 
-  it('rejects activity.create payload with legacy proposalType field', () => {
+  it('rejects activity.create payload with unsupported legacy type alias field', () => {
     expect(() => validateChatAction({
       type: 'activity.create',
       title: 'Eiffel Tower',
       description: 'Landmark',
       city: 'Paris',
-      proposalType: 'place',
-    })).toThrow('Unsupported field "proposalType"');
+      legacyType: 'place',
+    })).toThrow('Unsupported field "legacyType"');
   });
 
-  it('rejects legacy proposal.create payload', () => {
+  it('rejects legacy create action payload', () => {
     expect(() => validateChatAction({
-      type: 'proposal.create',
+      type: 'legacy.create',
       title: 'Louvre Museum',
       description: 'Museum',
       city: 'Paris',
-      proposalType: 'place',
+      legacyType: 'place',
     })).toThrow('Unsupported action type.');
   });
 
@@ -75,10 +75,10 @@ describe('chatbot action validation with activity naming', () => {
     });
   });
 
-  it('rejects legacy itinerary.addProposal payload', () => {
+  it('rejects legacy itinerary.add action payload', () => {
     expect(() => validateChatAction({
-      type: 'itinerary.addProposal',
-      activityId: 'p-legacy',
+      type: 'itinerary.addLegacy',
+      activityId: 'x-legacy',
       day: 1,
       timeBlock: 'morning',
     })).toThrow('Unsupported action type.');
@@ -91,8 +91,8 @@ describe('chatbot action validation with activity naming', () => {
 
   it('rejects legacy action plan item types', () => {
     expect(() => validateChatActionPlan([
-      { type: 'proposal.generate', city: 'Paris' },
-      { type: 'proposal.delete', activityId: 'p-1' },
+      { type: 'legacy.generate', city: 'Paris' },
+      { type: 'legacy.delete', activityId: 'x-1' },
     ])).toThrow('Unsupported action type.');
   });
 });

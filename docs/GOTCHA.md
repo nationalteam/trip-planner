@@ -19,7 +19,7 @@
 ## OpenAI `gpt-5-mini` rejects custom `temperature`
 
 - Context:
-  Proposal generation uses OpenAI Chat Completions in `src/lib/llm.ts`.
+  LegacyActivity generation uses OpenAI Chat Completions in `src/lib/llm.ts`.
 - Symptom:
   API returns HTTP 400 with:
   `Unsupported value: 'temperature' does not support 0.7 with this model. Only the default (1) value is supported.`
@@ -46,13 +46,13 @@
 ## Lat/Lng swap can remain undetected when both values are still in valid ranges
 
 - Context:
-  Map marker placement and proposal persistence previously normalized coordinates only when one orientation was out of range.
+  Map marker placement and legacy-activity persistence previously normalized coordinates only when one orientation was out of range.
 - Symptom:
   Some places still appear in the wrong region even after "swap obvious lat/lng" handling, especially for cities where both `(lat, lng)` and `(lng, lat)` are numerically valid (for example around Europe/North America).
 - Root cause:
   Validation based only on coordinate range cannot detect ambiguous swaps; both orders can pass bounds checks.
 - Fix:
-  Add batch normalization with anchor/reference centroid heuristics on API writes, using existing trip proposals as anchors for ambiguous points. Note that ambiguous swaps without such contextual anchors will not be corrected at render time.
+  Add batch normalization with anchor/reference centroid heuristics on API writes, using existing trip legacy-activities as anchors for ambiguous points. Note that ambiguous swaps without such contextual anchors will not be corrected at render time.
 - Preventive rule:
   Coordinate normalization must handle three cases explicitly: invalid numbers, obvious swaps, and ambiguous swaps that require contextual anchors.
 
@@ -74,7 +74,7 @@
 - Context:
   Creating a PR from shell with `gh pr create --body "..."` and Markdown inline code.
 - Symptom:
-  Shell errors like `command not found` for words inside backticks (for example `map-proposals`), and PR creation fails.
+  Shell errors like `command not found` for words inside backticks (for example `map-legacy-activities`), and PR creation fails.
 - Root cause:
   Backticks inside double-quoted shell strings trigger command substitution before `gh` receives the body text.
 - Fix:
@@ -85,7 +85,7 @@
 ## SQLite migration can partially apply before failing on unsupported `ALTER INDEX ... RENAME`
 
 - Context:
-  Hard-cut rename from `Proposal`/`proposalId` to `Activity`/`activityId` in a Prisma SQLite migration.
+  Hard-cut rename from `LegacyActivity`/`legacyActivityId` to `Activity`/`activityId` in a Prisma SQLite migration.
 - Symptom:
   `prisma migrate deploy` fails with `near "INDEX": syntax error`, but schema is already partially changed (table/column renamed).
 - Root cause:

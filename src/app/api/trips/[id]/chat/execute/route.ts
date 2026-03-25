@@ -33,12 +33,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const result = await executeTripActions(id, auth.id, actionPlan);
-    const activities = Array.isArray(result.activities) ? result.activities : [];
-    const { proposals: legacyProposals, ...rest } = result as Record<string, unknown> & { proposals?: unknown };
-    void legacyProposals;
+    const typed = result as Record<string, unknown> & {
+      results?: unknown;
+      trip?: unknown;
+      activities?: unknown;
+      itinerary?: unknown;
+    };
+    const activities = Array.isArray(typed.activities) ? typed.activities : [];
     return NextResponse.json({
-      ...rest,
+      results: typed.results,
+      trip: typed.trip,
       activities,
+      itinerary: typed.itinerary,
     });
   } catch (error) {
     return NextResponse.json(

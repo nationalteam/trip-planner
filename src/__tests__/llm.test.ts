@@ -84,13 +84,13 @@ describe('generateActivities', () => {
   });
 
   it('includes existing activity titles in the prompt context to avoid duplicates', async () => {
-    const existingProposals = [{ title: 'Eiffel Tower' }];
+    const existingActivities = [{ title: 'Eiffel Tower' }];
 
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '[]' } }],
     });
 
-    await generateActivities([], 'Paris', existingProposals);
+    await generateActivities([], 'Paris', existingActivities);
 
     const callArgs = mockCreate.mock.calls[0][0];
     const promptContent = callArgs.messages[0].content as string;
@@ -473,8 +473,8 @@ describe('generateChatActionPlan', () => {
     expect(prompt).toContain('"type": "itinerary.addActivity"');
     expect(prompt).toContain('"activityId": "activity-id"');
     expect(prompt).toContain('"activityType": "place"');
-    expect(prompt).not.toContain('"type": "proposal.generate"');
-    expect(prompt).not.toContain('"type": "proposal.create"');
-    expect(prompt).not.toContain('"type": "itinerary.addProposal"');
+    expect(prompt).not.toContain('"type": "legacy.generate"');
+    expect(prompt).not.toContain('"type": "legacy.create"');
+    expect(prompt).not.toContain('"type": "itinerary.addLegacy"');
   });
 });

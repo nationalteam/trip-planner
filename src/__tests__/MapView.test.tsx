@@ -43,7 +43,7 @@ jest.mock('leaflet', () => ({
 
 jest.mock('leaflet/dist/leaflet.css', () => ({}), { virtual: true });
 
-const baseProposal = {
+const baseActivity = {
   id: 'p-1',
   title: 'Ise Grand Shrine',
   description: 'A famous Shinto shrine.',
@@ -70,7 +70,7 @@ describe('MapView', () => {
 
   it('initialises the Leaflet map when activities are provided', async () => {
     await act(async () => {
-      render(<MapView activities={[baseProposal]} />);
+      render(<MapView activities={[baseActivity]} />);
     });
 
     expect(mockMap).toHaveBeenCalledTimes(1);
@@ -78,8 +78,8 @@ describe('MapView', () => {
 
   it('creates a marker for each valid approved activity', async () => {
     const activities = [
-      { ...baseProposal, id: 'p-1' },
-      { ...baseProposal, id: 'p-2', title: 'Toba Aquarium', lat: 34.4833, lng: 136.8333 },
+      { ...baseActivity, id: 'p-1' },
+      { ...baseActivity, id: 'p-2', title: 'Toba Aquarium', lat: 34.4833, lng: 136.8333 },
     ];
 
     await act(async () => {
@@ -91,8 +91,8 @@ describe('MapView', () => {
 
   it('skips activities with non-finite coordinates', async () => {
     const activities = [
-      baseProposal,
-      { ...baseProposal, id: 'p-bad', lat: NaN, lng: NaN },
+      baseActivity,
+      { ...baseActivity, id: 'p-bad', lat: NaN, lng: NaN },
     ];
 
     await act(async () => {
@@ -105,7 +105,7 @@ describe('MapView', () => {
 
   it('normalizes obviously swapped latitude/longitude before rendering marker', async () => {
     const activities = [
-      { ...baseProposal, id: 'p-swapped', lat: 136.7253, lng: 34.4548 },
+      { ...baseActivity, id: 'p-swapped', lat: 136.7253, lng: 34.4548 },
     ];
 
     await act(async () => {
@@ -120,8 +120,8 @@ describe('MapView', () => {
     // p-anchor has lng=-100 (|lng|>90) so its swapped form lat=-100 is invalid → unambiguous anchor
     // p-ambiguous-swapped has both values in [-90,90] → ambiguous; resolved via anchor centroid
     const activities = [
-      { ...baseProposal, id: 'p-anchor', lat: 50, lng: -100 },
-      { ...baseProposal, id: 'p-ambiguous-swapped', lat: -40, lng: 50 },
+      { ...baseActivity, id: 'p-anchor', lat: 50, lng: -100 },
+      { ...baseActivity, id: 'p-ambiguous-swapped', lat: -40, lng: 50 },
     ];
 
     await act(async () => {
@@ -135,8 +135,8 @@ describe('MapView', () => {
 
   it('shows only approved activities when some are approved', async () => {
     const activities = [
-      { ...baseProposal, id: 'p-approved', status: 'approved' },
-      { ...baseProposal, id: 'p-pending', status: 'pending', title: 'Pending Place' },
+      { ...baseActivity, id: 'p-approved', status: 'approved' },
+      { ...baseActivity, id: 'p-pending', status: 'pending', title: 'Pending Place' },
     ];
 
     await act(async () => {
@@ -149,8 +149,8 @@ describe('MapView', () => {
 
   it('shows all valid activities when none are approved', async () => {
     const activities = [
-      { ...baseProposal, id: 'p-1', status: 'pending' },
-      { ...baseProposal, id: 'p-2', status: 'pending', title: 'Another Place' },
+      { ...baseActivity, id: 'p-1', status: 'pending' },
+      { ...baseActivity, id: 'p-2', status: 'pending', title: 'Another Place' },
     ];
 
     await act(async () => {
@@ -164,7 +164,7 @@ describe('MapView', () => {
     let unmount!: () => void;
 
     await act(async () => {
-      const result = render(<MapView activities={[baseProposal]} />);
+      const result = render(<MapView activities={[baseActivity]} />);
       unmount = result.unmount;
     });
 
@@ -176,15 +176,15 @@ describe('MapView', () => {
   });
 
   it('reinitialises the map when activities change', async () => {
-    const { rerender } = render(<MapView activities={[baseProposal]} />);
+    const { rerender } = render(<MapView activities={[baseActivity]} />);
 
     await act(async () => {
       await Promise.resolve();
     });
 
     const updated = [
-      baseProposal,
-      { ...baseProposal, id: 'p-new', title: 'New Place', lat: 34.49, lng: 136.83 },
+      baseActivity,
+      { ...baseActivity, id: 'p-new', title: 'New Place', lat: 34.49, lng: 136.83 },
     ];
 
     await act(async () => {

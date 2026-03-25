@@ -123,7 +123,7 @@ Primary endpoints use `activities` naming:
 - `POST /api/activities/[id]/approve`
 - `POST /api/activities/[id]/reject`
 
-Legacy `/proposals*` routes are removed.
+Legacy activity-route aliases are removed.
 
 ## Scripts
 

@@ -124,7 +124,7 @@ describe('POST /api/trips/[id]/itinerary', () => {
     ];
     const organized = [{ id: 'ii-1', day: 2, timeBlock: 'afternoon' }];
     const updatedItems = [{ id: 'ii-1', tripId: 'trip-1', activityId: 'p-1', day: 2, timeBlock: 'afternoon' }];
-    const updatedWithProposal = [
+    const updatedWithActivity = [
       {
         id: 'ii-1',
         tripId: 'trip-1',
@@ -138,7 +138,7 @@ describe('POST /api/trips/[id]/itinerary', () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue({ id: 'trip-1' });
     (mockPrisma.itineraryItem.findMany as jest.Mock)
       .mockResolvedValueOnce(existingItems)
-      .mockResolvedValueOnce(updatedWithProposal);
+      .mockResolvedValueOnce(updatedWithActivity);
     mockOrganizeItinerary.mockResolvedValue(organized);
     (mockPrisma.itineraryItem.update as jest.Mock).mockResolvedValue(updatedItems[0]);
     (mockPrisma.$transaction as jest.Mock).mockResolvedValue(updatedItems);
@@ -149,7 +149,7 @@ describe('POST /api/trips/[id]/itinerary', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toEqual(updatedWithProposal);
+    expect(data).toEqual(updatedWithActivity);
     expect(mockOrganizeItinerary).toHaveBeenCalledWith(existingItems);
     expect(mockPrisma.$transaction).toHaveBeenCalled();
   });
@@ -291,7 +291,7 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
   });
 
   it('accepts lunch and night as valid timeBlock values', async () => {
-    const updatedWithProposal = [
+    const updatedWithActivity = [
       {
         id: 'ii-1',
         tripId: 'trip-1',
@@ -312,7 +312,7 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
       },
     ];
     (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
-    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(updatedWithProposal);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(updatedWithActivity);
 
     const body = [
       { id: 'ii-1', day: 2, timeBlock: 'lunch', order: 0 },
@@ -328,7 +328,7 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toEqual(updatedWithProposal);
+    expect(data).toEqual(updatedWithActivity);
     expect(mockPrisma.$transaction).toHaveBeenCalled();
   });
 
@@ -350,7 +350,7 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
   });
 
   it('updates itinerary items and returns them with activities', async () => {
-    const updatedWithProposal = [
+    const updatedWithActivity = [
       {
         id: 'ii-1',
         tripId: 'trip-1',
@@ -372,7 +372,7 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
     ];
 
     (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue(existingItems);
-    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(updatedWithProposal);
+    (mockPrisma.$transaction as jest.Mock).mockResolvedValue(updatedWithActivity);
 
     const body = [
       { id: 'ii-1', day: 1, timeBlock: 'afternoon', order: 0 },
@@ -388,7 +388,7 @@ describe('PATCH /api/trips/[id]/itinerary', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toEqual(updatedWithProposal);
+    expect(data).toEqual(updatedWithActivity);
     expect(mockPrisma.$transaction).toHaveBeenCalled();
   });
 

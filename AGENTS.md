@@ -64,4 +64,3 @@
 
 - Append ONE line to the end of `docs/CHANGELOG.md`.
 - Format: `YYYY-MM-DD | type(scope): summary (#ref)`.
-- Do not modify existing content.

@@ -63,3 +63,5 @@
 2026-03-25 | refactor(rename)!: remove remaining app-layer proposal aliases and converge on activity-first naming (#0)
 2026-03-25 | refactor(ui): adapt trips API counts to activity-first card counts model (#0)
 2026-03-25 | refactor(server)!: hard-cut server/prisma naming from proposal to activity (#0)
+2026-03-25 | refactor(ui): remove remaining runtime proposal fallbacks in map/itinerary/chat execute (#123)
+2026-03-25 | docs(readme): converge architecture/data-model naming to activity-first terms (#123)

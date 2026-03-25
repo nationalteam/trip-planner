@@ -61,7 +61,7 @@ describe('POST /api/trips/[id]/chat/plan', () => {
     const req = new NextRequest('http://localhost/api/trips/trip-1/chat/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Generate proposals' }),
+      body: JSON.stringify({ message: 'Generate activities' }),
     });
 
     const res = await POST(req, { params: Promise.resolve({ id: 'trip-1' }) });
@@ -76,7 +76,7 @@ describe('POST /api/trips/[id]/chat/plan', () => {
     const req = new NextRequest('http://localhost/api/trips/trip-1/chat/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Generate proposals' }),
+      body: JSON.stringify({ message: 'Generate activities' }),
     });
 
     const res = await POST(req, { params: Promise.resolve({ id: 'trip-1' }) });

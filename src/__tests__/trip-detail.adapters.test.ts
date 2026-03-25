@@ -1,7 +1,7 @@
 import { normalizeActivities, normalizeItineraryItems } from '@/app/trips/[id]/adapters';
 
 describe('trip detail adapters', () => {
-  it('normalizes proposals array into activities', () => {
+  it('normalizes activity array payloads', () => {
     const input = [
       {
         id: 'p-1',
@@ -19,7 +19,7 @@ describe('trip detail adapters', () => {
     ]);
   });
 
-  it('normalizes itinerary proposal field into activity field', () => {
+  it('normalizes legacy itinerary proposal field into activity field', () => {
     const input = [
       {
         id: 'ii-1',

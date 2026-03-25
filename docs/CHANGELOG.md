@@ -51,3 +51,4 @@
 2026-03-25 | refactor(api): remove legacy by-id /api/proposals routes and make /api/activities handlers primary (#0)
 2026-03-25 | refactor(api): remove legacy trip-level /api/trips/[id]/proposals routes and deprecation helper (#0)
 2026-03-25 | refactor(rename): switch map helper naming to activity-first module and copy (#0)
+2026-03-25 | docs(gotcha): record gh pr body backtick shell-substitution pitfall (#0)

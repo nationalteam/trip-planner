@@ -5,7 +5,8 @@ test.describe('Auth smoke', () => {
     await page.goto('/auth');
 
     await expect(page.getByRole('heading', { name: '登入' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '登入' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '註冊' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '登入' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: '註冊' }).first()).toBeVisible();
+    await expect(page.locator('form').getByRole('button', { name: '登入' })).toBeVisible();
   });
 });

@@ -41,3 +41,4 @@
 2026-03-25 | refactor(ui): rename user-facing proposal wording to activity across trip surfaces (#0)
 2026-03-25 | docs(rename): document activities migration/sunset and add phase5 cleanup checklist (#0)
 2026-03-25 | test(e2e): add Playwright baseline config and auth smoke test scaffold (#0)
+2026-03-25 | test(e2e): cover trip activity approve/reject flow and itinerary reflection (#0)

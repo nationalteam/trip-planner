@@ -8,7 +8,7 @@ import ActivityCard from '@/components/ActivityCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
-import { buildMapProposals as buildMapActivities } from '@/lib/map-proposals';
+import { buildMapActivities } from '@/lib/map-activities';
 import { normalizeActivities, normalizeItineraryItems } from './adapters';
 import type { Activity, ChatPlanResponse, ItineraryItem, Tab, Trip } from './types';
 

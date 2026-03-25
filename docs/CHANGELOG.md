@@ -30,3 +30,4 @@
 2026-03-25 | feat(ci): make bump-version workflow open version PRs to main (#0)
 2026-03-25 | feat(ci): add merge-to-main workflow to create release tags (#0)
 2026-03-25 | feat(api): add activities route aliases for proposals endpoints (#0)
+2026-03-25 | feat(api): add deprecation headers on legacy proposals endpoints (#0)

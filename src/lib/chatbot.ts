@@ -553,7 +553,6 @@ export async function executeTripActions(tripId: string, userId: string, actionP
     results,
     trip: updatedTrip,
     activities: proposals,
-    proposals,
     itinerary,
   };
 }

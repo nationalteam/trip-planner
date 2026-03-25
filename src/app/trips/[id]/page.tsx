@@ -65,7 +65,7 @@ export default function TripDetailPage() {
     try {
       const [tripRes, proposalsRes, itineraryRes] = await Promise.all([
         fetch(`/api/trips/${tripId}`),
-        fetch(`/api/trips/${tripId}/proposals?sortBy=${sortBy}&order=${sortOrder}`),
+        fetch(`/api/trips/${tripId}/activities?sortBy=${sortBy}&order=${sortOrder}`),
         fetch(`/api/trips/${tripId}/itinerary`),
       ]);
       const [tripData, proposalsData, itineraryData] = await Promise.all([
@@ -109,7 +109,7 @@ export default function TripDetailPage() {
     if (!selectedCity) return;
     setGenerating(true);
     try {
-      const res = await fetch(`/api/trips/${tripId}/proposals`, {
+      const res = await fetch(`/api/trips/${tripId}/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ city: selectedCity }),
@@ -127,7 +127,7 @@ export default function TripDetailPage() {
     e.preventDefault();
     setCreatingManual(true);
     try {
-      const res = await fetch(`/api/trips/${tripId}/proposals`, {
+      const res = await fetch(`/api/trips/${tripId}/activities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -166,7 +166,7 @@ export default function TripDetailPage() {
     if (!manualTitle || !city) return;
     setFillingDetails(true);
     try {
-      const res = await fetch(`/api/trips/${tripId}/proposals/fill`, {
+      const res = await fetch(`/api/trips/${tripId}/activities/fill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: manualTitle, city }),
@@ -186,7 +186,7 @@ export default function TripDetailPage() {
   }
 
   async function handleApprove(proposalId: string) {
-    const res = await fetch(`/api/proposals/${proposalId}/approve`, { method: 'POST' });
+    const res = await fetch(`/api/activities/${proposalId}/approve`, { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
       setActivities(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'approved' } : p));
@@ -197,7 +197,7 @@ export default function TripDetailPage() {
   }
 
   async function handleReject(proposalId: string) {
-    const res = await fetch(`/api/proposals/${proposalId}/reject`, { method: 'POST' });
+    const res = await fetch(`/api/activities/${proposalId}/reject`, { method: 'POST' });
     if (res.ok) {
       setActivities(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'rejected' } : p));
     }
@@ -302,7 +302,7 @@ export default function TripDetailPage() {
       message: 'Delete this proposal? This action cannot be undone.',
       onConfirm: async () => {
         setConfirmDialog(null);
-        const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' });
+        const res = await fetch(`/api/activities/${proposalId}`, { method: 'DELETE' });
         if (res.ok) {
           setActivities(prev => prev.filter(p => p.id !== proposalId));
           setItinerary(prev => prev.filter(item => item.activity.id !== proposalId));
@@ -344,7 +344,7 @@ export default function TripDetailPage() {
     formattedAddress: string;
     types: string[];
   }) {
-    const res = await fetch(`/api/trips/${tripId}/proposals`, {
+    const res = await fetch(`/api/trips/${tripId}/activities`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -413,7 +413,6 @@ export default function TripDetailPage() {
       if (res.ok) {
         if (data.trip) setTrip((prev) => (prev ? { ...prev, ...data.trip } : prev));
         if (Array.isArray(data.activities)) setActivities(normalizeActivities(data.activities));
-        else if (Array.isArray(data.proposals)) setActivities(normalizeActivities(data.proposals));
         if (Array.isArray(data.itinerary)) setItinerary(normalizeItineraryItems(data.itinerary));
         setChatPreview(null);
       } else {

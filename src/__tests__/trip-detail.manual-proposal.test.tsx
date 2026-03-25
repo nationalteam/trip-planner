@@ -54,7 +54,7 @@ describe('Trip detail manual proposal form', () => {
         } as Response;
       }
 
-      if (url.startsWith('/api/trips/trip-1/proposals?') && method === 'GET') {
+      if (url.startsWith('/api/trips/trip-1/activities?') && method === 'GET') {
         return {
           ok: true,
           status: 200,
@@ -70,7 +70,7 @@ describe('Trip detail manual proposal form', () => {
         } as Response;
       }
 
-      if (url === '/api/trips/trip-1/proposals' && method === 'POST') {
+      if (url === '/api/trips/trip-1/activities' && method === 'POST') {
         return {
           ok: true,
           status: 201,
@@ -138,7 +138,7 @@ describe('Trip detail manual proposal form', () => {
         } as Response;
       }
 
-      if (url.startsWith('/api/trips/trip-1/proposals?') && method === 'GET') {
+      if (url.startsWith('/api/trips/trip-1/activities?') && method === 'GET') {
         return {
           ok: true,
           status: 200,

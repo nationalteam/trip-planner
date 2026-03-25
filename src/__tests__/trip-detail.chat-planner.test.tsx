@@ -54,7 +54,7 @@ describe('Trip detail chat planner', () => {
         } as Response;
       }
 
-      if (url.startsWith('/api/trips/trip-1/proposals?') && method === 'GET') {
+      if (url.startsWith('/api/trips/trip-1/activities?') && method === 'GET') {
         return {
           ok: true,
           status: 200,
@@ -94,7 +94,7 @@ describe('Trip detail chat planner', () => {
           status: 200,
           json: async () => ({
             results: [{ type: 'proposal.create', status: 'success' }],
-            proposals: [
+            activities: [
               {
                 id: 'p-1',
                 type: 'place',

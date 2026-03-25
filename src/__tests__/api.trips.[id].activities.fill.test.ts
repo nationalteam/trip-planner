@@ -1,4 +1,4 @@
-import { POST } from '@/app/api/trips/[id]/proposals/fill/route';
+import { POST } from '@/app/api/trips/[id]/activities/fill/route';
 import { NextRequest } from 'next/server';
 
 jest.mock('@/lib/prisma', () => ({
@@ -34,14 +34,14 @@ const mockGeocode = geocodeWithGoogleMaps as jest.Mock;
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockRequireTripRole = requireTripRole as jest.Mock;
 
-describe('POST /api/trips/[id]/proposals/fill', () => {
+describe('POST /api/trips/[id]/activities/fill', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRequireAuth.mockResolvedValue({ id: 'u-1', email: 'u1@example.com', name: 'U1' });
     mockRequireTripRole.mockResolvedValue({ ok: true, role: 'owner' });
   });
 
-  it('returns filled proposal details including geocoded coordinates', async () => {
+  it('returns filled activity details including geocoded coordinates', async () => {
     const fakeTrip = { id: 'trip-1', name: 'Hokkaido', cities: '["Hokkaido"]' };
     const fakeFill = {
       description: 'A famous ski resort in Hokkaido.',
@@ -55,7 +55,7 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
     mockFill.mockResolvedValue(fakeFill);
     mockGeocode.mockResolvedValue(fakeGeocode);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals/fill', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities/fill', {
       method: 'POST',
       body: JSON.stringify({ title: 'Tomamu Ski Resort', city: 'Hokkaido' }),
       headers: { 'Content-Type': 'application/json' },
@@ -65,10 +65,8 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('Deprecation')).toBe('true');
-    expect(res.headers.get('Link')).toContain('/api/trips/trip-1/activities/fill');
-    expect(res.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
-    expect(res.headers.get('X-Legacy-Endpoint')).toBe('proposals');
+    expect(res.headers.get('Deprecation')).toBeNull();
+    expect(res.headers.get('Link')).toBeNull();
     expect(data).toEqual({ ...fakeFill, lat: 43.104, lng: 142.374 });
     expect(mockFill).toHaveBeenCalledWith('Tomamu Ski Resort', 'Hokkaido');
     expect(mockGeocode).toHaveBeenCalledWith('Tomamu Ski Resort, Hokkaido');
@@ -82,7 +80,7 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
     mockFill.mockResolvedValue(fakeFill);
     mockGeocode.mockResolvedValue(null);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals/fill', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities/fill', {
       method: 'POST',
       body: JSON.stringify({ title: 'Unknown Place', city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -100,7 +98,7 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
     const fakeTrip = { id: 'trip-1', name: 'Test Trip', cities: '["Paris"]' };
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals/fill', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities/fill', {
       method: 'POST',
       body: JSON.stringify({ city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -118,7 +116,7 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
     const fakeTrip = { id: 'trip-1', name: 'Test Trip', cities: '["Paris"]' };
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals/fill', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities/fill', {
       method: 'POST',
       body: JSON.stringify({ title: 'Eiffel Tower' }),
       headers: { 'Content-Type': 'application/json' },
@@ -134,7 +132,7 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
   it('returns 404 when trip does not exist', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(null);
 
-    const req = new NextRequest('http://localhost/api/trips/bad-id/proposals/fill', {
+    const req = new NextRequest('http://localhost/api/trips/bad-id/activities/fill', {
       method: 'POST',
       body: JSON.stringify({ title: 'Eiffel Tower', city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },
@@ -150,7 +148,7 @@ describe('POST /api/trips/[id]/proposals/fill', () => {
   it('returns 403 when user does not have owner role', async () => {
     mockRequireTripRole.mockResolvedValue({ ok: false });
 
-    const req = new NextRequest('http://localhost/api/trips/trip-1/proposals/fill', {
+    const req = new NextRequest('http://localhost/api/trips/trip-1/activities/fill', {
       method: 'POST',
       body: JSON.stringify({ title: 'Eiffel Tower', city: 'Paris' }),
       headers: { 'Content-Type': 'application/json' },

@@ -32,7 +32,12 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
+            const refType = process.env.GITHUB_REF_TYPE;
             const currentRef = process.env.GITHUB_REF_NAME;
+            if (refType !== 'branch') {
+              core.setFailed(`This workflow supports branch refs only. Received ref type: ${refType ?? 'unknown'}.`);
+              return;
+            }
             if (!currentRef) {
               core.setFailed('GITHUB_REF_NAME is not available.');
               return;
@@ -60,6 +65,12 @@ jobs:
           npm version "${{ inputs.bump }}" -m "chore(release): bump version to %s"
 
       - name: Push commit and tags
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
-          git push origin "HEAD:${GITHUB_REF_NAME}" --follow-tags
+          if [ "${GITHUB_REF_TYPE}" != "branch" ]; then
+            echo "This workflow supports branch refs only (received: ${GITHUB_REF_TYPE:-unknown})."
+            exit 1
+          fi
+          git push "https://x-access-token:${PAT_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}" --follow-tags

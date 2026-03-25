@@ -39,7 +39,7 @@ describe('Trip detail map arranged state', () => {
     mockGoogleMapView.mockClear();
   });
 
-  it('passes non-rejected proposals to Google map with itinerary-based isArranged flag', async () => {
+  it('passes non-rejected activities to Google map with itinerary-based isArranged flag', async () => {
     const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method ?? 'GET';
@@ -152,12 +152,12 @@ describe('Trip detail map arranged state', () => {
     });
 
     const lastCall = mockGoogleMapView.mock.calls.at(-1);
-    const props = lastCall?.[0] as { proposals?: Array<{ id: string; isArranged: boolean; status: string }>; focusTrigger?: number };
-    expect(props.proposals).toEqual([
+    const props = lastCall?.[0] as { activities?: Array<{ id: string; isArranged: boolean; status: string }>; focusTrigger?: number };
+    expect(props.activities).toEqual([
       expect.objectContaining({ id: 'p-arranged', isArranged: true, status: 'pending' }),
       expect.objectContaining({ id: 'p-unarranged', isArranged: false, status: 'approved' }),
     ]);
-    expect(props.proposals?.find((proposal) => proposal.id === 'p-rejected')).toBeUndefined();
+    expect(props.activities?.find((activity) => activity.id === 'p-rejected')).toBeUndefined();
     expect(typeof props.focusTrigger).toBe('number');
   });
 

@@ -54,3 +54,4 @@
 2026-03-25 | docs(gotcha): record gh pr body backtick shell-substitution pitfall (#0)
 2026-03-25 | docs(rename): align migration/auth docs with activities-only API state (#0)
 2026-03-25 | refactor(api): remove chat execute fallback from legacy proposals payload to activities (#0)
+2026-03-25 | refactor(ui): make map component inputs activity-first with legacy proposals fallback (#0)

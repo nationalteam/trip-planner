@@ -106,7 +106,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={1} />);
+    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={1} />);
 
     await waitFor(() => {
       const marker = ((window.google as unknown as GoogleMapsMock).maps.Marker);
@@ -136,7 +136,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={2} />);
+    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={2} />);
 
     await waitFor(() => {
       const mapInstance = mapFactory.mock.results[0]?.value;
@@ -164,7 +164,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={3} />);
+    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={3} />);
 
     await waitFor(() => {
       expect(infoWindowFactory).toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe('GoogleMapView', () => {
       },
     ];
 
-    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={4} />);
+    render(<GoogleMapView activities={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={4} />);
 
     await waitFor(() => {
       expect(infoWindowFactory).toHaveBeenCalled();
@@ -204,5 +204,28 @@ describe('GoogleMapView', () => {
 
     const infoOptions = infoWindowFactory.mock.calls[0]?.[0];
     expect(infoOptions.content).toContain('https://www.google.com/maps/search/?api=1&query=35.6852%2C139.71');
+  });
+
+  it('keeps legacy proposals prop as compatibility fallback', async () => {
+    const proposals = [
+      {
+        id: 'p-legacy',
+        title: 'Legacy spot',
+        description: 'legacy',
+        type: 'place',
+        lat: 35.11,
+        lng: 139.11,
+        city: 'Tokyo',
+        status: 'pending',
+        isArranged: false,
+      },
+    ];
+
+    render(<GoogleMapView proposals={proposals} canEdit onAddPlace={jest.fn()} focusTrigger={5} />);
+
+    await waitFor(() => {
+      const marker = ((window.google as unknown as GoogleMapsMock).maps.Marker);
+      expect(marker).toHaveBeenCalledTimes(1);
+    });
   });
 });

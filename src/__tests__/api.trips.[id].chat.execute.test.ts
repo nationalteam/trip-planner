@@ -66,20 +66,9 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     );
   });
 
-  it('accepts legacy proposal action type when validator normalizes to activity type', async () => {
-    mockValidateChatActionPlan.mockReturnValueOnce([
-      {
-        type: 'activity.create',
-        title: 'Legacy Place',
-        description: 'Converted',
-        city: 'Tokyo',
-      },
-    ]);
-    mockExecuteTripActions.mockResolvedValueOnce({
-      results: [{ type: 'activity.create', status: 'success' }],
-      trip: { id: 'trip-1', name: 'Updated Trip' },
-      activities: [{ id: 'a-1', title: 'Legacy Place' }],
-      itinerary: [],
+  it('rejects legacy proposal action type when validator reports unsupported type', async () => {
+    mockValidateChatActionPlan.mockImplementationOnce(() => {
+      throw new Error('Unsupported action type.');
     });
 
     const req = new NextRequest('http://localhost/api/trips/trip-1/chat/execute', {
@@ -100,17 +89,9 @@ describe('POST /api/trips/[id]/chat/execute', () => {
     const res = await POST(req, { params: Promise.resolve({ id: 'trip-1' }) });
     const data = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(mockExecuteTripActions).toHaveBeenCalledWith('trip-1', 'owner-1', [
-      {
-        type: 'activity.create',
-        title: 'Legacy Place',
-        description: 'Converted',
-        city: 'Tokyo',
-      },
-    ]);
-    expect(data.results).toEqual([{ type: 'activity.create', status: 'success' }]);
-    expect(data.activities).toEqual([{ id: 'a-1', title: 'Legacy Place' }]);
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/unsupported action/i);
+    expect(mockExecuteTripActions).not.toHaveBeenCalled();
   });
 
   it('does not map legacy proposals payload into activities', async () => {

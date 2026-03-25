@@ -149,12 +149,6 @@ function normalizeOptionalActivityType(value: unknown): ActivityType | undefined
 function normalizeActionType(value: unknown): ChatAction['type'] {
   if (typeof value !== 'string') throw new Error('Unsupported action type.');
 
-  if (value === 'proposal.generate') return 'activity.generate';
-  if (value === 'proposal.create') return 'activity.create';
-  if (value === 'proposal.update') return 'activity.update';
-  if (value === 'proposal.delete') return 'activity.delete';
-  if (value === 'itinerary.addProposal') return 'itinerary.addActivity';
-
   if (!ALLOWED_ACTION_TYPES.includes(value as ChatAction['type'])) {
     throw new Error('Unsupported action type.');
   }

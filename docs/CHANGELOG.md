@@ -57,3 +57,4 @@
 2026-03-25 | test(rename): align trip-detail manual/adapters test wording to activity terminology (#0)
 2026-03-25 | refactor(ui): make map component inputs activity-first with legacy proposals fallback (#0)
 2026-03-25 | test(rename): update trip detail map-arranged test ids to activity terminology (#0)
+2026-03-25 | refactor(chat)!: remove legacy proposal action-type aliases from chat action validation (#0)

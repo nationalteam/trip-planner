@@ -511,7 +511,7 @@ export default function TripDetailPage() {
     ].filter(Boolean).join(' · ')
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
-  const filteredProposals = filterStatus === 'all' ? activities : activities.filter(p => p.status === filterStatus);
+  const filteredActivities = filterStatus === 'all' ? activities : activities.filter((activity) => activity.status === filterStatus);
   const arrangedMapCount = mapProposals.filter((proposal) => proposal.isArranged).length;
   const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
   const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;
@@ -826,7 +826,7 @@ export default function TripDetailPage() {
             </div>
           )}
 
-          {filteredProposals.length === 0 ? (
+          {filteredActivities.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-3">💡</div>
               <p className="text-gray-500 text-lg">No activities yet</p>
@@ -834,10 +834,10 @@ export default function TripDetailPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProposals.map(proposal => (
+              {filteredActivities.map((activity) => (
                 <ActivityCard
-                  key={proposal.id}
-                  proposal={proposal}
+                  key={activity.id}
+                  activity={activity}
                   onApprove={handleApprove}
                   onReject={handleReject}
                   onDelete={canEdit ? handleDeleteProposal : undefined}

@@ -11,8 +11,8 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-jest.mock('@/components/ActivityCard', () => function MockActivityCard({ proposal }: { proposal: { title: string } }) {
-  return <div data-testid="proposal-card">{proposal.title}</div>;
+jest.mock('@/components/ActivityCard', () => function MockActivityCard({ activity }: { activity: { title: string } }) {
+  return <div data-testid="activity-card">{activity.title}</div>;
 });
 jest.mock('@/components/ItineraryView', () => function MockItineraryView() {
   return <div data-testid="itinerary-view" />;
@@ -35,7 +35,7 @@ describe('Trip detail chat planner', () => {
     jest.restoreAllMocks();
   });
 
-  it('previews and confirms chat actions, then updates proposal list', async () => {
+  it('previews and confirms chat actions, then updates activity list', async () => {
     const fetchMock = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method ?? 'GET';
@@ -75,7 +75,7 @@ describe('Trip detail chat planner', () => {
           ok: true,
           status: 200,
           json: async () => ({
-            summary: 'Will create one proposal.',
+            summary: 'Will create one activity.',
             actionPlan: [
               {
                 type: 'proposal.create',
@@ -133,11 +133,11 @@ describe('Trip detail chat planner', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /ai \(experimental\)/i }));
 
-    await userEvent.type(screen.getByPlaceholderText(/ask chat planner/i), 'Add Senso-ji proposal');
+    await userEvent.type(screen.getByPlaceholderText(/ask chat planner/i), 'Add Senso-ji activity');
     await userEvent.click(screen.getByRole('button', { name: /preview changes/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/will create one proposal/i)).toBeInTheDocument();
+      expect(screen.getByText(/will create one activity/i)).toBeInTheDocument();
     });
 
     await userEvent.click(screen.getByRole('button', { name: /confirm apply/i }));

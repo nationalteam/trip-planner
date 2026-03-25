@@ -10,6 +10,19 @@ interface Trip {
   createdAt: string;
   startDate?: string | null;
   durationDays?: number | null;
+  counts?: {
+    activitiesCount: number;
+    itineraryItemsCount: number;
+  };
+}
+
+interface TripApiResponse {
+  id: string;
+  name: string;
+  cities: string;
+  createdAt: string;
+  startDate?: string | null;
+  durationDays?: number | null;
   _count?: { proposals: number; itineraryItems: number };
 }
 
@@ -34,8 +47,24 @@ export default function Home() {
         window.location.href = '/auth';
         return;
       }
-      const data = await res.json();
-      setTrips(Array.isArray(data) ? data : []);
+      const data: unknown = await res.json();
+      const normalizedTrips = Array.isArray(data)
+        ? (data as TripApiResponse[]).map((trip) => ({
+          id: trip.id,
+          name: trip.name,
+          cities: trip.cities,
+          createdAt: trip.createdAt,
+          startDate: trip.startDate ?? null,
+          durationDays: trip.durationDays ?? null,
+          counts: trip._count
+            ? {
+              activitiesCount: trip._count.proposals,
+              itineraryItemsCount: trip._count.itineraryItems,
+            }
+            : undefined,
+        }))
+        : [];
+      setTrips(normalizedTrips);
     } catch {
       setTrips([]);
     } finally {

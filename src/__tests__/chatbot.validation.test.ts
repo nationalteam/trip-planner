@@ -37,20 +37,14 @@ describe('chatbot action validation with activity naming', () => {
     });
   });
 
-  it('accepts legacy proposal.create payload and normalizes to activity.create', () => {
-    const action = validateChatAction({
+  it('rejects legacy proposal.create payload', () => {
+    expect(() => validateChatAction({
       type: 'proposal.create',
       title: 'Louvre Museum',
       description: 'Museum',
       city: 'Paris',
       proposalType: 'place',
-    });
-
-    expect(action).toMatchObject({
-      type: 'activity.create',
-      title: 'Louvre Museum',
-      activityType: 'place',
-    });
+    })).toThrow('Unsupported action type.');
   });
 
   it('accepts itinerary.addActivity with activityId', () => {
@@ -71,37 +65,24 @@ describe('chatbot action validation with activity naming', () => {
     });
   });
 
-  it('accepts legacy itinerary.addProposal payload and normalizes to itinerary.addActivity', () => {
-    const action = validateChatAction({
+  it('rejects legacy itinerary.addProposal payload', () => {
+    expect(() => validateChatAction({
       type: 'itinerary.addProposal',
       proposalId: 'p-legacy',
       day: 1,
       timeBlock: 'morning',
-    });
-
-    expect(action).toEqual({
-      type: 'itinerary.addActivity',
-      activityId: 'p-legacy',
-      day: 1,
-      timeBlock: 'morning',
-      order: undefined,
-    });
+    })).toThrow('Unsupported action type.');
   });
 
-  it('requires activityId for activity.update after normalization', () => {
-    expect(() => validateChatAction({ type: 'proposal.update', title: 'new title' }))
+  it('requires activityId for activity.update', () => {
+    expect(() => validateChatAction({ type: 'activity.update', title: 'new title' }))
       .toThrow('activity.update requires activityId.');
   });
 
-  it('normalizes action plan item types to activity naming', () => {
-    const plan = validateChatActionPlan([
+  it('rejects legacy action plan item types', () => {
+    expect(() => validateChatActionPlan([
       { type: 'proposal.generate', city: 'Paris' },
       { type: 'proposal.delete', proposalId: 'p-1' },
-    ]);
-
-    expect(plan).toEqual([
-      { type: 'activity.generate', city: 'Paris' },
-      { type: 'activity.delete', activityId: 'p-1' },
-    ]);
+    ])).toThrow('Unsupported action type.');
   });
 });

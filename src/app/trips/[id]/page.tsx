@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import ProposalCard from '@/components/ProposalCard';
+import ActivityCard from '@/components/ActivityCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
@@ -835,7 +835,7 @@ export default function TripDetailPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProposals.map(proposal => (
-                <ProposalCard
+                <ActivityCard
                   key={proposal.id}
                   proposal={proposal}
                   onApprove={handleApprove}

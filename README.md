@@ -145,6 +145,13 @@ npm run start    # Start production server
 npm run lint     # ESLint
 npm run test     # Jest
 npm run test:ci  # Jest (CI mode + coverage)
+npm run test:e2e # Playwright end-to-end tests
+```
+
+Before running Playwright E2E for the first time:
+
+```bash
+npx playwright install chromium
 ```
 
 ## CI

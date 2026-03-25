@@ -132,7 +132,7 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
       <div className="text-center py-16">
         <div className="text-5xl mb-3">📋</div>
         <p className="text-gray-500 text-lg">No itinerary items yet</p>
-        <p className="text-gray-400 text-sm mt-1">Approve proposals to build your itinerary</p>
+        <p className="text-gray-400 text-sm mt-1">Approve activities to build your itinerary</p>
       </div>
     );
   }

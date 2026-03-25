@@ -38,3 +38,4 @@
 2026-03-25 | refactor(frontend): switch trip detail calls from proposals endpoints to activities aliases (#0)
 2026-03-25 | refactor(chat): unify execute response on activities and drop proposals fallback in trip detail (#0)
 2026-03-25 | test(api): add integration coverage for activities route behavior and non-deprecated headers (#0)
+2026-03-25 | refactor(ui): rename user-facing proposal wording to activity across trip surfaces (#0)

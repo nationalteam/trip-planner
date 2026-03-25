@@ -284,7 +284,7 @@ export default function TripDetailPage() {
 
   async function handleDeleteTrip() {
     setConfirmDialog({
-      message: 'Delete this trip? All proposals and itinerary items will be permanently removed.',
+      message: 'Delete this trip? All activities and itinerary items will be permanently removed.',
       onConfirm: async () => {
         setConfirmDialog(null);
         const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
@@ -299,7 +299,7 @@ export default function TripDetailPage() {
 
   async function handleDeleteProposal(proposalId: string) {
     setConfirmDialog({
-      message: 'Delete this proposal? This action cannot be undone.',
+      message: 'Delete this activity? This action cannot be undone.',
       onConfirm: async () => {
         setConfirmDialog(null);
         const res = await fetch(`/api/activities/${proposalId}`, { method: 'DELETE' });
@@ -307,7 +307,7 @@ export default function TripDetailPage() {
           setActivities(prev => prev.filter(p => p.id !== proposalId));
           setItinerary(prev => prev.filter(item => item.activity.id !== proposalId));
         } else {
-          alert('Failed to delete proposal. Please try again.');
+          alert('Failed to delete activity. Please try again.');
         }
       },
     });
@@ -644,7 +644,7 @@ export default function TripDetailPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            {tab === 'proposals' ? '💡 Proposals' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
+            {tab === 'proposals' ? '💡 Activities' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
           </button>
         ))}
       </div>
@@ -666,7 +666,7 @@ export default function TripDetailPage() {
               disabled={generating || !canEdit}
               className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {generating ? '⏳ Generating...' : '✨ Generate Proposals'}
+              {generating ? '⏳ Generating...' : '✨ Generate Activities'}
             </button>
             <div className="flex gap-1 ml-auto">
               <select
@@ -713,7 +713,7 @@ export default function TripDetailPage() {
                 className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-100 rounded-xl transition-colors"
               >
                 <span>
-                  <span className="block text-sm font-semibold text-gray-700">✍️ Add proposal manually</span>
+                  <span className="block text-sm font-semibold text-gray-700">✍️ Add activity manually</span>
                   <span className="block text-xs text-gray-500 mt-0.5">Quick add a place idea</span>
                 </span>
                 <span className="text-sm text-gray-500">{isManualFormOpen ? '▾' : '▸'}</span>
@@ -810,7 +810,7 @@ export default function TripDetailPage() {
                       disabled={creatingManual}
                       className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50"
                     >
-                      {creatingManual ? 'Saving...' : 'Add Manual Proposal'}
+                      {creatingManual ? 'Saving...' : 'Add Manual Activity'}
                     </button>
                     <button
                       type="button"
@@ -829,8 +829,8 @@ export default function TripDetailPage() {
           {filteredProposals.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-3">💡</div>
-              <p className="text-gray-500 text-lg">No proposals yet</p>
-              <p className="text-gray-400 text-sm mt-1">Generate AI proposals for your trip</p>
+              <p className="text-gray-500 text-lg">No activities yet</p>
+              <p className="text-gray-400 text-sm mt-1">Generate AI activities for your trip</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -920,7 +920,7 @@ export default function TripDetailPage() {
             mapProposals.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="text-5xl mb-3">🗺️</div>
-                <p className="text-gray-500">Generate proposals to see them on the map</p>
+                <p className="text-gray-500">Generate activities to see them on the map</p>
               </div>
             ) : (
               <MapView proposals={mapProposals} />
@@ -938,7 +938,7 @@ export default function TripDetailPage() {
               type="text"
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Ask Chat Planner (e.g. add a sushi proposal in Tokyo and organize itinerary)"
+              placeholder="Ask Chat Planner (e.g. add a sushi activity in Tokyo and organize itinerary)"
               className="border border-blue-200 rounded-lg px-3 py-2 text-sm flex-1 text-gray-900"
             />
             <button

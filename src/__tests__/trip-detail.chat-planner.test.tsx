@@ -141,7 +141,7 @@ describe('Trip detail chat planner', () => {
     });
 
     await userEvent.click(screen.getByRole('button', { name: /confirm apply/i }));
-    await userEvent.click(screen.getByRole('button', { name: /proposals/i }));
+    await userEvent.click(screen.getByRole('button', { name: /activities/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Senso-ji')).toBeInTheDocument();

@@ -345,7 +345,7 @@ export default function GoogleMapView({ proposals, canEdit, onAddPlace, focusTri
             onClick={handleAdd}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
-            {adding ? 'Adding...' : 'Add to Proposals'}
+            {adding ? 'Adding...' : 'Add to Activities'}
           </button>
         </div>
       ) : null}

@@ -50,7 +50,7 @@ export default function TripCard({ trip }: TripCardProps) {
           </div>
           {trip._count && (
             <div className="flex gap-3">
-              <span>{trip._count.proposals} proposals</span>
+              <span>{trip._count.proposals} activities</span>
               <span>{trip._count.itineraryItems} planned</span>
             </div>
           )}

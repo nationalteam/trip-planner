@@ -317,7 +317,7 @@ async function createActivityFromAction(tripId: string, action: Extract<ChatActi
     ? { lat: action.lat!, lng: action.lng! }
     : await geocodeWithGoogleMaps(`${action.title}, ${action.city}`);
   if (!resolvedCoordinates) {
-    throw new Error(`Unable to resolve coordinates for proposal "${action.title}".`);
+    throw new Error(`Unable to resolve coordinates for activity "${action.title}".`);
   }
   const normalized = normalizeCoordinateBatch([resolvedCoordinates])[0];
   return prisma.proposal.create({
@@ -397,7 +397,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
 
     if (action.type === 'activity.update') {
       const existing = await prisma.proposal.findUnique({ where: { id: action.activityId } });
-      if (!existing || existing.tripId !== tripId) throw new Error('Proposal not found');
+      if (!existing || existing.tripId !== tripId) throw new Error('Activity not found');
 
       let normalizedLatLng:
         | { lat: number; lng: number }
@@ -428,7 +428,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
 
     if (action.type === 'activity.delete') {
       const existing = await prisma.proposal.findUnique({ where: { id: action.activityId } });
-      if (!existing || existing.tripId !== tripId) throw new Error('Proposal not found');
+      if (!existing || existing.tripId !== tripId) throw new Error('Activity not found');
       await prisma.itineraryItem.deleteMany({ where: { proposalId: action.activityId } });
       await prisma.proposal.delete({ where: { id: action.activityId } });
       results.push({ type: action.type, status: 'success' });
@@ -470,7 +470,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
 
     if (action.type === 'itinerary.addActivity') {
       const proposal = await prisma.proposal.findUnique({ where: { id: action.activityId } });
-      if (!proposal || proposal.tripId !== tripId) throw new Error('Proposal not found');
+      if (!proposal || proposal.tripId !== tripId) throw new Error('Activity not found');
       const existingItem = await prisma.itineraryItem.findUnique({ where: { proposalId: action.activityId } });
       const day = action.day ?? (existingItem?.day ?? 1);
       const timeBlock = action.timeBlock ?? (existingItem?.timeBlock && isItineraryTimeBlock(existingItem.timeBlock)

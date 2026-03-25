@@ -35,6 +35,6 @@ export interface ItineraryItem {
   proposal?: Activity;
 }
 
-export type Tab = 'proposals' | 'itinerary' | 'map' | 'ai';
+export type Tab = 'activities' | 'itinerary' | 'map' | 'ai';
 export type ChatPlanAction = { type: string; [key: string]: unknown };
 export type ChatPlanResponse = { summary: string; actionPlan: ChatPlanAction[] };

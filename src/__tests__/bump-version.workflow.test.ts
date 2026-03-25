@@ -35,4 +35,20 @@ describe('bump-version workflow PR flow', () => {
     expect(workflow).toContain('uses: peter-evans/create-pull-request@v7');
     expect(workflow).not.toContain('--follow-tags');
   });
+
+  it('reads bumped version via two-step bash-safe output assignment', () => {
+    const workflowPath = path.join(
+      process.cwd(),
+      '.github/workflows/bump-version.yml',
+    );
+    const workflow = fs.readFileSync(workflowPath, 'utf8');
+
+    expect(workflow).toContain(
+      'next_version="$(node -p "require(\'./package.json\').version")"',
+    );
+    expect(workflow).toContain('echo "next_version=${next_version}" >> "$GITHUB_OUTPUT"');
+    expect(workflow).not.toContain(
+      'echo "next_version=$(node -p \\"require(\'./package.json\').version\\")" >> "$GITHUB_OUTPUT"',
+    );
+  });
 });

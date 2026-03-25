@@ -32,3 +32,4 @@
 2026-03-25 | docs(rename): add phased proposal-to-activity migration plan (#0)
 2026-03-25 | refactor(chat): adopt activity-first chat actions with legacy proposal aliases (#0)
 2026-03-25 | refactor(trip): normalize proposal payloads into activity-first trip detail state (#0)
+2026-03-25 | fix(ci): make bump-version output assignment bash-safe (#5)

@@ -78,7 +78,7 @@ describe('Trip detail chat planner', () => {
             summary: 'Will create one activity.',
             actionPlan: [
               {
-                type: 'proposal.create',
+                type: 'activity.create',
                 title: 'Senso-ji',
                 description: 'Temple visit',
                 city: 'Tokyo',
@@ -93,7 +93,7 @@ describe('Trip detail chat planner', () => {
           ok: true,
           status: 200,
           json: async () => ({
-            results: [{ type: 'proposal.create', status: 'success' }],
+            results: [{ type: 'activity.create', status: 'success' }],
             activities: [
               {
                 id: 'p-1',

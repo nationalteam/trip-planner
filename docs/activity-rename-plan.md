@@ -28,7 +28,7 @@ This plan is the single source of truth for migration sequencing.
 The repository currently uses `proposal` broadly across:
 - Prisma model and relation fields (`Proposal`, `proposalId`),
 - API paths (`/api/proposals/*`, `/api/trips/[id]/proposals/*`),
-- chat action contracts (`proposal.generate`, `proposal.create`, ...),
+- chat action contracts (`activity.generate`, `activity.create`, ...),
 - UI labels and component types,
 - tests and fixtures.
 

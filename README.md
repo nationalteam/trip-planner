@@ -115,7 +115,7 @@ Open [http://localhost:9527](http://localhost:9527).
 
 ## API Migration: `proposals` -> `activities`
 
-Primary endpoints now use `activities` naming:
+Primary endpoints use `activities` naming:
 
 - `GET/POST /api/trips/[id]/activities`
 - `POST /api/trips/[id]/activities/fill`
@@ -123,18 +123,7 @@ Primary endpoints now use `activities` naming:
 - `POST /api/activities/[id]/approve`
 - `POST /api/activities/[id]/reject`
 
-Legacy `proposals` endpoints are still available during the compatibility window and return deprecation metadata:
-
-- `Deprecation: true`
-- `Sunset: Tue, 30 Jun 2026 23:59:59 GMT`
-- `Link: <.../activities...>; rel="successor-version"`
-- `X-Legacy-Endpoint: proposals`
-- `Warning: 299 - "Deprecated API: use /api/activities endpoints"`
-
-Operational observability:
-
-- Legacy `/proposals*` requests emit runtime warning logs once per path per process.
-- Use these logs and request metrics as migration signals before removing legacy routes.
+Legacy `/proposals*` routes have been removed.
 
 ## Scripts
 
@@ -181,11 +170,10 @@ src/
     api/                          # REST API routes
       trips/                      # CRUD for trips
       activities/[id]/approve|reject
-      proposals/[id]/approve|reject # legacy alias (deprecated)
       users/                      # CRUD for users & preferences
   components/
     GoogleMapView.tsx             # Google Maps place picker + map markers
-    ProposalCard.tsx              # Activity card with approve/reject buttons
+    ActivityCard.tsx              # Activity card with approve/reject buttons
     ItineraryView.tsx             # Day-by-day itinerary grouped by time block
     MapView.tsx                   # Leaflet map (client-only)
     TripCard.tsx                  # Trip summary card

@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   bump-version:
@@ -26,45 +27,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify GitHub token access
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { owner, repo } = context.repo;
-            const refType = process.env.GITHUB_REF_TYPE;
-            const currentRef = process.env.GITHUB_REF_NAME;
-            if (refType !== 'branch') {
-              core.setFailed(`This workflow supports branch refs only (received: ${refType ?? 'unknown'}).`);
-              return;
-            }
-            if (!currentRef) {
-              core.setFailed('GITHUB_REF_NAME is not available.');
-              return;
-            }
-            await github.rest.repos.getBranch({
-              owner,
-              repo,
-              branch: currentRef,
-            });
-            core.info(`Validated access to ${owner}/${repo}@${currentRef}`);
-
-      - name: Configure git author
+      - name: Ensure branch ref
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump version
-        run: |
-          ./scripts/bump-version.sh "${{ inputs.bump }}"
-
-      - name: Push commit and tags
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          set -euo pipefail
           if [ "${GITHUB_REF_TYPE}" != "branch" ]; then
             echo "This workflow supports branch refs only (received: ${GITHUB_REF_TYPE:-unknown})."
             exit 1
           fi
-          git push "https://x-access-token:${PAT_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}" --follow-tags
+
+      - name: Bump version without creating tag
+        run: |
+          ./scripts/bump-version.sh "${{ inputs.bump }}" --no-tag
+
+      - name: Read bumped version
+        id: version
+        run: |
+          echo "next_version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Create release bump pull request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PAT_TOKEN != '' && secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          commit-message: "chore(release): bump version to ${{ steps.version.outputs.next_version }}"
+          title: "chore(release): bump version to ${{ steps.version.outputs.next_version }}"
+          body: |
+            Automated version bump PR.
+
+            - bump type: `${{ inputs.bump }}`
+            - target branch: `main`
+          branch: chore/release/bump-version-${{ steps.version.outputs.next_version }}
+          base: main
+          delete-branch: true
+          add-paths: |
+            package.json
+            package-lock.json
+
+      - name: Show pull request result
+        if: ${{ steps.cpr.outputs.pull-request-url != '' }}
+        run: |
+          echo "Created PR: ${{ steps.cpr.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"

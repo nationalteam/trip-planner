@@ -2,11 +2,27 @@
 set -euo pipefail
 
 bump_type="${1:-}"
+shift || true
+skip_tag=false
 
 if [ -z "${bump_type}" ]; then
-  echo "Usage: $0 <patch|minor|major>"
+  echo "Usage: $0 <patch|minor|major> [--no-tag]"
   exit 1
 fi
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --no-tag)
+      skip_tag=true
+      ;;
+    *)
+      echo "Unsupported option: $1"
+      echo "Usage: $0 <patch|minor|major> [--no-tag]"
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 case "${bump_type}" in
   patch|minor|major) ;;
@@ -27,9 +43,9 @@ increment_version() {
   local bump="$2"
   local major minor patch
 
-  IFS='.' read -r major minor patch <<EOF
+  IFS='.' read -r major minor patch <<EOF2
 ${version}
-EOF
+EOF2
 
   if [ -z "${major:-}" ] || [ -z "${minor:-}" ] || [ -z "${patch:-}" ]; then
     echo "Unsupported version format: ${version}"
@@ -66,4 +82,8 @@ while git rev-parse --verify --quiet "refs/tags/v${next_version}" >/dev/null; do
   next_version="$(increment_version "${next_version}" "${bump_type}")"
 done
 
-npm version "${next_version}" -m "chore(release): bump version to %s"
+if [ "${skip_tag}" = true ]; then
+  npm version "${next_version}" --no-git-tag-version
+else
+  npm version "${next_version}" -m "chore(release): bump version to %s"
+fi

@@ -68,3 +68,16 @@
   Restart `next dev` after schema + client generation changes.
 - Preventive rule:
   Any time Prisma schema fields are added/removed, run `npx prisma generate` and restart the dev server before manual API/UI verification.
+
+## `gh pr create --body` can break when Markdown backticks are passed in double quotes
+
+- Context:
+  Creating a PR from shell with `gh pr create --body "..."` and Markdown inline code.
+- Symptom:
+  Shell errors like `command not found` for words inside backticks (for example `map-proposals`), and PR creation fails.
+- Root cause:
+  Backticks inside double-quoted shell strings trigger command substitution before `gh` receives the body text.
+- Fix:
+  Use `--body-file` (or single-quoted safe text) to avoid shell interpolation.
+- Preventive rule:
+  For multiline PR bodies containing Markdown backticks, always write to a temp file and pass `--body-file`.

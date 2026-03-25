@@ -53,6 +53,8 @@ describe('DELETE /api/proposals/[id]', () => {
     expect(res.status).toBe(204);
     expect(res.headers.get('Deprecation')).toBe('true');
     expect(res.headers.get('Link')).toContain('/api/activities/proposal-1');
+    expect(res.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
+    expect(res.headers.get('X-Legacy-Endpoint')).toBe('proposals');
     expect(mockPrisma.itineraryItem.deleteMany).toHaveBeenCalledWith({ where: { proposalId: 'proposal-1' } });
     expect(mockPrisma.proposal.delete).toHaveBeenCalledWith({ where: { id: 'proposal-1' } });
   });

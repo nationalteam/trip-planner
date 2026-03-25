@@ -67,6 +67,8 @@ describe('GET /api/trips/[id]/proposals', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Deprecation')).toBe('true');
     expect(res.headers.get('Link')).toContain('/api/trips/trip-1/activities');
+    expect(res.headers.get('Sunset')).toBe('Tue, 30 Jun 2026 23:59:59 GMT');
+    expect(res.headers.get('X-Legacy-Endpoint')).toBe('proposals');
     expect(data).toEqual(fakeProposals);
   });
 

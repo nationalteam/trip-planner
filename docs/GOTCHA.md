@@ -94,3 +94,16 @@
   Remove index-rename statements from the migration SQL, then reconcile migration state with `prisma migrate resolve --applied <migration_name>`.
 - Preventive rule:
   For SQLite rename migrations, avoid index renames; keep old index names or recreate indexes via explicit `DROP INDEX` + `CREATE INDEX` in a verified compatible SQL script.
+
+## Historical migrations must keep original naming even after domain rename
+
+- Context:
+  App/runtime naming converged from `proposal` to `activity` after hard-cut migration.
+- Symptom:
+  Global text replacement attempts can touch old `prisma/migrations/*` SQL and make migration history inconsistent with what actually ran.
+- Root cause:
+  Historical migration files are immutable records, not active domain code.
+- Fix:
+  Keep legacy names in historical migration SQL unchanged and only rename current schema/runtime code.
+- Preventive rule:
+  During terminology refactors, exclude `prisma/migrations/*` and keep prior migration snapshots verbatim.

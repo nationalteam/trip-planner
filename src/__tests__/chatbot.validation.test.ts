@@ -14,8 +14,13 @@ jest.mock('@/lib/geocoding', () => ({
 }));
 
 import { validateChatAction, validateChatActionPlan } from '@/lib/chatbot';
+import * as chatbotModule from '@/lib/chatbot';
 
 describe('chatbot action validation with activity naming', () => {
+  it('does not expose legacy suggestProposalCreateActionFromTitle export', () => {
+    expect('suggestProposalCreateActionFromTitle' in chatbotModule).toBe(false);
+  });
+
   it('accepts activity.create payload with activityType', () => {
     const action = validateChatAction({
       type: 'activity.create',

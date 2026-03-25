@@ -569,7 +569,3 @@ export async function suggestActivityCreateActionFromTitle(title: string, city: 
     durationMinutes: details.durationMinutes,
   };
 }
-
-export async function suggestProposalCreateActionFromTitle(title: string, city: string): Promise<ChatAction> {
-  return suggestActivityCreateActionFromTitle(title, city);
-}

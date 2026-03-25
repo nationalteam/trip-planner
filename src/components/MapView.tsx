@@ -15,16 +15,15 @@ interface MapActivity {
 }
 
 interface MapViewProps {
-  activities?: MapActivity[];
-  proposals?: MapActivity[];
+  activities: MapActivity[];
 }
 
 const DEFAULT_CENTER = { lat: 48.8566, lng: 2.3522 };
 
-export default function MapView({ activities, proposals }: MapViewProps) {
+export default function MapView({ activities }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const mapActivities = activities ?? proposals ?? [];
+  const mapActivities = activities;
 
   useEffect(() => {
     if (!mapRef.current) return;

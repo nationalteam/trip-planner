@@ -60,4 +60,5 @@
 2026-03-25 | refactor(chat)!: remove legacy proposal action-type aliases from chat action validation (#0)
 2026-03-25 | refactor(llm): introduce activity-first helper names with proposal aliases for compatibility (#0)
 2026-03-25 | docs(rename): add Prisma activity migration design with phased rollback plan (#0)
+2026-03-25 | refactor(rename)!: remove remaining app-layer proposal aliases and converge on activity-first naming (#0)
 2026-03-25 | refactor(ui): adapt trips API counts to activity-first card counts model (#0)

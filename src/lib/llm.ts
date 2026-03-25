@@ -96,7 +96,7 @@ function mapProviderError(provider: Provider, error: unknown): never {
   throw error instanceof Error ? error : new Error(message);
 }
 
-interface ProposalLike {
+interface ActivityLike {
   title?: string;
 }
 
@@ -125,16 +125,16 @@ export interface ChatActionPlanResult {
   actionPlan: unknown[];
 }
 
-export async function generateActivities(preferences: object[], city: string, existingActivities: ProposalLike[] = []) {
+export async function generateActivities(preferences: object[], city: string, existingActivities: ActivityLike[] = []) {
   const provider = resolveProvider();
   const openai = createClient(provider);
-  const prompt = `You are a travel planner. Generate restaurant and place proposals for a trip.
+  const prompt = `You are a travel planner. Generate restaurant and place activities for a trip.
 
 City: ${city}
 User Preferences: ${JSON.stringify(preferences, null, 2)}
-${existingActivities.length > 0 ? `Already proposed (do not repeat these): ${JSON.stringify(existingActivities.map(p => p.title))}` : ''}
+${existingActivities.length > 0 ? `Already included (do not repeat these): ${JSON.stringify(existingActivities.map((a) => a.title))}` : ''}
 
-Return a JSON array of 5-8 proposals with this exact format:
+Return a JSON array of 5-8 activities with this exact format:
 [
   {
     "type": "food",
@@ -196,7 +196,7 @@ export async function fillActivityDetails(title: string, city: string): Promise<
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? fallbackModel)
     : fallbackModel;
 
-  const prompt = `You are a travel planner. Fill in details for a travel proposal.
+  const prompt = `You are a travel planner. Fill in details for a travel activity.
 
 Title: ${title}
 City: ${city}
@@ -252,11 +252,6 @@ Return ONLY valid JSON, no markdown.`;
     return defaults;
   }
 }
-
-// Legacy aliases kept for incremental migration and external compatibility.
-export const generateProposals = generateActivities;
-export type ProposalFillResult = ActivityFillResult;
-export const fillProposalDetails = fillActivityDetails;
 
 export async function organizeItinerary(items: ItineraryItemForLLM[]): Promise<OrganizedItineraryItem[]> {
   const provider = resolveProvider();

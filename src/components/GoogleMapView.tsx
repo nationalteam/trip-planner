@@ -30,8 +30,7 @@ interface SelectedPlace {
 }
 
 interface GoogleMapViewProps {
-  activities?: MapActivity[];
-  proposals?: MapActivity[];
+  activities: MapActivity[];
   canEdit: boolean;
   onAddPlace: (place: SelectedPlace) => Promise<void>;
   focusTrigger?: number;
@@ -151,7 +150,7 @@ function buildInfoWindowContent(activity: MapActivity): string {
   </div>`;
 }
 
-export default function GoogleMapView({ activities, proposals, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
+export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -161,7 +160,7 @@ export default function GoogleMapView({ activities, proposals, canEdit, onAddPla
   const [loadingError, setLoadingError] = useState('');
   const [adding, setAdding] = useState(false);
 
-  const mapActivities = activities ?? proposals ?? [];
+  const mapActivities = activities;
   const normalizedProposals = useMemo(
     () => normalizeCoordinateBatch(mapActivities, { reference: DEFAULT_CENTER }),
     [mapActivities]

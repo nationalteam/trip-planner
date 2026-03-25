@@ -203,11 +203,4 @@ describe('MapView', () => {
     expect(mockMarker).not.toHaveBeenCalled();
   });
 
-  it('keeps legacy proposals prop as compatibility fallback', async () => {
-    await act(async () => {
-      render(<MapView proposals={[baseProposal]} />);
-    });
-
-    expect(mockMap).toHaveBeenCalledTimes(1);
-  });
 });

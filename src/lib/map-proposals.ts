@@ -4,7 +4,10 @@ type ProposalLike = {
 };
 
 type ItineraryItemLike = {
-  proposal: {
+  activity?: {
+    id: string;
+  };
+  proposal?: {
     id: string;
   };
 };
@@ -17,7 +20,11 @@ export function buildMapProposals<T extends ProposalLike>(
   proposals: T[],
   itinerary: ItineraryItemLike[]
 ): Array<MapProposal<T>> {
-  const arrangedProposalIds = new Set(itinerary.map((item) => item.proposal.id));
+  const arrangedProposalIds = new Set(
+    itinerary
+      .map((item) => item.activity?.id ?? item.proposal?.id)
+      .filter((id): id is string => Boolean(id))
+  );
   return proposals
     .filter((proposal) => proposal.status !== 'rejected')
     .map((proposal) => ({

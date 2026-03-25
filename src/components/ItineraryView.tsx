@@ -13,7 +13,16 @@ interface ItineraryItem {
   day: number;
   timeBlock: string;
   order: number;
-  proposal: {
+  activity: {
+    id: string;
+    title: string;
+    description: string;
+    type: string;
+    city: string;
+    durationMinutes: number | null;
+    suggestedTime: string;
+  };
+  proposal?: {
     id: string;
     title: string;
     description: string;
@@ -290,6 +299,10 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
                       <p className="text-xs text-gray-400">Drop activity here</p>
                     )}
                     {slotItems.map(item => (
+                      (() => {
+                        const activity = item.activity ?? item.proposal;
+                        if (!activity) return null;
+                        return (
                       <div
                         key={item.id}
                         draggable
@@ -304,18 +317,20 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
                         }`}
                       >
                         <span className="text-xl mt-0.5 select-none">⠿</span>
-                        <span className="text-xl mt-0.5">{typeIcons[item.proposal.type] || '📌'}</span>
+                        <span className="text-xl mt-0.5">{typeIcons[activity.type] || '📌'}</span>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">{item.proposal.title}</p>
-                          <p className="text-sm text-gray-600">{item.proposal.description}</p>
+                          <p className="font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-sm text-gray-600">{activity.description}</p>
                           <div className="flex gap-3 mt-1">
-                            <span className="text-xs text-gray-400">{item.proposal.city}</span>
-                            {item.proposal.durationMinutes && (
-                              <span className="text-xs text-gray-400">⏱ {item.proposal.durationMinutes}min</span>
+                            <span className="text-xs text-gray-400">{activity.city}</span>
+                            {activity.durationMinutes && (
+                              <span className="text-xs text-gray-400">⏱ {activity.durationMinutes}min</span>
                             )}
                           </div>
                         </div>
                       </div>
+                        );
+                      })()
                     ))}
                   </div>
                 </div>

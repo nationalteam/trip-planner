@@ -5,7 +5,7 @@ import { ITINERARY_TIME_BLOCKS, isItineraryTimeBlock, normalizeSuggestedTimeToTi
 import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
 import { isValidDateOnly } from '@/lib/dates';
 
-type ProposalType = 'food' | 'place' | 'hotel';
+type ActivityType = 'food' | 'place' | 'hotel';
 type SuggestedTime = 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'night';
 type GeneratedProposal = {
   type?: string;
@@ -18,35 +18,35 @@ type GeneratedProposal = {
 };
 
 export type ChatAction =
-  | { type: 'proposal.generate'; city: string }
+  | { type: 'activity.generate'; city: string }
   | {
-    type: 'proposal.create';
+    type: 'activity.create';
     title: string;
     description: string;
     city: string;
-    proposalType?: ProposalType;
+    activityType?: ActivityType;
     suggestedTime?: SuggestedTime;
     durationMinutes?: number | null;
     lat?: number;
     lng?: number;
   }
   | {
-    type: 'proposal.update';
-    proposalId: string;
+    type: 'activity.update';
+    activityId: string;
     title?: string;
     description?: string;
     city?: string;
-    proposalType?: ProposalType;
+    activityType?: ActivityType;
     suggestedTime?: SuggestedTime;
     durationMinutes?: number | null;
     lat?: number;
     lng?: number;
   }
-  | { type: 'proposal.delete'; proposalId: string }
+  | { type: 'activity.delete'; activityId: string }
   | { type: 'itinerary.organize' }
   | {
-    type: 'itinerary.addProposal';
-    proposalId: string;
+    type: 'itinerary.addActivity';
+    activityId: string;
     day?: number;
     timeBlock?: (typeof ITINERARY_TIME_BLOCKS)[number];
     order?: number;
@@ -67,12 +67,12 @@ export type ChatAction =
   };
 
 const ALLOWED_ACTION_TYPES: ChatAction['type'][] = [
-  'proposal.generate',
-  'proposal.create',
-  'proposal.update',
-  'proposal.delete',
+  'activity.generate',
+  'activity.create',
+  'activity.update',
+  'activity.delete',
   'itinerary.organize',
-  'itinerary.addProposal',
+  'itinerary.addActivity',
   'trip.update',
   'preference.updateMe',
 ];
@@ -140,10 +140,33 @@ function normalizeOptionalSuggestedTime(value: unknown): SuggestedTime | undefin
   return value as SuggestedTime;
 }
 
-function normalizeOptionalProposalType(value: unknown): ProposalType | undefined {
+function normalizeOptionalActivityType(value: unknown): ActivityType | undefined {
   if (value == null) return undefined;
-  if (value !== 'food' && value !== 'place' && value !== 'hotel') throw new Error('Invalid proposalType.');
+  if (value !== 'food' && value !== 'place' && value !== 'hotel') throw new Error('Invalid activityType.');
   return value;
+}
+
+function normalizeActionType(value: unknown): ChatAction['type'] {
+  if (typeof value !== 'string') throw new Error('Unsupported action type.');
+
+  if (value === 'proposal.generate') return 'activity.generate';
+  if (value === 'proposal.create') return 'activity.create';
+  if (value === 'proposal.update') return 'activity.update';
+  if (value === 'proposal.delete') return 'activity.delete';
+  if (value === 'itinerary.addProposal') return 'itinerary.addActivity';
+
+  if (!ALLOWED_ACTION_TYPES.includes(value as ChatAction['type'])) {
+    throw new Error('Unsupported action type.');
+  }
+  return value as ChatAction['type'];
+}
+
+function readActionId(raw: Record<string, unknown>, actionName: string): string {
+  const activityId = normalizeOptionalString(raw.activityId, 'activityId');
+  const proposalId = normalizeOptionalString(raw.proposalId, 'proposalId');
+  const resolved = activityId ?? proposalId;
+  if (!resolved) throw new Error(`${actionName} requires activityId.`);
+  return resolved;
 }
 
 function normalizeTripStartDate(value: unknown): string | null | undefined {
@@ -164,32 +187,30 @@ function normalizeTripDurationDays(value: unknown): number | null | undefined {
 
 export function validateChatAction(value: unknown): ChatAction {
   const raw = asObject(value, 'action');
-  const type = raw.type;
-  if (typeof type !== 'string' || !ALLOWED_ACTION_TYPES.includes(type as ChatAction['type'])) {
-    throw new Error('Unsupported action type.');
-  }
+  const type = normalizeActionType(raw.type);
 
-  if (type === 'proposal.generate') {
+  if (type === 'activity.generate') {
     assertAllowedKeys(raw, ['type', 'city']);
     const city = normalizeOptionalString(raw.city, 'city');
     if (!city) throw new Error('Invalid city. Expected non-empty string.');
     return { type, city };
   }
 
-  if (type === 'proposal.create') {
-    assertAllowedKeys(raw, ['type', 'title', 'description', 'city', 'proposalType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
+  if (type === 'activity.create') {
+    assertAllowedKeys(raw, ['type', 'title', 'description', 'city', 'activityType', 'proposalType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
     const title = normalizeOptionalString(raw.title, 'title');
     const description = normalizeOptionalString(raw.description, 'description');
     const city = normalizeOptionalString(raw.city, 'city');
     if (!title || !description || !city) {
-      throw new Error('proposal.create requires title, description, and city.');
+      throw new Error('activity.create requires title, description, and city.');
     }
+    const activityType = normalizeOptionalActivityType(raw.activityType ?? raw.proposalType);
     return {
       type,
       title,
       description,
       city,
-      proposalType: normalizeOptionalProposalType(raw.proposalType),
+      activityType,
       suggestedTime: normalizeOptionalSuggestedTime(raw.suggestedTime),
       durationMinutes: normalizeOptionalDuration(raw.durationMinutes),
       lat: normalizeOptionalNumber(raw.lat, 'lat'),
@@ -197,17 +218,17 @@ export function validateChatAction(value: unknown): ChatAction {
     };
   }
 
-  if (type === 'proposal.update') {
-    assertAllowedKeys(raw, ['type', 'proposalId', 'title', 'description', 'city', 'proposalType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
-    const proposalId = normalizeOptionalString(raw.proposalId, 'proposalId');
-    if (!proposalId) throw new Error('proposal.update requires proposalId.');
+  if (type === 'activity.update') {
+    assertAllowedKeys(raw, ['type', 'activityId', 'proposalId', 'title', 'description', 'city', 'activityType', 'proposalType', 'suggestedTime', 'durationMinutes', 'lat', 'lng']);
+    const activityId = readActionId(raw, 'activity.update');
+    const activityType = normalizeOptionalActivityType(raw.activityType ?? raw.proposalType);
     return {
       type,
-      proposalId,
+      activityId,
       title: normalizeOptionalString(raw.title, 'title'),
       description: normalizeOptionalString(raw.description, 'description'),
       city: normalizeOptionalString(raw.city, 'city'),
-      proposalType: normalizeOptionalProposalType(raw.proposalType),
+      activityType,
       suggestedTime: normalizeOptionalSuggestedTime(raw.suggestedTime),
       durationMinutes: normalizeOptionalDuration(raw.durationMinutes),
       lat: normalizeOptionalNumber(raw.lat, 'lat'),
@@ -215,11 +236,10 @@ export function validateChatAction(value: unknown): ChatAction {
     };
   }
 
-  if (type === 'proposal.delete') {
-    assertAllowedKeys(raw, ['type', 'proposalId']);
-    const proposalId = normalizeOptionalString(raw.proposalId, 'proposalId');
-    if (!proposalId) throw new Error('proposal.delete requires proposalId.');
-    return { type, proposalId };
+  if (type === 'activity.delete') {
+    assertAllowedKeys(raw, ['type', 'activityId', 'proposalId']);
+    const activityId = readActionId(raw, 'activity.delete');
+    return { type, activityId };
   }
 
   if (type === 'itinerary.organize') {
@@ -227,10 +247,9 @@ export function validateChatAction(value: unknown): ChatAction {
     return { type };
   }
 
-  if (type === 'itinerary.addProposal') {
-    assertAllowedKeys(raw, ['type', 'proposalId', 'day', 'timeBlock', 'order']);
-    const proposalId = normalizeOptionalString(raw.proposalId, 'proposalId');
-    if (!proposalId) throw new Error('itinerary.addProposal requires proposalId.');
+  if (type === 'itinerary.addActivity') {
+    assertAllowedKeys(raw, ['type', 'activityId', 'proposalId', 'day', 'timeBlock', 'order']);
+    const activityId = readActionId(raw, 'itinerary.addActivity');
     const day = normalizeOptionalInteger(raw.day, 'day', 1);
     const order = normalizeOptionalInteger(raw.order, 'order', 0);
     const timeBlock = raw.timeBlock == null
@@ -240,7 +259,7 @@ export function validateChatAction(value: unknown): ChatAction {
         : (() => {
           throw new Error('Invalid timeBlock.');
         })());
-    return { type, proposalId, day, timeBlock, order };
+    return { type, activityId, day, timeBlock, order };
   }
 
   if (type === 'trip.update') {
@@ -292,7 +311,7 @@ export async function planTripActions(
   return { summary, actionPlan };
 }
 
-async function createProposalFromAction(tripId: string, action: Extract<ChatAction, { type: 'proposal.create' }>) {
+async function createActivityFromAction(tripId: string, action: Extract<ChatAction, { type: 'activity.create' }>) {
   const hasManualCoordinates = Number.isFinite(action.lat) && Number.isFinite(action.lng);
   const resolvedCoordinates = hasManualCoordinates
     ? { lat: action.lat!, lng: action.lng! }
@@ -304,7 +323,7 @@ async function createProposalFromAction(tripId: string, action: Extract<ChatActi
   return prisma.proposal.create({
     data: {
       tripId,
-      type: action.proposalType ?? 'place',
+      type: action.activityType ?? 'place',
       title: action.title,
       description: action.description,
       reason: '',
@@ -326,7 +345,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
   if (!trip) throw new Error('Trip not found');
 
   for (const action of validated) {
-    if (action.type === 'proposal.generate') {
+    if (action.type === 'activity.generate') {
       const members = await prisma.tripMember.findMany({
         where: { tripId },
         select: { userId: true },
@@ -351,7 +370,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
             prisma.proposal.create({
               data: {
                 tripId,
-                type: normalizeOptionalProposalType(p.type) ?? 'place',
+                type: normalizeOptionalActivityType(p.type) ?? 'place',
                 title: p.title,
                 description: p.description,
                 reason: p.reason || '',
@@ -370,14 +389,14 @@ export async function executeTripActions(tripId: string, userId: string, actionP
       continue;
     }
 
-    if (action.type === 'proposal.create') {
-      await createProposalFromAction(tripId, action);
+    if (action.type === 'activity.create') {
+      await createActivityFromAction(tripId, action);
       results.push({ type: action.type, status: 'success' });
       continue;
     }
 
-    if (action.type === 'proposal.update') {
-      const existing = await prisma.proposal.findUnique({ where: { id: action.proposalId } });
+    if (action.type === 'activity.update') {
+      const existing = await prisma.proposal.findUnique({ where: { id: action.activityId } });
       if (!existing || existing.tripId !== tripId) throw new Error('Proposal not found');
 
       let normalizedLatLng:
@@ -391,9 +410,9 @@ export async function executeTripActions(tripId: string, userId: string, actionP
       }
 
       await prisma.proposal.update({
-        where: { id: action.proposalId },
+        where: { id: action.activityId },
         data: {
-          type: action.proposalType,
+          type: action.activityType,
           title: action.title,
           description: action.description,
           city: action.city,
@@ -407,11 +426,11 @@ export async function executeTripActions(tripId: string, userId: string, actionP
       continue;
     }
 
-    if (action.type === 'proposal.delete') {
-      const existing = await prisma.proposal.findUnique({ where: { id: action.proposalId } });
+    if (action.type === 'activity.delete') {
+      const existing = await prisma.proposal.findUnique({ where: { id: action.activityId } });
       if (!existing || existing.tripId !== tripId) throw new Error('Proposal not found');
-      await prisma.itineraryItem.deleteMany({ where: { proposalId: action.proposalId } });
-      await prisma.proposal.delete({ where: { id: action.proposalId } });
+      await prisma.itineraryItem.deleteMany({ where: { proposalId: action.activityId } });
+      await prisma.proposal.delete({ where: { id: action.activityId } });
       results.push({ type: action.type, status: 'success' });
       continue;
     }
@@ -449,10 +468,10 @@ export async function executeTripActions(tripId: string, userId: string, actionP
       continue;
     }
 
-    if (action.type === 'itinerary.addProposal') {
-      const proposal = await prisma.proposal.findUnique({ where: { id: action.proposalId } });
+    if (action.type === 'itinerary.addActivity') {
+      const proposal = await prisma.proposal.findUnique({ where: { id: action.activityId } });
       if (!proposal || proposal.tripId !== tripId) throw new Error('Proposal not found');
-      const existingItem = await prisma.itineraryItem.findUnique({ where: { proposalId: action.proposalId } });
+      const existingItem = await prisma.itineraryItem.findUnique({ where: { proposalId: action.activityId } });
       const day = action.day ?? (existingItem?.day ?? 1);
       const timeBlock = action.timeBlock ?? (existingItem?.timeBlock && isItineraryTimeBlock(existingItem.timeBlock)
         ? existingItem.timeBlock
@@ -467,7 +486,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
         await prisma.itineraryItem.create({
           data: {
             tripId,
-            proposalId: action.proposalId,
+            proposalId: action.activityId,
             day,
             timeBlock,
             order,
@@ -533,20 +552,25 @@ export async function executeTripActions(tripId: string, userId: string, actionP
   return {
     results,
     trip: updatedTrip,
+    activities: proposals,
     proposals,
     itinerary,
   };
 }
 
-export async function suggestProposalCreateActionFromTitle(title: string, city: string): Promise<ChatAction> {
+export async function suggestActivityCreateActionFromTitle(title: string, city: string): Promise<ChatAction> {
   const details = await fillProposalDetails(title, city);
   return {
-    type: 'proposal.create',
+    type: 'activity.create',
     title,
     city,
     description: details.description || `${title} in ${city}`,
-    proposalType: details.type,
+    activityType: details.type,
     suggestedTime: details.suggestedTime,
     durationMinutes: details.durationMinutes,
   };
+}
+
+export async function suggestProposalCreateActionFromTitle(title: string, city: string): Promise<ChatAction> {
+  return suggestActivityCreateActionFromTitle(title, city);
 }

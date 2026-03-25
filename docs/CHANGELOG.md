@@ -39,3 +39,4 @@
 2026-03-25 | refactor(chat): unify execute response on activities and drop proposals fallback in trip detail (#0)
 2026-03-25 | test(api): add integration coverage for activities route behavior and non-deprecated headers (#0)
 2026-03-25 | refactor(ui): rename user-facing proposal wording to activity across trip surfaces (#0)
+2026-03-25 | docs(rename): document activities migration/sunset and add phase5 cleanup checklist (#0)

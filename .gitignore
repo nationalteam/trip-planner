@@ -36,6 +36,9 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+/playwright-report
+/test-results
+/blob-report
 
 # Local env files (not .example)
 .env

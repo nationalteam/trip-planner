@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-jest.mock('@/components/ProposalCard', () => function MockProposalCard({ proposal }: { proposal: { title: string } }) {
+jest.mock('@/components/ActivityCard', () => function MockActivityCard({ proposal }: { proposal: { title: string } }) {
   return <div data-testid="proposal-card">{proposal.title}</div>;
 });
 jest.mock('@/components/ItineraryView', () => function MockItineraryView() {

@@ -35,7 +35,7 @@ jobs:
             const refType = process.env.GITHUB_REF_TYPE;
             const currentRef = process.env.GITHUB_REF_NAME;
             if (refType !== 'branch') {
-              core.setFailed(`This workflow supports branch refs only. Received ref type: ${refType ?? 'unknown'}.`);
+              core.setFailed(`This workflow supports branch refs only (received: ${refType ?? 'unknown'}).`);
               return;
             }
             if (!currentRef) {

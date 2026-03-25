@@ -56,3 +56,4 @@
 2026-03-25 | refactor(api): remove chat execute fallback from legacy proposals payload to activities (#0)
 2026-03-25 | test(rename): align trip-detail manual/adapters test wording to activity terminology (#0)
 2026-03-25 | refactor(ui): make map component inputs activity-first with legacy proposals fallback (#0)
+2026-03-25 | refactor(llm): introduce activity-first helper names with proposal aliases for compatibility (#0)

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { fillProposalDetails, generateChatActionPlan, generateProposals, organizeItinerary, type ItineraryItemForLLM } from '@/lib/llm';
+import { fillActivityDetails, generateActivities, generateChatActionPlan, organizeItinerary, type ItineraryItemForLLM } from '@/lib/llm';
 import { geocodeWithGoogleMaps } from '@/lib/geocoding';
 import { ITINERARY_TIME_BLOCKS, isItineraryTimeBlock, normalizeSuggestedTimeToTimeBlock } from '@/lib/time-block';
 import { getCoordinateCentroid, normalizeCoordinateBatch } from '@/lib/coordinates';
@@ -355,7 +355,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
       });
       const existingProposals = await prisma.proposal.findMany({ where: { tripId } });
       const existingCenter = getCoordinateCentroid(existingProposals.filter((proposal) => proposal.city === action.city));
-      const generated = await generateProposals(allPreferences, action.city, existingProposals) as GeneratedProposal[];
+      const generated = await generateActivities(allPreferences, action.city, existingProposals) as GeneratedProposal[];
       const withCoordinates = await Promise.all(generated.map(async (proposal: GeneratedProposal) => {
         const geocoded = await geocodeWithGoogleMaps(`${proposal.title}, ${proposal.city || action.city}`);
         return geocoded ? { ...proposal, ...geocoded } : null;
@@ -558,7 +558,7 @@ export async function executeTripActions(tripId: string, userId: string, actionP
 }
 
 export async function suggestActivityCreateActionFromTitle(title: string, city: string): Promise<ChatAction> {
-  const details = await fillProposalDetails(title, city);
+  const details = await fillActivityDetails(title, city);
   return {
     type: 'activity.create',
     title,

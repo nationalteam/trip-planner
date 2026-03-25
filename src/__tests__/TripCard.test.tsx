@@ -32,17 +32,17 @@ describe('TripCard', () => {
     expect(screen.getByText(/2024/)).toBeInTheDocument();
   });
 
-  it('renders proposal and itinerary counts when _count is provided', () => {
+  it('renders activity and itinerary counts when counts is provided', () => {
     const tripWithCount = {
       ...baseTrip,
-      _count: { proposals: 5, itineraryItems: 3 },
+      counts: { activitiesCount: 5, itineraryItemsCount: 3 },
     };
     render(<TripCard trip={tripWithCount} />);
     expect(screen.getByText('5 activities')).toBeInTheDocument();
     expect(screen.getByText('3 planned')).toBeInTheDocument();
   });
 
-  it('does not render counts when _count is absent', () => {
+  it('does not render counts when counts is absent', () => {
     render(<TripCard trip={baseTrip} />);
     expect(screen.queryByText(/activities/)).not.toBeInTheDocument();
     expect(screen.queryByText(/planned/)).not.toBeInTheDocument();

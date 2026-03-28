@@ -17,7 +17,7 @@
     "better-sqlite3": "^12.8.0",
     "leaflet": "^1.9.4",
     "next": "15.5.14",
-    "openai": "^6.32.0",
+    "openai": "^6.33.0",
     "prisma": "^7.5.0",
     "react": "^18",
     "react-dom": "^18",

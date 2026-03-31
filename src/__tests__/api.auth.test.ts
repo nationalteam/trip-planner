@@ -1,6 +1,7 @@
 import { POST as register } from '@/app/api/auth/register/route';
 import { POST as login } from '@/app/api/auth/login/route';
 import { POST as logout } from '@/app/api/auth/logout/route';
+import { POST as changePassword } from '@/app/api/auth/change-password/route';
 import { GET as me } from '@/app/api/me/route';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -9,6 +10,7 @@ jest.mock('@/lib/prisma', () => ({
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
     session: {
       deleteMany: jest.fn(),
@@ -36,6 +38,7 @@ import {
   hashPassword,
   requireAuth,
   setSessionCookie,
+  validatePassword,
   verifyPassword,
 } from '@/lib/auth';
 
@@ -46,6 +49,7 @@ const mockHashPassword = hashPassword as jest.Mock;
 const mockVerifyPassword = verifyPassword as jest.Mock;
 const mockRequireAuth = requireAuth as jest.Mock;
 const mockClearSessionCookie = clearSessionCookie as jest.Mock;
+const mockValidatePassword = validatePassword as jest.Mock;
 
 describe('auth routes', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -149,5 +153,83 @@ describe('auth routes', () => {
 
     const res = await me(req);
     expect(res.status).toBe(401);
+  });
+
+  it('changes password when current password is correct', async () => {
+    mockRequireAuth.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A' });
+    (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+      id: 'u1',
+      email: 'a@b.com',
+      name: 'A',
+      passwordHash: 'old-hash',
+    });
+    mockVerifyPassword.mockResolvedValue(true);
+    mockValidatePassword.mockReturnValue(true);
+    mockHashPassword.mockResolvedValue('new-hash');
+    (mockPrisma.user.update as jest.Mock).mockResolvedValue({ id: 'u1' });
+
+    const req = new NextRequest('http://localhost/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: 'oldpass123', newPassword: 'newpass123' }),
+    });
+
+    const res = await changePassword(req);
+    expect(res.status).toBe(200);
+    expect(mockVerifyPassword).toHaveBeenCalledWith('oldpass123', 'old-hash');
+    expect(mockHashPassword).toHaveBeenCalledWith('newpass123');
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { passwordHash: 'new-hash' },
+    });
+  });
+
+  it('rejects change-password when not authenticated', async () => {
+    mockRequireAuth.mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
+
+    const req = new NextRequest('http://localhost/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: 'oldpass123', newPassword: 'newpass123' }),
+    });
+
+    const res = await changePassword(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects change-password when current password is wrong', async () => {
+    mockRequireAuth.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A' });
+    (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+      id: 'u1',
+      email: 'a@b.com',
+      name: 'A',
+      passwordHash: 'old-hash',
+    });
+    mockVerifyPassword.mockResolvedValue(false);
+
+    const req = new NextRequest('http://localhost/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: 'wrongpass', newPassword: 'newpass123' }),
+    });
+
+    const res = await changePassword(req);
+    expect(res.status).toBe(401);
+    const data = await res.json();
+    expect(data.error).toBeDefined();
+  });
+
+  it('rejects change-password when new password is too short', async () => {
+    mockRequireAuth.mockResolvedValue({ id: 'u1', email: 'a@b.com', name: 'A' });
+    mockValidatePassword.mockReturnValue(false);
+
+    const req = new NextRequest('http://localhost/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: 'oldpass123', newPassword: 'short' }),
+    });
+
+    const res = await changePassword(req);
+    expect(res.status).toBe(400);
   });
 });

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 type Me = {
   id: string;
@@ -39,6 +40,12 @@ export default function AuthNav() {
   return (
     <div className="flex items-center gap-3 text-sm">
       <span className="text-blue-100">{me.name}</span>
+      <Link
+        href="/settings"
+        className="bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-md transition-colors backdrop-blur-sm"
+      >
+        設定
+      </Link>
       <button
         type="button"
         onClick={handleLogout}

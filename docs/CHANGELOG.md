@@ -68,3 +68,4 @@
 2026-03-25 | docs(test): neutralize legacy proposal wording in readme and test descriptions (#124)
 2026-03-25 | refactor(rename): remove remaining editable proposal tokens and keep only historical migration/changelog records (#0)
 2026-03-25 | docs(rename): remove completed activity migration planning docs and retain lessons in GOTCHA (#0)
+2026-03-31 | feat(ui): beautify web pages with gradient accents, modern font stack, and polished components (#0)

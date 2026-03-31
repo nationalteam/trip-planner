@@ -37,9 +37,9 @@ const typeIcons: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-50 border-yellow-200',
-  approved: 'bg-green-50 border-green-200',
-  rejected: 'bg-red-50 border-red-200',
+  pending: 'bg-yellow-50 border-yellow-200 shadow-yellow-100/50',
+  approved: 'bg-green-50 border-green-200 shadow-green-100/50',
+  rejected: 'bg-red-50 border-red-200 shadow-red-100/50',
 };
 
 export default function ActivityCard({ activity, onApprove, onReject, onDelete, canEdit = true }: ActivityCardProps) {
@@ -48,7 +48,7 @@ export default function ActivityCard({ activity, onApprove, onReject, onDelete, 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
   return (
-    <div className={`rounded-xl border p-5 transition-all ${statusColors[activity.status] || 'bg-white border-gray-200'}`}>
+    <div className={`rounded-xl border p-5 transition-all shadow-sm hover:shadow-md ${statusColors[activity.status] || 'bg-white border-gray-200'}`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{typeIcons[activity.type] || '📌'}</span>

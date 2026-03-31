@@ -110,14 +110,14 @@ export default function Home() {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-md hover:shadow-lg"
         >
           + New Trip
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100 ring-1 ring-blue-100">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Create a New Trip</h2>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
@@ -128,7 +128,7 @@ export default function Home() {
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. European Summer 2024"
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-shadow"
               />
             </div>
             <div>
@@ -139,7 +139,7 @@ export default function Home() {
                 onChange={e => setCitiesInput(e.target.value)}
                 placeholder="e.g. Paris, Rome, Barcelona"
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-shadow"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -149,7 +149,7 @@ export default function Home() {
                   type="date"
                   value={startDateInput}
                   onChange={e => setStartDateInput(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-shadow"
                 />
               </div>
               <div>
@@ -161,7 +161,7 @@ export default function Home() {
                   value={durationDaysInput}
                   onChange={e => setDurationDaysInput(e.target.value)}
                   placeholder="e.g. 7"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-shadow"
                 />
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={creating}
-                className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all font-medium shadow-sm"
               >
                 {creating ? 'Creating...' : 'Create Trip'}
               </button>
@@ -187,7 +187,7 @@ export default function Home() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-10 w-10 spinner-gradient"></div>
         </div>
       ) : trips.length === 0 ? (
         <div className="text-center py-20">
@@ -196,7 +196,7 @@ export default function Home() {
           <p className="text-gray-500 mb-6">Create your first trip to get started</p>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-md"
           >
             Create Your First Trip
           </button>

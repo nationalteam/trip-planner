@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <nav className="bg-blue-600 text-white px-6 py-4 shadow-md">
+        <nav className="bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white px-6 py-4 shadow-lg">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <Link href="/" className="text-xl font-bold tracking-tight hover:text-blue-100 transition-colors">
               ✈️ Trip Planner
@@ -27,7 +27,7 @@ export default function RootLayout({
             <AuthNav />
           </div>
         </nav>
-        <main className="min-h-screen bg-gray-50">
+        <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
           {children}
         </main>
       </body>

@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import defaultTheme from "tailwindcss/defaultTheme";
 
 const config: Config = {
   content: [
@@ -19,9 +18,6 @@ const config: Config = {
           "Helvetica Neue",
           "Noto Sans",
           "sans-serif",
-          ...defaultTheme.fontFamily.sans.filter(
-            (f) => !["ui-sans-serif", "system-ui"].includes(f)
-          ),
         ],
       },
       colors: {

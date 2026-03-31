@@ -20,11 +20,6 @@ body {
 }
 
 @layer components {
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
   .spinner-gradient {
     border: 3px solid #e5e7eb;
     border-top-color: #2563eb;

@@ -489,7 +489,7 @@ export default function TripDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 spinner-gradient"></div>
       </div>
     );
   }
@@ -625,7 +625,7 @@ export default function TripDetailPage() {
           <button
             type="submit"
             disabled={sharing}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all"
           >
             {sharing ? 'Sharing...' : 'Share'}
           </button>
@@ -633,7 +633,7 @@ export default function TripDetailPage() {
         </form>
       )}
 
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 w-fit">
+      <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl mb-6 w-fit backdrop-blur-sm shadow-sm">
         {(['activities', 'itinerary', 'map', ...(canEdit ? (['ai'] as Tab[]) : [])] as Tab[]).map(tab => (
           <button
             key={tab}
@@ -664,7 +664,7 @@ export default function TripDetailPage() {
             <button
               onClick={handleGenerate}
               disabled={generating || !canEdit}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-sm"
             >
               {generating ? '⏳ Generating...' : '✨ Generate Activities'}
             </button>
@@ -855,7 +855,7 @@ export default function TripDetailPage() {
             <button
               onClick={handleOrganizeItinerary}
               disabled={organizing || itinerary.length === 0 || !canEdit}
-              className="bg-purple-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:from-purple-700 hover:to-fuchsia-700 disabled:opacity-50 transition-all shadow-sm"
             >
               {organizing ? '⏳ Organizing...' : '🤖 Organize with AI'}
             </button>
@@ -864,7 +864,7 @@ export default function TripDetailPage() {
                 type="button"
                 onClick={handleAddItineraryDay}
                 disabled={addingDay}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-sm"
               >
                 {addingDay ? 'Adding...' : '+ Add Day'}
               </button>
@@ -930,7 +930,7 @@ export default function TripDetailPage() {
       )}
 
       {activeTab === 'ai' && canEdit && (
-        <div className="border border-blue-200 rounded-xl bg-blue-50 p-4">
+        <div className="border border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-blue-900">🤖 Chat Planner (Experimental)</h2>
           <p className="text-xs text-blue-700 mt-1">Describe changes in natural language. Preview first, then confirm to apply.</p>
           <div className="mt-3 flex flex-col sm:flex-row gap-2">

@@ -40,7 +40,9 @@ export default function AuthPage() {
 
   return (
     <div className="max-w-md mx-auto py-16 px-4">
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="h-2 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+        <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{mode === 'login' ? '登入' : '註冊'}</h1>
         <p className="text-sm text-gray-500 mb-6">{mode === 'login' ? '使用帳號繼續規劃旅程' : '建立新帳號開始使用'}</p>
 
@@ -48,14 +50,14 @@ export default function AuthPage() {
           <button
             type="button"
             onClick={() => setMode('login')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === 'login' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
             登入
           </button>
           <button
             type="button"
             onClick={() => setMode('register')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium ${mode === 'register' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === 'register' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
             註冊
           </button>
@@ -70,7 +72,7 @@ export default function AuthPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               />
             </div>
           )}
@@ -81,7 +83,7 @@ export default function AuthPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
             />
           </div>
           <div>
@@ -92,7 +94,7 @@ export default function AuthPage() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
             />
           </div>
 
@@ -101,11 +103,12 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-60"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 transition-all shadow-sm"
           >
             {submitting ? '處理中...' : mode === 'login' ? '登入' : '註冊'}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

@@ -255,8 +255,8 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
   return (
     <div className="space-y-8">
       {days.map(day => (
-        <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-blue-600 text-white px-6 py-3">
+        <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-lg">{buildDayHeading(day, schedule)}</h3>
               {typeof schedule?.durationDays === 'number' && schedule.durationDays > 0 && day > schedule.durationDays && (

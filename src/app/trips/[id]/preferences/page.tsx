@@ -88,7 +88,9 @@ export default function PreferencesPage() {
       <p className="text-gray-500 mb-2">Set preferences to get personalized AI activities for your trip.</p>
       {me && <p className="text-sm text-gray-400 mb-8">Current traveler: {me.name} ({me.email})</p>}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+        <div className="p-6">
         <h2 className="font-semibold text-gray-800 mb-4">
           {preferences ? 'Edit Preferences' : 'Set Preferences'}
         </h2>
@@ -148,11 +150,12 @@ export default function PreferencesPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-sm"
           >
             {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Preferences'}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

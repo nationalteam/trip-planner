@@ -42,7 +42,7 @@ export default function AuthNav() {
       <button
         type="button"
         onClick={handleLogout}
-        className="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1.5 rounded-md transition-colors"
+        className="bg-white/15 hover:bg-white/25 text-white px-3 py-1.5 rounded-md transition-colors backdrop-blur-sm"
       >
         登出
       </button>

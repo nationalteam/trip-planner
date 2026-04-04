@@ -105,7 +105,7 @@ export default function MapView({ activities, itineraryRoute, showItineraryRoute
       });
 
       if (showItineraryRoute && itineraryRoute?.length) {
-        const routeToShow = itineraryDayFilter === 'all' || itineraryDayFilter == null
+        const routeToShow = itineraryDayFilter === 'all' || itineraryDayFilter === undefined
           ? itineraryRoute
           : itineraryRoute.filter((item) => item.day === itineraryDayFilter);
 

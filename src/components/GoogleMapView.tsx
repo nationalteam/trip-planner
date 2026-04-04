@@ -215,7 +215,7 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
     clearRoutePolylines();
     if (!google || !map || !showItineraryRoute || !itineraryRoute?.length) return;
 
-    const routeToShow = itineraryDayFilter === 'all' || itineraryDayFilter == null
+    const routeToShow = itineraryDayFilter === 'all' || itineraryDayFilter === undefined
       ? itineraryRoute
       : itineraryRoute.filter((item) => item.day === itineraryDayFilter);
 

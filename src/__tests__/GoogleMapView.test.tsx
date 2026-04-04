@@ -65,7 +65,7 @@ describe('GoogleMapView', () => {
 
     (global as unknown as { window: Window & { google?: unknown } }).window.google = {
       maps: {
-        SymbolPath: { CIRCLE: 'CIRCLE', FORWARD_OPEN_ARROW: 'FORWARD_OPEN_ARROW' },
+        SymbolPath: { CIRCLE: 'CIRCLE', FORWARD_OPEN_ARROW: 'FORWARD_OPEN_ARROW', FORWARD_CLOSED_ARROW: 'FORWARD_CLOSED_ARROW' },
         Map: mapFactory,
         Marker: markerFactory,
         LatLngBounds: latLngBoundsFactory,

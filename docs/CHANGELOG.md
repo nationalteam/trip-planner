@@ -70,3 +70,4 @@
 2026-03-25 | docs(rename): remove completed activity migration planning docs and retain lessons in GOTCHA (#0)
 2026-03-31 | feat(ui): beautify web pages with gradient accents, modern font stack, and polished components (#0)
 2026-04-04 | feat(map): show itinerary route arrows on map with day filter toggle (#0)
+2026-04-04 | fix(map): beautify route arrows with filled closed-arrow icons and white border (#0)

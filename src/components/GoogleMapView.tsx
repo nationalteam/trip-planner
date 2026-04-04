@@ -233,18 +233,20 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
         path,
         geodesic: true,
         strokeColor: color,
-        strokeOpacity: 0.9,
-        strokeWeight: 3,
+        strokeOpacity: 0.85,
+        strokeWeight: 4,
         icons: [
           {
             icon: {
-              path: google.maps.SymbolPath.FORWARD_OPEN_ARROW,
-              scale: 4,
-              strokeColor: color,
-              strokeWeight: 2.5,
+              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+              scale: 5,
+              fillColor: color,
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 1,
             },
-            repeat: '80px',
-            offset: '0',
+            repeat: '100px',
+            offset: '50%',
           },
         ],
       });

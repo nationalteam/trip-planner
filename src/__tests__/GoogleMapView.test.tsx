@@ -6,6 +6,8 @@ import { render, waitFor } from '@testing-library/react';
 import GoogleMapView from '@/components/GoogleMapView';
 
 type MarkerConstructor = jest.MockedFunction<(options: { icon: { fillColor: string } }) => unknown>;
+type PolylineInstance = { setMap: jest.Mock };
+type PolylineConstructor = jest.MockedFunction<(options: { path: { lat: number; lng: number }[] }) => PolylineInstance>;
 type MapInstance = {
   addListener: jest.Mock;
   panTo: jest.Mock;
@@ -19,6 +21,7 @@ type GoogleMapsMock = {
     Map: jest.MockedFunction<() => MapInstance>;
     LatLngBounds: jest.MockedFunction<() => { extend: jest.Mock }>;
     InfoWindow: jest.MockedFunction<(options: { content: string }) => { open: jest.Mock }>;
+    Polyline: PolylineConstructor;
   };
 };
 
@@ -27,6 +30,7 @@ describe('GoogleMapView', () => {
   let mapFactory: jest.MockedFunction<() => MapInstance>;
   let latLngBoundsFactory: jest.MockedFunction<() => { extend: jest.Mock }>;
   let infoWindowFactory: jest.MockedFunction<(options: { content: string }) => { open: jest.Mock }>;
+  let polylineFactory: PolylineConstructor;
 
   beforeEach(() => {
     const markerFactory = jest.fn(() => ({
@@ -55,13 +59,18 @@ describe('GoogleMapView', () => {
       })
     ) as jest.MockedFunction<(options: { content: string }) => { open: jest.Mock }>;
 
+    polylineFactory = jest.fn(() => ({
+      setMap: jest.fn(),
+    })) as PolylineConstructor;
+
     (global as unknown as { window: Window & { google?: unknown } }).window.google = {
       maps: {
-        SymbolPath: { CIRCLE: 'CIRCLE' },
+        SymbolPath: { CIRCLE: 'CIRCLE', FORWARD_OPEN_ARROW: 'FORWARD_OPEN_ARROW' },
         Map: mapFactory,
         Marker: markerFactory,
         LatLngBounds: latLngBoundsFactory,
         InfoWindow: infoWindowFactory,
+        Polyline: polylineFactory,
         places: {
           Autocomplete: autocompleteFactory,
           PlacesService: jest.fn(() => ({ getDetails: jest.fn() })),
@@ -206,6 +215,98 @@ describe('GoogleMapView', () => {
 
     const infoOptions = infoWindowFactory.mock.calls[0]?.[0];
     expect(infoOptions.content).toContain('https://www.google.com/maps/search/?api=1&query=35.6852%2C139.71');
+  });
+
+  it('draws a polyline with forward-arrow icons when showItineraryRoute is true', async () => {
+    const activities = [
+      { id: 'a1', title: 'Spot A', description: '', type: 'place', lat: 35.1, lng: 139.1, city: 'Tokyo', status: 'approved', isArranged: true },
+    ];
+    const itineraryRoute = [
+      { activityId: 'a1', day: 1, lat: 35.1, lng: 139.1 },
+      { activityId: 'a2', day: 1, lat: 35.2, lng: 139.2 },
+    ];
+
+    render(
+      <GoogleMapView
+        activities={activities}
+        canEdit
+        onAddPlace={jest.fn()}
+        focusTrigger={5}
+        itineraryRoute={itineraryRoute}
+        showItineraryRoute
+        itineraryDayFilter="all"
+      />
+    );
+
+    await waitFor(() => {
+      expect(polylineFactory).toHaveBeenCalledTimes(1);
+    });
+
+    const polylineArgs = polylineFactory.mock.calls[0]?.[0] as { path: { lat: number; lng: number }[]; icons: unknown[] };
+    expect(polylineArgs.path).toEqual([
+      { lat: 35.1, lng: 139.1 },
+      { lat: 35.2, lng: 139.2 },
+    ]);
+    expect(Array.isArray(polylineArgs.icons) && polylineArgs.icons.length > 0).toBe(true);
+
+    const polylineInstance = polylineFactory.mock.results[0]?.value as PolylineInstance;
+    expect(polylineInstance.setMap).toHaveBeenCalled();
+  });
+
+  it('does not draw route polylines when showItineraryRoute is false', async () => {
+    const itineraryRoute = [
+      { activityId: 'a1', day: 1, lat: 35.1, lng: 139.1 },
+      { activityId: 'a2', day: 1, lat: 35.2, lng: 139.2 },
+    ];
+
+    render(
+      <GoogleMapView
+        activities={[]}
+        canEdit
+        onAddPlace={jest.fn()}
+        focusTrigger={6}
+        itineraryRoute={itineraryRoute}
+        showItineraryRoute={false}
+        itineraryDayFilter="all"
+      />
+    );
+
+    await waitFor(() => {
+      expect((window.google as unknown as GoogleMapsMock).maps.Map).toHaveBeenCalled();
+    });
+
+    expect(polylineFactory).not.toHaveBeenCalled();
+  });
+
+  it('draws only the filtered day polyline when itineraryDayFilter is set', async () => {
+    const itineraryRoute = [
+      { activityId: 'a1', day: 1, lat: 35.1, lng: 139.1 },
+      { activityId: 'a2', day: 1, lat: 35.2, lng: 139.2 },
+      { activityId: 'a3', day: 2, lat: 36.1, lng: 140.1 },
+      { activityId: 'a4', day: 2, lat: 36.2, lng: 140.2 },
+    ];
+
+    render(
+      <GoogleMapView
+        activities={[]}
+        canEdit
+        onAddPlace={jest.fn()}
+        focusTrigger={7}
+        itineraryRoute={itineraryRoute}
+        showItineraryRoute
+        itineraryDayFilter={1}
+      />
+    );
+
+    await waitFor(() => {
+      expect(polylineFactory).toHaveBeenCalledTimes(1);
+    });
+
+    const polylineArgs = polylineFactory.mock.calls[0]?.[0] as { path: { lat: number; lng: number }[] };
+    expect(polylineArgs.path).toEqual([
+      { lat: 35.1, lng: 139.1 },
+      { lat: 35.2, lng: 139.2 },
+    ]);
   });
 
 });

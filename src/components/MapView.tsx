@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { normalizeCoordinateBatch } from '@/lib/coordinates';
+import { type ItineraryRouteItem, DAY_COLORS } from '@/lib/map-activities';
 
 interface MapActivity {
   id: string;
@@ -16,11 +17,14 @@ interface MapActivity {
 
 interface MapViewProps {
   activities: MapActivity[];
+  itineraryRoute?: ItineraryRouteItem[];
+  showItineraryRoute?: boolean;
+  itineraryDayFilter?: 'all' | number;
 }
 
 const DEFAULT_CENTER = { lat: 48.8566, lng: 2.3522 };
 
-export default function MapView({ activities }: MapViewProps) {
+export default function MapView({ activities, itineraryRoute, showItineraryRoute, itineraryDayFilter }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const mapActivities = activities;
@@ -99,6 +103,25 @@ export default function MapView({ activities }: MapViewProps) {
             </div>
           `);
       });
+
+      if (showItineraryRoute && itineraryRoute?.length) {
+        const routeToShow = itineraryDayFilter === 'all' || itineraryDayFilter == null
+          ? itineraryRoute
+          : itineraryRoute.filter((item) => item.day === itineraryDayFilter);
+
+        const byDay = new Map<number, ItineraryRouteItem[]>();
+        for (const item of routeToShow) {
+          if (!byDay.has(item.day)) byDay.set(item.day, []);
+          byDay.get(item.day)!.push(item);
+        }
+
+        for (const [day, items] of byDay) {
+          if (items.length < 2) continue;
+          const coords = items.map((item) => [item.lat, item.lng] as [number, number]);
+          const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
+          L.polyline(coords, { color, weight: 3, opacity: 0.9 }).addTo(map);
+        }
+      }
     };
 
     initMap();
@@ -110,7 +133,7 @@ export default function MapView({ activities }: MapViewProps) {
         mapInstanceRef.current = null;
       }
     };
-  }, [mapActivities]);
+  }, [mapActivities, itineraryRoute, showItineraryRoute, itineraryDayFilter]);
 
   return (
     <div ref={mapRef} className="w-full h-[500px] rounded-xl overflow-hidden shadow-sm border border-gray-200" />

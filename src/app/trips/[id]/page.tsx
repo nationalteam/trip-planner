@@ -8,7 +8,7 @@ import ActivityCard from '@/components/ActivityCard';
 import ItineraryView from '@/components/ItineraryView';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { compareItineraryTimeBlock } from '@/lib/time-block';
-import { buildMapActivities } from '@/lib/map-activities';
+import { buildMapActivities, type ItineraryRouteItem } from '@/lib/map-activities';
 import { normalizeActivities, normalizeItineraryItems } from './adapters';
 import type { Activity, ChatPlanResponse, ItineraryItem, Tab, Trip } from './types';
 
@@ -49,6 +49,8 @@ export default function TripDetailPage() {
   const [fillingDetails, setFillingDetails] = useState(false);
   const [mapProvider, setMapProvider] = useState<'google' | 'leaflet'>('google');
   const [mapFocusTrigger, setMapFocusTrigger] = useState(0);
+  const [showItineraryRoute, setShowItineraryRoute] = useState(false);
+  const [itineraryDayFilter, setItineraryDayFilter] = useState<'all' | number>('all');
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleStartDateInput, setScheduleStartDateInput] = useState('');
   const [scheduleDurationDaysInput, setScheduleDurationDaysInput] = useState('');
@@ -104,6 +106,27 @@ export default function TripDetailPage() {
   }, [trip, editingSchedule]);
 
   const mapActivities = useMemo(() => buildMapActivities(activities, itinerary), [activities, itinerary]);
+
+  const itineraryRoute = useMemo<ItineraryRouteItem[]>(() => {
+    return [...itinerary]
+      .sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        const tbCompare = compareItineraryTimeBlock(a.timeBlock, b.timeBlock);
+        if (tbCompare !== 0) return tbCompare;
+        return a.order - b.order;
+      })
+      .map((item) => ({
+        activityId: item.activity.id,
+        day: item.day,
+        lat: item.activity.lat,
+        lng: item.activity.lng,
+      }));
+  }, [itinerary]);
+
+  const itineraryDays = useMemo(
+    () => [...new Set(itinerary.map((item) => item.day))].sort((a, b) => a - b),
+    [itinerary]
+  );
 
   async function handleGenerate() {
     if (!selectedCity) return;
@@ -911,11 +934,57 @@ export default function TripDetailPage() {
               Leaflet (Legacy)
             </button>
           </div>
+          {itinerary.length > 0 && (
+            <div className="flex items-center flex-wrap gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setShowItineraryRoute((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  showItineraryRoute ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {showItineraryRoute ? '🗺 Route: On' : '🗺 Route: Off'}
+              </button>
+              {showItineraryRoute && itineraryDays.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setItineraryDayFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      itineraryDayFilter === 'all' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    All Days
+                  </button>
+                  {itineraryDays.map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setItineraryDayFilter(day)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        itineraryDayFilter === day ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      Day {day}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
           <p className="text-sm text-gray-500 mb-4">
             Showing {arrangedMapCount} arranged and {mapActivities.length - arrangedMapCount} unarranged activities (rejected hidden)
           </p>
           {mapProvider === 'google' ? (
-            <GoogleMapView activities={mapActivities} canEdit={canEdit} onAddPlace={handleAddGooglePlace} focusTrigger={mapFocusTrigger} />
+            <GoogleMapView
+              activities={mapActivities}
+              canEdit={canEdit}
+              onAddPlace={handleAddGooglePlace}
+              focusTrigger={mapFocusTrigger}
+              itineraryRoute={itineraryRoute}
+              showItineraryRoute={showItineraryRoute}
+              itineraryDayFilter={itineraryDayFilter}
+            />
           ) : (
             mapActivities.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-xl border border-gray-200">
@@ -923,7 +992,12 @@ export default function TripDetailPage() {
                 <p className="text-gray-500">Generate activities to see them on the map</p>
               </div>
             ) : (
-              <MapView activities={mapActivities} />
+              <MapView
+                activities={mapActivities}
+                itineraryRoute={itineraryRoute}
+                showItineraryRoute={showItineraryRoute}
+                itineraryDayFilter={itineraryDayFilter}
+              />
             )
           )}
         </div>

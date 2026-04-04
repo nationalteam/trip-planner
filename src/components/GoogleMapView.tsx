@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeCoordinateBatch } from '@/lib/coordinates';
+import { type ItineraryRouteItem, DAY_COLORS } from '@/lib/map-activities';
 
 interface MapActivity {
   id: string;
@@ -34,6 +35,9 @@ interface GoogleMapViewProps {
   canEdit: boolean;
   onAddPlace: (place: SelectedPlace) => Promise<void>;
   focusTrigger?: number;
+  itineraryRoute?: ItineraryRouteItem[];
+  showItineraryRoute?: boolean;
+  itineraryDayFilter?: 'all' | number;
 }
 
 const DEFAULT_CENTER = { lat: 35.6764, lng: 139.65 };
@@ -150,12 +154,13 @@ function buildInfoWindowContent(activity: MapActivity): string {
   </div>`;
 }
 
-export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTrigger }: GoogleMapViewProps) {
+export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTrigger, itineraryRoute, showItineraryRoute, itineraryDayFilter }: GoogleMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const placesServiceRef = useRef<any>(null);
   const markerInstancesRef = useRef<any[]>([]);
+  const routePolylineInstancesRef = useRef<any[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [loadingError, setLoadingError] = useState('');
   const [adding, setAdding] = useState(false);
@@ -169,6 +174,11 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
   const clearMarkers = useCallback(() => {
     markerInstancesRef.current.forEach((marker) => marker.setMap(null));
     markerInstancesRef.current = [];
+  }, []);
+
+  const clearRoutePolylines = useCallback(() => {
+    routePolylineInstancesRef.current.forEach((p) => p.setMap(null));
+    routePolylineInstancesRef.current = [];
   }, []);
 
   const renderActivityMarkers = useCallback(() => {
@@ -198,6 +208,50 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
       markerInstancesRef.current.push(marker);
     });
   }, [clearMarkers, normalizedActivities]);
+
+  const renderItineraryRoute = useCallback(() => {
+    const google = window.google;
+    const map = mapInstanceRef.current;
+    clearRoutePolylines();
+    if (!google || !map || !showItineraryRoute || !itineraryRoute?.length) return;
+
+    const routeToShow = itineraryDayFilter === 'all' || itineraryDayFilter == null
+      ? itineraryRoute
+      : itineraryRoute.filter((item) => item.day === itineraryDayFilter);
+
+    const byDay = new Map<number, ItineraryRouteItem[]>();
+    for (const item of routeToShow) {
+      if (!byDay.has(item.day)) byDay.set(item.day, []);
+      byDay.get(item.day)!.push(item);
+    }
+
+    for (const [day, items] of byDay) {
+      if (items.length < 2) continue;
+      const path = items.map((item) => ({ lat: item.lat, lng: item.lng }));
+      const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
+      const polyline = new google.maps.Polyline({
+        path,
+        geodesic: true,
+        strokeColor: color,
+        strokeOpacity: 0.9,
+        strokeWeight: 3,
+        icons: [
+          {
+            icon: {
+              path: google.maps.SymbolPath.FORWARD_OPEN_ARROW,
+              scale: 4,
+              strokeColor: color,
+              strokeWeight: 2.5,
+            },
+            repeat: '80px',
+            offset: '0',
+          },
+        ],
+      });
+      polyline.setMap(map);
+      routePolylineInstancesRef.current.push(polyline);
+    }
+  }, [clearRoutePolylines, itineraryDayFilter, itineraryRoute, showItineraryRoute]);
 
   const autoFitMapToActivities = useCallback(() => {
     const google = window.google;
@@ -235,6 +289,10 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
   }, [renderActivityMarkers]);
 
   useEffect(() => {
+    renderItineraryRoute();
+  }, [renderItineraryRoute]);
+
+  useEffect(() => {
     autoFitMapToActivities();
   }, [focusTrigger, autoFitMapToActivities]);
 
@@ -269,6 +327,7 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
       mapInstanceRef.current = map;
       placesServiceRef.current = new google.maps.places.PlacesService(map);
       renderActivityMarkers();
+      renderItineraryRoute();
       autoFitMapToActivities();
 
       const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
@@ -307,10 +366,11 @@ export default function GoogleMapView({ activities, canEdit, onAddPlace, focusTr
     return () => {
       cancelled = true;
       clearMarkers();
+      clearRoutePolylines();
       mapInstanceRef.current = null;
       placesServiceRef.current = null;
     };
-  }, [autoFitMapToActivities, clearMarkers, renderActivityMarkers]);
+  }, [autoFitMapToActivities, clearMarkers, clearRoutePolylines, renderActivityMarkers, renderItineraryRoute]);
 
   const handleAdd = useCallback(async () => {
     if (!selectedPlace || adding || !canEdit) return;

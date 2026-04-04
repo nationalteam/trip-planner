@@ -14,6 +14,8 @@ const mockDivIcon = jest.fn();
 const mockTileLayer = jest.fn();
 const mockMap = jest.fn();
 const mockMergeOptions = jest.fn();
+const mockPolylineAddTo = jest.fn();
+const mockPolyline = jest.fn();
 
 const markerInstance = {
   addTo: mockAddTo.mockReturnThis(),
@@ -32,6 +34,7 @@ jest.mock('leaflet', () => ({
     tileLayer: mockTileLayer.mockReturnValue({ addTo: jest.fn() }),
     divIcon: mockDivIcon.mockReturnValue({}),
     marker: mockMarker.mockReturnValue(markerInstance),
+    polyline: mockPolyline,
     Icon: {
       Default: {
         prototype: {},
@@ -61,6 +64,8 @@ describe('MapView', () => {
     mockAddTo.mockReturnValue(markerInstance);
     mockBindPopup.mockReturnValue(markerInstance);
     mockSetView.mockReturnValue(mapInstance);
+    mockPolyline.mockReturnValue({ addTo: mockPolylineAddTo });
+    mockPolylineAddTo.mockReturnValue({});
   });
 
   it('renders the map container div', () => {
@@ -201,6 +206,52 @@ describe('MapView', () => {
     });
 
     expect(mockMarker).not.toHaveBeenCalled();
+  });
+
+  it('draws polylines when showItineraryRoute is true and there are 2+ items in a day', async () => {
+    const itineraryRoute = [
+      { activityId: 'a1', day: 1, lat: 34.1, lng: 136.1 },
+      { activityId: 'a2', day: 1, lat: 34.2, lng: 136.2 },
+    ];
+
+    await act(async () => {
+      render(
+        <MapView
+          activities={[]}
+          itineraryRoute={itineraryRoute}
+          showItineraryRoute
+          itineraryDayFilter="all"
+        />
+      );
+    });
+
+    expect(mockPolyline).toHaveBeenCalledTimes(1);
+    const polylineArgs = mockPolyline.mock.calls[0]?.[0] as [number, number][];
+    expect(polylineArgs).toEqual([
+      [34.1, 136.1],
+      [34.2, 136.2],
+    ]);
+    expect(mockPolylineAddTo).toHaveBeenCalled();
+  });
+
+  it('does not draw polylines when showItineraryRoute is false', async () => {
+    const itineraryRoute = [
+      { activityId: 'a1', day: 1, lat: 34.1, lng: 136.1 },
+      { activityId: 'a2', day: 1, lat: 34.2, lng: 136.2 },
+    ];
+
+    await act(async () => {
+      render(
+        <MapView
+          activities={[]}
+          itineraryRoute={itineraryRoute}
+          showItineraryRoute={false}
+          itineraryDayFilter="all"
+        />
+      );
+    });
+
+    expect(mockPolyline).not.toHaveBeenCalled();
   });
 
 });

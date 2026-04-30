@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth';
 import { normalizeSuggestedTimeToTimeBlock } from '@/lib/time-block';
 
+type SlotEntry = { day: number; timeBlock: string };
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
   if (auth instanceof NextResponse) return auth;
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const createdItems = [];
     // Track slots taken during this batch so we don't double-book within the same call
-    const takenSlots = existingItems.map((item: { day: number; timeBlock: string }) => ({
+    const takenSlots = existingItems.map((item: SlotEntry) => ({
       day: item.day,
       timeBlock: item.timeBlock,
     }));
@@ -51,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       const timeBlock = normalizeSuggestedTimeToTimeBlock(activity.suggestedTime);
       let day = 1;
-      while (takenSlots.some((s: { day: number; timeBlock: string }) => s.day === day && s.timeBlock === timeBlock)) {
+      while (takenSlots.some((s: SlotEntry) => s.day === day && s.timeBlock === timeBlock)) {
         day++;
       }
       takenSlots.push({ day, timeBlock });

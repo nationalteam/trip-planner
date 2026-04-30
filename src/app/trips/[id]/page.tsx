@@ -702,7 +702,7 @@ export default function TripDetailPage() {
               <span className="flex items-center gap-1.5">
                 💡 Activities
                 {pendingCount > 0 && (
-                  <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  <span data-testid="activities-tab-badge" className="bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
                     {pendingCount}
                   </span>
                 )}

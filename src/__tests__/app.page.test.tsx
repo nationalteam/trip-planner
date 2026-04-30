@@ -71,12 +71,14 @@ describe('Home page', () => {
 
     render(<Home />);
 
+    const user = userEvent.setup();
+
     await waitFor(() => expect(screen.getByText('No trips yet')).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: /new trip/i }));
-    await userEvent.type(screen.getByPlaceholderText(/european summer/i), 'Japan Trip');
-    await userEvent.type(screen.getByPlaceholderText(/paris, rome/i), 'Tokyo');
-    await userEvent.click(screen.getByRole('button', { name: /create trip/i }));
+    await user.click(screen.getByRole('button', { name: /new trip/i }));
+    await user.type(screen.getByPlaceholderText(/european summer/i), 'Japan Trip');
+    await user.type(screen.getByPlaceholderText(/paris, rome/i), 'Tokyo');
+    await user.click(screen.getByRole('button', { name: /create trip/i }));
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/trips/new-trip-1');

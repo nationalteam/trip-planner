@@ -4,6 +4,15 @@ import { buildForbiddenResponse, requireAuth, requireTripRole } from '@/lib/auth
 import { normalizeSuggestedTimeToTimeBlock } from '@/lib/time-block';
 
 type SlotEntry = { day: number; timeBlock: string };
+type ItineraryItemWithActivity = {
+  id: string;
+  tripId: string;
+  activityId: string;
+  day: number;
+  timeBlock: string;
+  order: number;
+  activity: Record<string, unknown>;
+};
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req);
@@ -34,45 +43,50 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       orderBy: { day: 'asc' },
     });
 
-    const createdItems = [];
     // Track slots taken during this batch so we don't double-book within the same call
-    const takenSlots = existingItems.map((item: SlotEntry) => ({
+    const takenSlots: SlotEntry[] = existingItems.map((item) => ({
       day: item.day,
       timeBlock: item.timeBlock,
     }));
 
+    const alreadyHasItemIds: string[] = [];
+    const newlyCreatedItems: ItineraryItemWithActivity[] = [];
+
     for (const activity of pendingActivities) {
       if (activity.itineraryItem) {
-        const fullItem = await tx.itineraryItem.findUnique({
-          where: { id: activity.itineraryItem.id },
-          include: { activity: true },
-        });
-        if (fullItem) createdItems.push(fullItem);
+        alreadyHasItemIds.push(activity.itineraryItem.id);
         continue;
       }
 
       const timeBlock = normalizeSuggestedTimeToTimeBlock(activity.suggestedTime);
       let day = 1;
-      while (takenSlots.some((s: SlotEntry) => s.day === day && s.timeBlock === timeBlock)) {
+      while (takenSlots.some((s) => s.day === day && s.timeBlock === timeBlock)) {
         day++;
       }
       takenSlots.push({ day, timeBlock });
 
       const newItem = await tx.itineraryItem.create({
         data: { tripId, activityId: activity.id, day, timeBlock },
-      });
-      const fullItem = await tx.itineraryItem.findUnique({
-        where: { id: newItem.id },
         include: { activity: true },
-      });
-      if (fullItem) createdItems.push(fullItem);
+      }) as ItineraryItemWithActivity;
+      newlyCreatedItems.push(newItem);
     }
 
+    const existingFullItems: ItineraryItemWithActivity[] = alreadyHasItemIds.length > 0
+      ? await tx.itineraryItem.findMany({
+          where: { id: { in: alreadyHasItemIds } },
+          include: { activity: true },
+        }) as ItineraryItemWithActivity[]
+      : [];
+
     const updatedActivities = await tx.activity.findMany({
-      where: { tripId, id: { in: pendingActivities.map((a: { id: string }) => a.id) } },
+      where: { tripId, id: { in: pendingActivities.map((a) => a.id) } },
     });
 
-    return { activities: updatedActivities, itineraryItems: createdItems };
+    return {
+      activities: updatedActivities,
+      itineraryItems: [...existingFullItems, ...newlyCreatedItems],
+    };
   });
 
   return NextResponse.json(result);

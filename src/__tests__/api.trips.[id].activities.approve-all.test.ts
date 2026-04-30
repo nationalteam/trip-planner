@@ -10,7 +10,6 @@ jest.mock('@/lib/prisma', () => ({
     itineraryItem: {
       findMany: jest.fn(),
       create: jest.fn(),
-      findUnique: jest.fn(),
     },
     $transaction: jest.fn(),
   },
@@ -86,11 +85,10 @@ describe('POST /api/trips/[id]/activities/approve-all', () => {
     (mockPrisma.activity.findMany as jest.Mock)
       .mockResolvedValueOnce(pendingActivities)
       .mockResolvedValueOnce(updatedActivities);
+    // First call: slot calculation (returns empty, all are new)
     (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue([]);
+    // create now uses include: { activity: true } so returns the full item directly
     (mockPrisma.itineraryItem.create as jest.Mock)
-      .mockResolvedValueOnce(itineraryItems[0])
-      .mockResolvedValueOnce(itineraryItems[1]);
-    (mockPrisma.itineraryItem.findUnique as jest.Mock)
       .mockResolvedValueOnce(itineraryItems[0])
       .mockResolvedValueOnce(itineraryItems[1]);
     (mockPrisma.activity.updateMany as jest.Mock).mockResolvedValue({ count: 2 });
@@ -120,8 +118,10 @@ describe('POST /api/trips/[id]/activities/approve-all', () => {
     (mockPrisma.activity.findMany as jest.Mock)
       .mockResolvedValueOnce(pendingActivities)
       .mockResolvedValueOnce(updatedActivities);
-    (mockPrisma.itineraryItem.findMany as jest.Mock).mockResolvedValue([existingItineraryItem]);
-    (mockPrisma.itineraryItem.findUnique as jest.Mock).mockResolvedValue(fullItem);
+    // First findMany: slot calculation; second findMany: batch-fetch existing item with activity
+    (mockPrisma.itineraryItem.findMany as jest.Mock)
+      .mockResolvedValueOnce([existingItineraryItem])
+      .mockResolvedValueOnce([fullItem]);
     (mockPrisma.activity.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
     (mockPrisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => fn(mockPrisma));
 

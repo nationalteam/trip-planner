@@ -120,8 +120,8 @@ describe('Trip detail — Approve All', () => {
 
     await waitFor(() => expect(screen.getByText('Paris Trip')).toBeInTheDocument());
 
-    // The badge should show the pending count next to the Activities tab label
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // The badge should be scoped within the Activities tab element
+    expect(screen.getByTestId('activities-tab-badge')).toHaveTextContent('2');
   });
 
   it('calls approve-all endpoint and updates state on click', async () => {
@@ -155,10 +155,12 @@ describe('Trip detail — Approve All', () => {
 
     render(<TripDetailPage />);
 
+    const user = userEvent.setup();
+
     await waitFor(() => expect(screen.getByText('Paris Trip')).toBeInTheDocument());
 
     const approveAllBtn = screen.getByRole('button', { name: /approve all \(2\)/i });
-    await userEvent.click(approveAllBtn);
+    await user.click(approveAllBtn);
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(

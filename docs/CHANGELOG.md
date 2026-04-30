@@ -71,3 +71,4 @@
 2026-03-31 | feat(ui): beautify web pages with gradient accents, modern font stack, and polished components (#0)
 2026-04-04 | feat(map): show itinerary route arrows on map with day filter toggle (#0)
 2026-04-04 | fix(map): beautify route arrows with filled closed-arrow icons and white border (#0)
+2026-04-30 | feat(ux): auto-navigate after trip creation, batch approve-all endpoint, pending count badge and Approve All button (#0)

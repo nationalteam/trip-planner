@@ -62,6 +62,7 @@ export default function TripDetailPage() {
   const [executingChat, setExecutingChat] = useState(false);
   const [chatError, setChatError] = useState('');
   const [chatPreview, setChatPreview] = useState<ChatPlanResponse | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -509,6 +510,35 @@ export default function TripDetailPage() {
     }
   }
 
+  async function handleApproveAll() {
+    setApprovingAll(true);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/activities/approve-all`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.activities)) {
+          setActivities((prev) =>
+            prev.map((a) => {
+              const updated = (data.activities as Activity[]).find((u) => u.id === a.id);
+              return updated ?? a;
+            })
+          );
+        }
+        if (Array.isArray(data.itineraryItems)) {
+          setItinerary((prev) => {
+            const existingIds = new Set(prev.map((item) => item.id));
+            const newItems = normalizeItineraryItems(data.itineraryItems).filter(
+              (item) => !existingIds.has(item.id)
+            );
+            return [...prev, ...newItems];
+          });
+        }
+      }
+    } finally {
+      setApprovingAll(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -534,6 +564,7 @@ export default function TripDetailPage() {
     ].filter(Boolean).join(' · ')
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
+  const pendingCount = activities.filter((a) => a.status === 'pending').length;
   const filteredActivities = filterStatus === 'all' ? activities : activities.filter((activity) => activity.status === filterStatus);
   const arrangedMapCount = mapActivities.filter((activity) => activity.isArranged).length;
   const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
@@ -667,7 +698,16 @@ export default function TripDetailPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            {tab === 'activities' ? '💡 Activities' : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
+            {tab === 'activities' ? (
+              <span className="flex items-center gap-1.5">
+                💡 Activities
+                {pendingCount > 0 && (
+                  <span data-testid="activities-tab-badge" className="bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
+                    {pendingCount}
+                  </span>
+                )}
+              </span>
+            ) : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
           </button>
         ))}
       </div>
@@ -691,6 +731,15 @@ export default function TripDetailPage() {
             >
               {generating ? '⏳ Generating...' : '✨ Generate Activities'}
             </button>
+            {canEdit && pendingCount > 0 && (
+              <button
+                onClick={handleApproveAll}
+                disabled={approvingAll}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-sm"
+              >
+                {approvingAll ? '⏳ Approving...' : `✓ Approve All (${pendingCount})`}
+              </button>
+            )}
             <div className="flex gap-1 ml-auto">
               <select
                 value={sortBy}

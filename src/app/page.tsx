@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import TripCard from '@/components/TripCard';
 
 interface Trip {
@@ -27,6 +28,7 @@ interface TripApiResponse {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -89,12 +91,7 @@ export default function Home() {
       });
       if (res.ok) {
         const trip = await res.json();
-        setTrips(prev => [trip, ...prev]);
-        setName('');
-        setCitiesInput('');
-        setStartDateInput('');
-        setDurationDaysInput('');
-        setShowForm(false);
+        router.push(`/trips/${trip.id}`);
       }
     } finally {
       setCreating(false);

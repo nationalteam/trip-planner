@@ -72,3 +72,6 @@
 2026-04-04 | feat(map): show itinerary route arrows on map with day filter toggle (#0)
 2026-04-04 | fix(map): beautify route arrows with filled closed-arrow icons and white border (#0)
 2026-04-30 | feat(ux): auto-navigate after trip creation, batch approve-all endpoint, pending count badge and Approve All button (#0)
+2026-04-30 | feat(search): add activity text search/filter in activities tab (B-3) (#0)
+2026-04-30 | feat(weather): add Open-Meteo weather forecast on itinerary day headers (D-1) (#0)
+2026-04-30 | feat(share): add token-based public shareable trip link with read-only view (A-1) (#0)

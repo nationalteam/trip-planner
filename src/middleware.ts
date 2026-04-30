@@ -6,6 +6,9 @@ const PUBLIC_PATHS = new Set(['/auth']);
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
   if (pathname.startsWith('/api/auth/')) return true;
+  if (pathname.startsWith('/api/public/')) return true;
+  if (pathname.startsWith('/api/weather')) return true;
+  if (pathname.startsWith('/share/')) return true;
   if (pathname === '/favicon.ico') return true;
   return false;
 }

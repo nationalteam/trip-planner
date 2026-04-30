@@ -13,6 +13,7 @@ model Trip {
   startDate String?
   durationDays Int?
   itineraryVisibleDays Int?
+  shareToken String?  @unique
   createdAt DateTime @default(now())
   activities Activity[]
   itineraryItems ItineraryItem[]

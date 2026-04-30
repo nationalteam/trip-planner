@@ -37,6 +37,15 @@ interface ItinerarySchedule {
   itineraryVisibleDays?: number | null;
 }
 
+interface WeatherDay {
+  date: string;
+  weathercode: number;
+  temp_max: number;
+  temp_min: number;
+  emoji: string;
+  label: string;
+}
+
 const typeIcons: Record<string, string> = {
   food: '🍽️',
   place: '🏛️',
@@ -46,6 +55,7 @@ const typeIcons: Record<string, string> = {
 interface Props {
   items: ItineraryItem[];
   schedule?: ItinerarySchedule;
+  weatherByDay?: Record<number, WeatherDay>;
   onReorder?: (updates: ReorderPayload[]) => void;
   onDeleteEmptyDay?: (day: number) => void;
   deletingDay?: number | null;
@@ -91,7 +101,7 @@ function buildDayHeading(day: number, schedule?: ItinerarySchedule): string {
   return `Day ${day}`;
 }
 
-export default function ItineraryView({ items, schedule, onReorder, onDeleteEmptyDay, deletingDay }: Props) {
+export default function ItineraryView({ items, schedule, weatherByDay, onReorder, onDeleteEmptyDay, deletingDay }: Props) {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragItemId = useRef<string | null>(null);
   const lastDragClientY = useRef<number | null>(null);
@@ -257,12 +267,21 @@ export default function ItineraryView({ items, schedule, onReorder, onDeleteEmpt
       {days.map(day => (
         <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-lg">{buildDayHeading(day, schedule)}</h3>
-              {typeof schedule?.durationDays === 'number' && schedule.durationDays > 0 && day > schedule.durationDays && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">
-                  Over planned range
-                </span>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-lg">{buildDayHeading(day, schedule)}</h3>
+                {typeof schedule?.durationDays === 'number' && schedule.durationDays > 0 && day > schedule.durationDays && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">
+                    Over planned range
+                  </span>
+                )}
+              </div>
+              {weatherByDay?.[day] && (
+                <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-sm font-medium" title={weatherByDay[day].label}>
+                  <span>{weatherByDay[day].emoji}</span>
+                  <span>{weatherByDay[day].temp_max}°</span>
+                  <span className="opacity-75 text-xs">/ {weatherByDay[day].temp_min}°</span>
+                </div>
               )}
             </div>
           </div>

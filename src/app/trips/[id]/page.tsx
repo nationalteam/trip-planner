@@ -63,6 +63,12 @@ export default function TripDetailPage() {
   const [chatError, setChatError] = useState('');
   const [chatPreview, setChatPreview] = useState<ChatPlanResponse | null>(null);
   const [approvingAll, setApprovingAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [revokingLink, setRevokingLink] = useState(false);
+  const [copyLinkMsg, setCopyLinkMsg] = useState('');
+  const [weatherByDay, setWeatherByDay] = useState<Record<number, { date: string; weathercode: number; temp_max: number; temp_min: number; emoji: string; label: string }>>({});
 
   const fetchAll = useCallback(async () => {
     try {
@@ -83,6 +89,7 @@ export default function TripDetailPage() {
         const cities = JSON.parse(tripData.cities);
         if (cities.length > 0) setSelectedCity(cities[0]);
       }
+      if (tripData?.shareToken) setShareToken(tripData.shareToken as string);
     } finally {
       setLoading(false);
     }
@@ -508,6 +515,72 @@ export default function TripDetailPage() {
     if (tab === 'map') {
       setMapFocusTrigger((prev) => prev + 1);
     }
+    if (tab === 'itinerary') {
+      fetchWeather();
+    }
+  }
+
+  async function fetchWeather() {
+    if (!trip?.startDate || !trip.cities) return;
+    const cities: string[] = JSON.parse(trip.cities);
+    if (!cities.length) return;
+    const primaryCity = cities[0];
+    const days = Math.max(trip.durationDays ?? 7, 7);
+    try {
+      const res = await fetch(`/api/weather?city=${encodeURIComponent(primaryCity)}&startDate=${trip.startDate}&days=${days}`);
+      if (!res.ok) return;
+      const data = await res.json() as { forecasts: { date: string; weathercode: number; temp_max: number; temp_min: number; emoji: string; label: string }[] };
+      if (!Array.isArray(data.forecasts) || !trip.startDate) return;
+      const startDateObj = new Date(trip.startDate + 'T00:00:00Z');
+      const byDay: Record<number, { date: string; weathercode: number; temp_max: number; temp_min: number; emoji: string; label: string }> = {};
+      data.forecasts.forEach(f => {
+        const fDate = new Date(f.date + 'T00:00:00Z');
+        const diffDays = Math.round((fDate.getTime() - startDateObj.getTime()) / 86400000);
+        const day = diffDays + 1;
+        if (day >= 1) byDay[day] = f;
+      });
+      setWeatherByDay(byDay);
+    } catch {
+      // weather is non-critical, ignore errors
+    }
+  }
+
+  async function handleGenerateShareLink() {
+    setGeneratingLink(true);
+    setCopyLinkMsg('');
+    try {
+      const res = await fetch(`/api/trips/${tripId}/public-link`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json() as { shareToken: string };
+        setShareToken(data.shareToken);
+      }
+    } finally {
+      setGeneratingLink(false);
+    }
+  }
+
+  async function handleRevokeShareLink() {
+    setRevokingLink(true);
+    setCopyLinkMsg('');
+    try {
+      const res = await fetch(`/api/trips/${tripId}/public-link`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        setShareToken(null);
+      }
+    } finally {
+      setRevokingLink(false);
+    }
+  }
+
+  function handleCopyShareLink() {
+    if (!shareToken) return;
+    const url = `${window.location.origin}/share/${shareToken}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopyLinkMsg('Copied!');
+      setTimeout(() => setCopyLinkMsg(''), 2000);
+    }).catch(() => {
+      setCopyLinkMsg(url);
+    });
   }
 
   async function handleApproveAll() {
@@ -565,7 +638,12 @@ export default function TripDetailPage() {
     : 'Flexible schedule';
   const canEdit = trip.currentRole === 'owner';
   const pendingCount = activities.filter((a) => a.status === 'pending').length;
-  const filteredActivities = filterStatus === 'all' ? activities : activities.filter((activity) => activity.status === filterStatus);
+  const filteredActivities = activities.filter((activity) => {
+    const matchesStatus = filterStatus === 'all' || activity.status === filterStatus;
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q || activity.title.toLowerCase().includes(q) || activity.description.toLowerCase().includes(q) || activity.city.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
   const arrangedMapCount = mapActivities.filter((activity) => activity.isArranged).length;
   const maxItineraryDay = itinerary.reduce((max, item) => Math.max(max, item.day), 0);
   const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;
@@ -667,24 +745,57 @@ export default function TripDetailPage() {
         </div>
       </div>
       {trip.currentRole === 'owner' && (
-        <form onSubmit={handleShareTrip} className="mb-6 flex flex-col sm:flex-row gap-2 sm:items-center">
-          <input
-            type="email"
-            value={shareEmail}
-            onChange={(e) => setShareEmail(e.target.value)}
-            placeholder="Share with user email"
-            required
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 text-gray-900"
-          />
-          <button
-            type="submit"
-            disabled={sharing}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all"
-          >
-            {sharing ? 'Sharing...' : 'Share'}
-          </button>
-          {shareMessage && <span className="text-sm text-gray-500">{shareMessage}</span>}
-        </form>
+        <div className="mb-6 space-y-3">
+          <form onSubmit={handleShareTrip} className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <input
+              type="email"
+              value={shareEmail}
+              onChange={(e) => setShareEmail(e.target.value)}
+              placeholder="Share with user email"
+              required
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 text-gray-900"
+            />
+            <button
+              type="submit"
+              disabled={sharing}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all"
+            >
+              {sharing ? 'Sharing...' : 'Share'}
+            </button>
+            {shareMessage && <span className="text-sm text-gray-500">{shareMessage}</span>}
+          </form>
+          <div className="flex flex-wrap items-center gap-2">
+            {shareToken ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleCopyShareLink}
+                  className="text-sm text-blue-600 hover:text-blue-700 border border-blue-200 bg-blue-50 px-3 py-1.5 rounded-lg font-medium transition-colors"
+                >
+                  🔗 Copy public link
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRevokeShareLink}
+                  disabled={revokingLink}
+                  className="text-xs text-red-600 hover:text-red-700 border border-red-200 bg-red-50 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  {revokingLink ? 'Revoking...' : 'Revoke link'}
+                </button>
+                {copyLinkMsg && <span className="text-xs text-green-600 font-medium">{copyLinkMsg}</span>}
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleGenerateShareLink}
+                disabled={generatingLink}
+                className="text-sm text-gray-600 hover:text-gray-700 border border-gray-200 bg-gray-50 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {generatingLink ? 'Generating...' : '🔗 Generate public link'}
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl mb-6 w-fit backdrop-blur-sm shadow-sm">
@@ -740,7 +851,14 @@ export default function TripDetailPage() {
                 {approvingAll ? '⏳ Approving...' : `✓ Approve All (${pendingCount})`}
               </button>
             )}
-            <div className="flex gap-1 ml-auto">
+            <div className="flex gap-1 ml-auto flex-wrap">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="🔍 Search activities..."
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
+              />
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as 'createdAt' | 'title' | 'city' | 'status')}
@@ -954,6 +1072,7 @@ export default function TripDetailPage() {
               durationDays: trip.durationDays,
               itineraryVisibleDays: trip.itineraryVisibleDays,
             }}
+            weatherByDay={weatherByDay}
             onReorder={canEdit ? handleReorderItinerary : undefined}
             onDeleteEmptyDay={canEdit && !trip.durationDays ? handleDeleteEmptyDay : undefined}
             deletingDay={deletingDay}

@@ -7,6 +7,7 @@ export interface Trip {
   durationDays?: number | null;
   itineraryVisibleDays?: number | null;
   currentRole?: 'owner' | 'viewer';
+  shareToken?: string | null;
 }
 
 export interface Activity {

@@ -58,6 +58,7 @@ export default function SharePage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('itinerary');
   const [weatherByDay, setWeatherByDay] = useState<Record<number, WeatherDay>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,12 +69,13 @@ export default function SharePage() {
     fetch(`/api/public/trips/${token}`)
       .then(res => {
         if (res.status === 404) { setNotFound(true); return null; }
+        if (!res.ok) { setFetchError(true); return null; }
         return res.json();
       })
       .then(data => {
         if (data) setTrip(data as Trip);
       })
-      .catch(() => setNotFound(true))
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -137,6 +139,16 @@ export default function SharePage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 spinner-gradient"></div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center">
+        <div className="text-6xl mb-4">⚠️</div>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Something went wrong</h1>
+        <p className="text-gray-500">Could not load this trip. Please try again later.</p>
       </div>
     );
   }

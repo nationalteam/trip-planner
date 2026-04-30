@@ -75,3 +75,4 @@
 2026-04-30 | feat(search): add activity text search/filter in activities tab (B-3) (#0)
 2026-04-30 | feat(weather): add Open-Meteo weather forecast on itinerary day headers (D-1) (#0)
 2026-04-30 | feat(share): add token-based public shareable trip link with read-only view (A-1) (#0)
+2026-04-30 | fix(share): strip shareToken for non-owners, filter public itinerary to approved activities, validate weather startDate, fix middleware path, guard clipboard API (#143)

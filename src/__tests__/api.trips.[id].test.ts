@@ -74,6 +74,45 @@ describe('GET /api/trips/[id]', () => {
     expect(res.status).toBe(404);
     expect(data.error).toBe('Not found');
   });
+
+  it('strips shareToken for viewer role', async () => {
+    mockRequireTripRole.mockResolvedValue({ ok: true, role: 'viewer' });
+    const fakeTrip = {
+      id: 'trip-1',
+      name: 'Paris Adventure',
+      cities: '["Paris"]',
+      shareToken: 'secret-token',
+      createdAt: new Date(),
+    };
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1');
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await GET(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.shareToken).toBeUndefined();
+  });
+
+  it('includes shareToken for owner role', async () => {
+    const fakeTrip = {
+      id: 'trip-1',
+      name: 'Paris Adventure',
+      cities: '["Paris"]',
+      shareToken: 'owner-token',
+      createdAt: new Date(),
+    };
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(fakeTrip);
+
+    const req = new NextRequest('http://localhost/api/trips/trip-1');
+    const context = { params: Promise.resolve({ id: 'trip-1' }) };
+    const res = await GET(req, context);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.shareToken).toBe('owner-token');
+  });
 });
 
 describe('DELETE /api/trips/[id]', () => {

@@ -525,7 +525,7 @@ export default function TripDetailPage() {
     const cities: string[] = JSON.parse(trip.cities);
     if (!cities.length) return;
     const primaryCity = cities[0];
-    const days = Math.max(trip.durationDays ?? 7, 7);
+    const days = Math.min(Math.max(trip.durationDays ?? 7, 7), 16);
     try {
       const res = await fetch(`/api/weather?city=${encodeURIComponent(primaryCity)}&startDate=${trip.startDate}&days=${days}`);
       if (!res.ok) return;
@@ -575,12 +575,16 @@ export default function TripDetailPage() {
   function handleCopyShareLink() {
     if (!shareToken) return;
     const url = `${window.location.origin}/share/${shareToken}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopyLinkMsg('Copied!');
-      setTimeout(() => setCopyLinkMsg(''), 2000);
-    }).catch(() => {
+    try {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopyLinkMsg('Copied!');
+        setTimeout(() => setCopyLinkMsg(''), 2000);
+      }).catch(() => {
+        setCopyLinkMsg(url);
+      });
+    } catch {
       setCopyLinkMsg(url);
-    });
+    }
   }
 
   async function handleApproveAll() {

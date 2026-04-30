@@ -2,8 +2,13 @@ import { GET } from '@/app/api/weather/route';
 import { NextRequest } from 'next/server';
 
 const mockFetch = jest.fn();
+const originalFetch = global.fetch;
 
 global.fetch = mockFetch;
+
+afterAll(() => {
+  global.fetch = originalFetch;
+});
 
 describe('GET /api/weather', () => {
   beforeEach(() => {
@@ -20,6 +25,41 @@ describe('GET /api/weather', () => {
     const req = new NextRequest('http://localhost/api/weather?city=');
     const res = await GET(req);
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when startDate is not a valid YYYY-MM-DD', async () => {
+    const req = new NextRequest('http://localhost/api/weather?city=Paris&startDate=not-a-date');
+    const res = await GET(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when startDate has invalid format (date-only required)', async () => {
+    const req = new NextRequest('http://localhost/api/weather?city=Paris&startDate=2024-13-01');
+    const res = await GET(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('treats empty startDate as not provided and proceeds normally', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ results: [{ latitude: 48.85, longitude: 2.35 }] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          daily: {
+            time: ['2024-06-01'],
+            weathercode: [0],
+            temperature_2m_max: [25],
+            temperature_2m_min: [18],
+          },
+        }),
+      });
+
+    const req = new NextRequest('http://localhost/api/weather?city=Paris&startDate=');
+    const res = await GET(req);
+    expect(res.status).toBe(200);
   });
 
   it('returns forecasts for valid city', async () => {

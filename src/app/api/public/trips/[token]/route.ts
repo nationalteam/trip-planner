@@ -16,6 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
         orderBy: { createdAt: 'asc' },
       },
       itineraryItems: {
+        where: { activity: { status: 'approved' } },
         include: { activity: true },
         orderBy: [{ day: 'asc' }, { timeBlock: 'asc' }, { order: 'asc' }],
       },

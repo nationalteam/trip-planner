@@ -125,6 +125,35 @@ describe('GET /api/public/trips/[token]', () => {
     expect(data.shareToken).toBeUndefined();
   });
 
+  it('filters itinerary items to only approved activities', async () => {
+    const mockTrip = {
+      id: 'trip-1',
+      name: 'Tokyo Adventure',
+      cities: '["Tokyo"]',
+      shareToken: 'valid-token',
+      activities: [{ id: 'a-1', title: 'Senso-ji', status: 'approved' }],
+      itineraryItems: [
+        { id: 'item-1', day: 1, timeBlock: 'morning', order: 1, activity: { id: 'a-1', status: 'approved', title: 'Senso-ji' } },
+        { id: 'item-2', day: 1, timeBlock: 'afternoon', order: 1, activity: { id: 'a-2', status: 'pending', title: 'Draft place' } },
+      ],
+    };
+    (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(mockTrip);
+
+    const req = new NextRequest('http://localhost/api/public/trips/valid-token');
+    await publicGet(req, { params: Promise.resolve({ token: 'valid-token' }) });
+
+    // Verify the query included the approved-only filter for itinerary items
+    expect(mockPrisma.trip.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          itineraryItems: expect.objectContaining({
+            where: { activity: { status: 'approved' } },
+          }),
+        }),
+      })
+    );
+  });
+
   it('returns 404 for invalid token', async () => {
     (mockPrisma.trip.findUnique as jest.Mock).mockResolvedValue(null);
 

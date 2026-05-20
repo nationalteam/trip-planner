@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import TripCard from '@/components/TripCard';
+import { summarizePortfolioPriority } from '@/lib/portfolio-priority';
 
 interface Trip {
   id: string;
@@ -50,11 +52,7 @@ export default function Home() {
   const [startDateInput, setStartDateInput] = useState('');
   const [durationDaysInput, setDurationDaysInput] = useState('');
 
-  useEffect(() => {
-    fetchTrips();
-  }, []);
-
-  async function fetchTrips() {
+  const fetchTrips = useCallback(async () => {
     try {
       const res = await fetch('/api/trips');
       if (res.status === 401) {
@@ -84,7 +82,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -112,6 +114,7 @@ export default function Home() {
 
   const totalActivities = trips.reduce((sum, trip) => sum + (trip.counts?.activitiesCount ?? 0), 0);
   const plannedItems = trips.reduce((sum, trip) => sum + (trip.counts?.itineraryItemsCount ?? 0), 0);
+  const portfolioPriority = summarizePortfolioPriority(trips);
 
   return (
     <div className="relative overflow-hidden bg-[#f7f1e8]">
@@ -130,6 +133,7 @@ export default function Home() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <button
+                type="button"
                 onClick={() => setShowForm(true)}
                 className="rounded-full bg-[#1f1710] px-6 py-3 text-sm font-bold text-amber-50 shadow-xl shadow-amber-900/20 transition-all hover:-translate-y-0.5 hover:bg-[#352719]"
               >
@@ -153,6 +157,25 @@ export default function Home() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Planned</p>
               </div>
             </div>
+
+            {portfolioPriority && (
+              <div className="mt-5 max-w-2xl rounded-[1.75rem] border border-amber-200 bg-white/88 p-5 shadow-xl shadow-amber-900/10 backdrop-blur">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-800">Concierge next move</p>
+                    <h2 className="mt-2 text-xl font-black text-stone-950">{portfolioPriority.label}</h2>
+                    <p className="mt-1 text-sm font-bold text-stone-500">{portfolioPriority.tripName}</p>
+                    <p className="mt-2 text-sm leading-6 text-stone-600">{portfolioPriority.detail}</p>
+                  </div>
+                  <Link
+                    href={`/trips/${portfolioPriority.tripId}`}
+                    className="inline-flex shrink-0 justify-center rounded-full bg-[#1f1710] px-4 py-2 text-sm font-black text-amber-50 shadow-sm transition hover:bg-[#352719]"
+                  >
+                    {portfolioPriority.actionLabel}
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="rounded-[2rem] border border-amber-100 bg-white/80 p-4 shadow-2xl shadow-amber-900/10 backdrop-blur">
@@ -212,8 +235,9 @@ export default function Home() {
             </div>
             <form onSubmit={handleCreate} className="grid gap-4 lg:grid-cols-5">
               <div className="lg:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-1">Trip Name</label>
+                <label htmlFor="trip-name" className="block text-sm font-bold text-slate-700 mb-1">Trip Name</label>
                 <input
+                  id="trip-name"
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -223,8 +247,9 @@ export default function Home() {
                 />
               </div>
               <div className="lg:col-span-3">
-                <label className="block text-sm font-bold text-slate-700 mb-1">Cities (comma separated)</label>
+                <label htmlFor="trip-cities" className="block text-sm font-bold text-slate-700 mb-1">Cities (comma separated)</label>
                 <input
+                  id="trip-cities"
                   type="text"
                   value={citiesInput}
                   onChange={e => setCitiesInput(e.target.value)}
@@ -234,8 +259,9 @@ export default function Home() {
                 />
               </div>
               <div className="lg:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-1">Start Date (optional)</label>
+                <label htmlFor="trip-start-date" className="block text-sm font-bold text-slate-700 mb-1">Start Date (optional)</label>
                 <input
+                  id="trip-start-date"
                   type="date"
                   value={startDateInput}
                   onChange={e => setStartDateInput(e.target.value)}
@@ -243,8 +269,9 @@ export default function Home() {
                 />
               </div>
               <div className="lg:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-1">Duration Days (optional)</label>
+                <label htmlFor="trip-duration-days" className="block text-sm font-bold text-slate-700 mb-1">Duration Days (optional)</label>
                 <input
+                  id="trip-duration-days"
                   type="number"
                   min={1}
                   step={1}
@@ -275,6 +302,7 @@ export default function Home() {
               <p className="mt-1 text-slate-500">A private-feeling portfolio for every destination you are shaping.</p>
             </div>
             <button
+              type="button"
               onClick={() => setShowForm(!showForm)}
               className="rounded-full border border-amber-200 bg-white px-5 py-2.5 text-sm font-bold text-stone-800 shadow-sm transition hover:border-amber-300 hover:text-amber-800"
             >
@@ -292,6 +320,7 @@ export default function Home() {
               <h3 className="text-xl font-black text-slate-800 mb-2">No trips yet</h3>
               <p className="mx-auto mb-6 max-w-md text-slate-500">Create your first trip to turn loose inspiration into a boutique, shareable travel dossier.</p>
               <button
+                type="button"
                 onClick={() => setShowForm(true)}
                 className="rounded-full bg-[#1f1710] px-6 py-3 font-bold text-amber-50 shadow-lg shadow-amber-900/20 transition hover:bg-[#352719]"
               >

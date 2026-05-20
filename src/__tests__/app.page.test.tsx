@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Home from '@/app/page';
@@ -83,6 +82,33 @@ describe('Home page', () => {
     expect(screen.getByText('Signature pace')).toBeInTheDocument();
     expect(screen.getByText('Table-first planning')).toBeInTheDocument();
     expect(screen.getByText('Quiet logistics')).toBeInTheDocument();
+  });
+
+  it('surfaces a concierge next move for the trip portfolio', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      status: 200,
+      ok: true,
+      json: async () => [
+        {
+          id: 'trip-1',
+          name: 'Paris Atelier',
+          cities: '["Paris"]',
+          createdAt: '2026-05-01T00:00:00.000Z',
+          startDate: null,
+          durationDays: null,
+          _count: { activities: 4, itineraryItems: 4 },
+        },
+      ],
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(<Home />);
+
+    expect(await screen.findByText('Concierge next move')).toBeInTheDocument();
+    expect(screen.getByText('Frame the trip dates')).toBeInTheDocument();
+    expect(screen.getAllByText('Paris Atelier').length).toBeGreaterThan(0);
+    expect(screen.getByText('Add dates or duration so pacing, weather, and route decisions can be trusted.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open dossier/i })).toHaveAttribute('href', '/trips/trip-1');
   });
 
   it('navigates to the new trip detail page after successful creation', async () => {

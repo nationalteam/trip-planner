@@ -82,3 +82,4 @@
 2026-05-20 | feat(trip): reshape dossier hierarchy and utility drawer (#0)
 2026-05-20 | feat(itinerary): add daily concierge pace summaries (#0)
 2026-05-20 | feat(itinerary): add concierge pacing notes (#0)
+2026-05-20 | feat(home): add portfolio concierge next move (#0)

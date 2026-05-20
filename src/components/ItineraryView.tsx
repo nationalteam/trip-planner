@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { calculateAutoScrollDelta } from '@/lib/drag-autoscroll';
+import { summarizeItineraryDayPace } from '@/lib/itinerary-day-pacing';
 import {
   ITINERARY_TIME_BLOCK_LABELS,
   ITINERARY_TIME_BLOCKS,
   type ItineraryTimeBlock,
 } from '@/lib/time-block';
-import { calculateAutoScrollDelta } from '@/lib/drag-autoscroll';
 
 interface ItineraryItem {
   id: string;
@@ -82,10 +83,10 @@ function deriveDateLabel(startDate: string, day: number): string | null {
 
 function buildDayHeading(day: number, schedule?: ItinerarySchedule): string {
   const hasDuration = typeof schedule?.durationDays === 'number' && schedule.durationDays > 0;
-  const hasStartDate = typeof schedule?.startDate === 'string' && schedule.startDate.trim().length > 0;
+  const startDate = typeof schedule?.startDate === 'string' ? schedule.startDate.trim() : '';
 
-  if (hasStartDate) {
-    const derivedDate = deriveDateLabel(schedule.startDate!, day);
+  if (startDate.length > 0) {
+    const derivedDate = deriveDateLabel(startDate, day);
     if (derivedDate) {
       if (hasDuration) {
         return `Day ${day} / ${schedule.durationDays} days · ${derivedDate}`;
@@ -264,10 +265,14 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
 
   return (
     <div className="space-y-8">
-      {days.map(day => (
+      {days.map(day => {
+        const dayItems = ITINERARY_TIME_BLOCKS.flatMap((timeBlock) => byDay[day]?.[timeBlock] ?? []);
+        const paceSummary = summarizeItineraryDayPace(dayItems.map((item) => item.activity.durationMinutes));
+
+        return (
         <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
           <div className="bg-gradient-to-r from-amber-800 to-stone-900 text-white px-6 py-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold text-lg">{buildDayHeading(day, schedule)}</h3>
                 {typeof schedule?.durationDays === 'number' && schedule.durationDays > 0 && day > schedule.durationDays && (
@@ -276,13 +281,20 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
                   </span>
                 )}
               </div>
-              {weatherByDay?.[day] && (
-                <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-sm font-medium" title={weatherByDay[day].label}>
-                  <span>{weatherByDay[day].emoji}</span>
-                  <span>{weatherByDay[day].temp_max}°</span>
-                  <span className="opacity-75 text-xs">/ {weatherByDay[day].temp_min}°</span>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <div className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-amber-50">
+                  <span className="font-black text-white">{paceSummary.label}</span>
+                  <span className="mx-1.5 text-amber-100/70">·</span>
+                  <span>{paceSummary.detail}</span>
                 </div>
-              )}
+                {weatherByDay?.[day] && (
+                  <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-sm font-medium" title={weatherByDay[day].label}>
+                    <span>{weatherByDay[day].emoji}</span>
+                    <span>{weatherByDay[day].temp_max}°</span>
+                    <span className="opacity-75 text-xs">/ {weatherByDay[day].temp_min}°</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="p-6 space-y-6">
@@ -294,8 +306,9 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
                   {ITINERARY_TIME_BLOCK_LABELS[timeBlock]}
                 </h4>
-                <div
+                <fieldset
                   data-testid={slotId}
+                  aria-label={`${ITINERARY_TIME_BLOCK_LABELS[timeBlock]} drop zone for day ${day}`}
                   onDragOver={e => handleDragOver(e, slotId)}
                   onDrop={e => handleDrop(e, slotId, { day, timeBlock })}
                   className={`rounded-lg border border-dashed p-3 transition-colors ${
@@ -309,16 +322,16 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
                       <p className="text-xs text-gray-400">Drop activity here</p>
                     )}
                     {slotItems.map(item => (
-                      (() => {
-                        return (
-                      <div
+                      <button
                         key={item.id}
+                        type="button"
                         draggable
+                        aria-label={`Move ${item.activity.title}`}
                         onDragStart={e => handleDragStart(e, item.id)}
                         onDragOver={e => handleDragOver(e, item.id)}
                         onDrop={e => handleDrop(e, item.id)}
                         onDragEnd={handleDragEnd}
-                        className={`flex items-start gap-3 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-colors ${
+                        className={`flex w-full items-start gap-3 p-3 text-left rounded-lg cursor-grab active:cursor-grabbing transition-colors ${
                           dragOverId === item.id
                             ? 'bg-amber-50 border-2 border-amber-300'
                             : 'bg-white'
@@ -336,12 +349,10 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
                             )}
                           </div>
                         </div>
-                      </div>
-                        );
-                      })()
+                      </button>
                     ))}
                   </div>
-                </div>
+                </fieldset>
               </div>
               );
             })}
@@ -362,7 +373,8 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

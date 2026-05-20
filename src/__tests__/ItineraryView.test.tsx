@@ -1,8 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import ItineraryView from '@/components/ItineraryView';
 
 const makeItem = (overrides: Partial<{
@@ -157,6 +156,18 @@ describe('ItineraryView', () => {
     const items = [makeItem({ id: 'item-1', day: 6, activityTitle: 'Day 6 item' })];
     render(<ItineraryView items={items} schedule={{ durationDays: 5 }} />);
     expect(screen.getByText('Over planned range')).toBeInTheDocument();
+  });
+
+  it('renders concierge pace guidance in day headers', () => {
+    const items = [
+      makeItem({ id: 'item-1', day: 1, activityDuration: 90 }),
+      makeItem({ id: 'item-2', day: 1, timeBlock: 'afternoon', activityDuration: 120 }),
+    ];
+
+    render(<ItineraryView items={items} />);
+
+    expect(screen.getByText('Balanced pace')).toBeInTheDocument();
+    expect(screen.getByText('2 stops · 3h 30m planned')).toBeInTheDocument();
   });
 
   it('renders empty days up to durationDays even when no items exist on some days', () => {

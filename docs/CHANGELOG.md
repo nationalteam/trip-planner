@@ -80,3 +80,4 @@
 2026-05-20 | fix(deps): resolve Dependabot npm security alerts (#0)
 2026-05-20 | feat(trip): add concierge readiness guidance panel (#0)
 2026-05-20 | feat(trip): reshape dossier hierarchy and utility drawer (#0)
+2026-05-20 | feat(itinerary): add daily concierge pace summaries (#0)

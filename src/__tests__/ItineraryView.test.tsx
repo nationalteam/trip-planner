@@ -168,6 +168,7 @@ describe('ItineraryView', () => {
 
     expect(screen.getByText('Balanced pace')).toBeInTheDocument();
     expect(screen.getByText('2 stops · 3h 30m planned')).toBeInTheDocument();
+    expect(screen.getByText('Good rhythm. Keep transit buffers between anchors.')).toBeInTheDocument();
   });
 
   it('renders empty days up to durationDays even when no items exist on some days', () => {

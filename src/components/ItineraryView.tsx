@@ -282,10 +282,13 @@ export default function ItineraryView({ items, schedule, weatherByDay, onReorder
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                <div className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-amber-50">
-                  <span className="font-black text-white">{paceSummary.label}</span>
-                  <span className="mx-1.5 text-amber-100/70">·</span>
-                  <span>{paceSummary.detail}</span>
+                <div className="rounded-2xl border border-white/20 bg-white/15 px-3 py-1.5 text-xs font-semibold text-amber-50">
+                  <div>
+                    <span className="font-black text-white">{paceSummary.label}</span>
+                    <span className="mx-1.5 text-amber-100/70">·</span>
+                    <span>{paceSummary.detail}</span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] font-medium leading-4 text-amber-100/85">{paceSummary.guidance}</p>
                 </div>
                 {weatherByDay?.[day] && (
                   <div className="flex items-center gap-1.5 bg-white/20 rounded-full px-3 py-1 text-sm font-medium" title={weatherByDay[day].label}>

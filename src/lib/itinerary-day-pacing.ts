@@ -3,6 +3,7 @@ export type ItineraryDayPaceLabel = 'Open day' | 'Relaxed pace' | 'Balanced pace
 export interface ItineraryDayPaceSummary {
   label: ItineraryDayPaceLabel;
   detail: string;
+  guidance: string;
   totalMinutes: number;
   stopCount: number;
   unsizedCount: number;
@@ -32,6 +33,19 @@ function classifyPace(totalMinutes: number): ItineraryDayPaceLabel {
   return 'Intensive pace';
 }
 
+function getPaceGuidance(label: ItineraryDayPaceLabel): string {
+  switch (label) {
+    case 'Open day':
+      return 'Keep this day open for recovery, transfers, or a signature anchor.';
+    case 'Relaxed pace':
+      return 'Light day. Add one signature stop or preserve space for spontaneity.';
+    case 'Balanced pace':
+      return 'Good rhythm. Keep transit buffers between anchors.';
+    case 'Intensive pace':
+      return 'Dense day. Split a stop or add recovery time before evening plans.';
+  }
+}
+
 export function summarizeItineraryDayPace(durations: Array<number | null>): ItineraryDayPaceSummary {
   const stopCount = durations.length;
   const timedDurations = durations.filter((duration): duration is number => (
@@ -45,6 +59,7 @@ export function summarizeItineraryDayPace(durations: Array<number | null>): Itin
     return {
       label,
       detail: 'No timed stops yet',
+      guidance: getPaceGuidance(label),
       totalMinutes,
       stopCount,
       unsizedCount,
@@ -61,6 +76,7 @@ export function summarizeItineraryDayPace(durations: Array<number | null>): Itin
   return {
     label,
     detail: detailParts.join(' · '),
+    guidance: getPaceGuidance(label),
     totalMinutes,
     stopCount,
     unsizedCount,

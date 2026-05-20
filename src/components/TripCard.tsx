@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { summarizePortfolioPriority } from '@/lib/portfolio-priority';
 
 interface Trip {
   id: string;
@@ -38,6 +39,7 @@ export default function TripCard({ trip }: TripCardProps) {
   const plannedPercent = trip.counts && trip.counts.activitiesCount > 0
     ? Math.round((trip.counts.itineraryItemsCount / trip.counts.activitiesCount) * 100)
     : 0;
+  const nextMove = summarizePortfolioPriority([trip]);
 
   return (
     <Link href={`/trips/${trip.id}`} className="group block h-full">
@@ -76,6 +78,14 @@ export default function TripCard({ trip }: TripCardProps) {
               </p>
             </div>
           </div>
+
+          {nextMove && (
+            <div className="mb-5 rounded-2xl border border-amber-100 bg-white/75 p-3 shadow-sm">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-800">Next move</p>
+              <p className="mt-1 text-sm font-black text-stone-950">{nextMove.label}</p>
+              <p className="mt-1 text-xs leading-5 text-stone-500">{nextMove.detail}</p>
+            </div>
+          )}
 
           <div className="flex items-end justify-between gap-4 border-t border-slate-100 pt-4 text-sm text-slate-500">
             <div className="min-w-0">

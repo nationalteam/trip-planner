@@ -105,9 +105,9 @@ describe('Home page', () => {
     render(<Home />);
 
     expect(await screen.findByText('Concierge next move')).toBeInTheDocument();
-    expect(screen.getByText('Frame the trip dates')).toBeInTheDocument();
+    expect(screen.getAllByText('Frame the trip dates').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Paris Atelier').length).toBeGreaterThan(0);
-    expect(screen.getByText('Add dates or duration so pacing, weather, and route decisions can be trusted.')).toBeInTheDocument();
+    expect(screen.getAllByText('Add dates or duration so pacing, weather, and route decisions can be trusted.').length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: /open dossier/i })).toHaveAttribute('href', '/trips/trip-1');
   });
 

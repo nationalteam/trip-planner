@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import TripCard from '@/components/TripCard';
 
@@ -69,6 +68,13 @@ describe('TripCard', () => {
     render(<TripCard trip={{ ...baseTrip, counts: { activitiesCount: 5, itineraryItemsCount: 3 } }} />);
     expect(screen.getByText('Private dossier')).toBeInTheDocument();
     expect(screen.getByText('60% planned')).toBeInTheDocument();
+  });
+
+  it('renders a concierge next move for each dossier card', () => {
+    render(<TripCard trip={{ ...baseTrip, counts: { activitiesCount: 5, itineraryItemsCount: 3 } }} />);
+    expect(screen.getByText('Next move')).toBeInTheDocument();
+    expect(screen.getByText('Frame the trip dates')).toBeInTheDocument();
+    expect(screen.getByText('Add dates or duration so pacing, weather, and route decisions can be trusted.')).toBeInTheDocument();
   });
 
   it('renders the airplane emoji icon', () => {

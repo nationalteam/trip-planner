@@ -83,3 +83,4 @@
 2026-05-20 | feat(itinerary): add daily concierge pace summaries (#0)
 2026-05-20 | feat(itinerary): add concierge pacing notes (#0)
 2026-05-20 | feat(home): add portfolio concierge next move (#0)
+2026-05-20 | feat(card): add dossier next-move cues (#0)

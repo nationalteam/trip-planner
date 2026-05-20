@@ -135,6 +135,28 @@ describe('Trip detail — Approve All', () => {
     expect(screen.getByText('Set dates or trip duration so the itinerary can be paced with confidence.')).toBeInTheDocument();
   });
 
+  it('uses a compact planning pipeline and keeps sharing controls in trip settings', async () => {
+    global.fetch = makeBaseFetchMock() as unknown as typeof fetch;
+
+    render(<TripDetailPage />);
+
+    const user = userEvent.setup();
+
+    await waitFor(() => expect(screen.getByText('Paris Trip')).toBeInTheDocument());
+
+    expect(screen.getByTestId('planning-pipeline')).toHaveTextContent('2 ideas');
+    expect(screen.getByTestId('planning-pipeline')).toHaveTextContent('0 approved');
+    expect(screen.getByTestId('planning-pipeline')).toHaveTextContent('0 scheduled');
+    expect(screen.getByTestId('planning-pipeline')).toHaveTextContent('0 mapped');
+    expect(screen.queryByText('Curated ideas')).not.toBeInTheDocument();
+
+    const shareInput = screen.getByPlaceholderText(/share with user email/i);
+    expect(shareInput).not.toBeVisible();
+
+    await user.click(screen.getByText('Trip settings'));
+    expect(shareInput).toBeVisible();
+  });
+
   it('calls approve-all endpoint and updates state on click', async () => {
     const approvedActivities = PENDING_ACTIVITIES.map((a) => ({ ...a, status: 'approved' }));
     const newItineraryItems = approvedActivities.map((a, i) => ({

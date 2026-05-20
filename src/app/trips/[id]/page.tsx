@@ -664,35 +664,36 @@ export default function TripDetailPage() {
   const hasOverRangeDays = typeof trip.durationDays === 'number' && trip.durationDays > 0 && maxItineraryDay > trip.durationDays;
 
   return (
-    <div className="relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_32%),radial-gradient(circle_at_top_right,_rgba(79,70,229,0.16),_transparent_30%)]" />
+    <div className="relative overflow-hidden bg-[#f7f1e8]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top_left,_rgba(180,130,60,0.20),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(31,23,16,0.14),_transparent_34%),linear-gradient(180deg,_#fbf7ef_0%,_#ffffff_82%)]" />
       <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <div className="mb-8 rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-xl shadow-slate-100 backdrop-blur sm:p-7">
-        <Link href="/" className="mb-4 inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-bold text-slate-600 transition-colors hover:border-amber-300 hover:text-amber-800">← All Trips</Link>
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
-          <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-amber-800">Private dossier workspace</p>
-            <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">{trip.name}</h1>
-            <div className="flex flex-wrap gap-2 mt-4">
-              {cities.map(city => (
-                <span key={city} className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-bold text-amber-900">
-                  📍 {city}
-                </span>
-              ))}
-            </div>
+        <div className="mb-6">
+          <Link href="/" className="inline-flex rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-sm font-bold text-stone-600 shadow-sm transition-colors hover:border-amber-300 hover:text-amber-800">← All Trips</Link>
+        </div>
+
+        <section className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+          <div className="rounded-[2rem] border border-amber-100 bg-white/88 p-6 shadow-2xl shadow-amber-900/10 backdrop-blur sm:p-8">
+            <p className="text-xs font-black uppercase tracking-[0.26em] text-amber-800">Private dossier workspace</p>
+            <h1 className="mt-3 max-w-4xl font-serif text-5xl font-black tracking-tight text-stone-950 sm:text-6xl">
+              {trip.name}
+            </h1>
+            <p className="mt-3 text-sm font-semibold text-stone-500">
+              {cities.length} {cities.length === 1 ? 'destination' : 'destinations'} · {cities.join(' · ')}
+            </p>
+
             {editingSchedule ? (
-              <form onSubmit={handleSaveSchedule} className="mt-3 flex flex-col sm:flex-row sm:items-end gap-2">
+              <form onSubmit={handleSaveSchedule} className="mt-5 flex flex-col gap-3 rounded-3xl border border-amber-100 bg-[#fffaf2] p-4 sm:flex-row sm:items-end">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Start Date</label>
                   <input
                     type="date"
                     value={scheduleStartDateInput}
                     onChange={(e) => setScheduleStartDateInput(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
+                    className="rounded-2xl border border-amber-200 bg-white px-3 py-2 text-sm text-stone-950 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Duration Days</label>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-stone-500 mb-1">Duration Days</label>
                   <input
                     type="number"
                     min={1}
@@ -700,14 +701,14 @@ export default function TripDetailPage() {
                     value={scheduleDurationDaysInput}
                     onChange={(e) => setScheduleDurationDaysInput(e.target.value)}
                     placeholder="e.g. 5"
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 w-36"
+                    className="w-36 rounded-2xl border border-amber-200 bg-white px-3 py-2 text-sm text-stone-950 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
                   />
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="submit"
                     disabled={savingSchedule}
-                    className="bg-amber-800 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-900 disabled:opacity-50"
+                    className="rounded-full bg-[#1f1710] px-4 py-2 text-sm font-black text-amber-50 shadow-sm hover:bg-[#352719] disabled:opacity-50"
                   >
                     {savingSchedule ? 'Saving...' : 'Save'}
                   </button>
@@ -715,7 +716,7 @@ export default function TripDetailPage() {
                     type="button"
                     disabled={savingSchedule}
                     onClick={() => setEditingSchedule(false)}
-                    className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-stone-600 hover:bg-stone-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -723,168 +724,197 @@ export default function TripDetailPage() {
                     type="button"
                     disabled={savingSchedule}
                     onClick={handleClearSchedule}
-                    className="border border-red-300 text-red-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+                    className="rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-stone-500 hover:text-stone-800 disabled:opacity-50"
                   >
                     Clear
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="mt-2 flex items-center gap-2">
-                <p className="text-sm text-gray-500">{tripSchedule}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="rounded-full border border-amber-200 bg-[#fffaf2] px-4 py-2 text-sm font-black text-stone-700">{tripSchedule}</span>
                 {canEdit && (
                   <button
                     type="button"
                     onClick={handleStartEditSchedule}
-                    className="text-xs text-amber-800 hover:underline"
+                    className="text-sm font-bold text-amber-800 hover:underline"
                   >
                     Edit schedule
                   </button>
                 )}
               </div>
             )}
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href={`/trips/${tripId}/preferences`}
-              className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
-            >
-              ⚙️ Preferences
-            </Link>
-            {trip.currentRole === 'owner' && (
-              <button
-                onClick={handleDeleteTrip}
-                className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                🗑️ Delete Trip
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-      {trip.currentRole === 'owner' && (
-        <div className="mb-6 space-y-3">
-          <form onSubmit={handleShareTrip} className="flex flex-col sm:flex-row gap-2 sm:items-center">
-            <input
-              type="email"
-              value={shareEmail}
-              onChange={(e) => setShareEmail(e.target.value)}
-              placeholder="Share with user email"
-              required
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 text-gray-900"
-            />
-            <button
-              type="submit"
-              disabled={sharing}
-              className="bg-gradient-to-r from-amber-800 to-stone-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-amber-900 hover:to-stone-950 disabled:opacity-50 transition-all"
-            >
-              {sharing ? 'Sharing...' : 'Share'}
-            </button>
-            {shareMessage && <span className="text-sm text-gray-500">{shareMessage}</span>}
-          </form>
-          <div className="flex flex-wrap items-center gap-2">
-            {shareToken ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCopyShareLink}
-                  className="text-sm text-amber-800 hover:text-amber-800 border border-amber-200 bg-amber-50 px-3 py-1.5 rounded-lg font-medium transition-colors"
-                >
-                  🔗 Copy public link
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRevokeShareLink}
-                  disabled={revokingLink}
-                  className="text-xs text-red-600 hover:text-red-700 border border-red-200 bg-red-50 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
-                >
-                  {revokingLink ? 'Revoking...' : 'Revoke link'}
-                </button>
-                {copyLinkMsg && <span className="text-xs text-green-600 font-medium">{copyLinkMsg}</span>}
-              </>
-            ) : (
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={handleGenerateShareLink}
-                disabled={generatingLink}
-                className="text-sm text-gray-600 hover:text-gray-700 border border-gray-200 bg-gray-50 px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                onClick={() => handleTabChange('itinerary')}
+                className="rounded-full bg-[#1f1710] px-5 py-3 text-sm font-black text-amber-50 shadow-xl shadow-amber-900/15 transition hover:-translate-y-0.5 hover:bg-[#352719]"
               >
-                {generatingLink ? 'Generating...' : '🔗 Generate public link'}
+                Open itinerary
               </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      <section className="mb-6 rounded-[2rem] border border-amber-100 bg-white/85 p-5 shadow-xl shadow-amber-900/10 backdrop-blur">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-800">Concierge readiness</p>
-            <div className="mt-2 flex flex-wrap items-baseline gap-3">
-              <h2 className="text-4xl font-black tracking-tight text-stone-950">{conciergeReadiness.score}%</h2>
-              <span className="rounded-full bg-[#1f1710] px-3 py-1 text-xs font-black uppercase tracking-wide text-amber-50">
-                {conciergeReadiness.stage}
-              </span>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-stone-600">{conciergeReadiness.nextStep}</p>
-          </div>
-          <div className="grid flex-1 gap-2 sm:grid-cols-2 lg:max-w-xl">
-            {conciergeReadiness.checklist.map((item) => (
-              <div
-                key={item.id}
-                className={`rounded-2xl border px-3 py-2 text-sm ${item.complete ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-amber-100 bg-[#fffaf2] text-stone-500'}`}
-                title={item.detail}
+              <button
+                type="button"
+                onClick={() => handleTabChange('activities')}
+                className="rounded-full border border-amber-200 bg-white px-5 py-3 text-sm font-black text-stone-700 shadow-sm transition hover:border-amber-300 hover:text-amber-800"
               >
-                <span className="font-black">{item.complete ? '✓' : '○'} {item.label}</span>
+                Review ideas
+              </button>
+            </div>
+
+            <div className="mt-8 rounded-3xl border border-amber-100 bg-[#fffaf2] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-800">Concierge readiness</p>
+                  <p className="mt-1 text-sm leading-6 text-stone-600">{conciergeReadiness.nextStep}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-black text-stone-950">{conciergeReadiness.score}%</span>
+                  <span className="rounded-full bg-[#1f1710] px-3 py-1 text-xs font-black uppercase tracking-wide text-amber-50">
+                    {conciergeReadiness.stage}
+                  </span>
+                </div>
               </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                <div className="h-full rounded-full bg-amber-700" style={{ width: `${conciergeReadiness.score}%` }} />
+              </div>
+            </div>
+          </div>
+
+          <aside className="lg:sticky lg:top-24">
+            <details className="group rounded-[2rem] border border-amber-100 bg-white/88 p-4 shadow-xl shadow-amber-900/10 backdrop-blur">
+              <summary className="cursor-pointer list-none rounded-2xl px-3 py-2 text-sm font-black uppercase tracking-[0.18em] text-stone-700 transition-colors hover:bg-amber-50">
+                Trip settings
+                <span className="float-right text-stone-400 transition-transform group-open:rotate-180">⌄</span>
+              </summary>
+              <div className="mt-4 space-y-5 border-t border-amber-100 pt-4">
+                <Link
+                  href={`/trips/${tripId}/preferences`}
+                  className="block rounded-2xl border border-amber-100 bg-[#fffaf2] px-4 py-3 text-sm font-bold text-stone-700 transition hover:border-amber-200 hover:text-amber-800"
+                >
+                  ⚙️ Preferences
+                </Link>
+
+                {trip.currentRole === 'owner' && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-400">Share dossier</p>
+                    <form onSubmit={handleShareTrip} className="space-y-2">
+                      <input
+                        type="email"
+                        value={shareEmail}
+                        onChange={(e) => setShareEmail(e.target.value)}
+                        placeholder="Share with user email"
+                        required
+                        className="w-full rounded-2xl border border-amber-200 bg-white px-3 py-2 text-sm text-stone-950 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-100"
+                      />
+                      <button
+                        type="submit"
+                        disabled={sharing}
+                        className="w-full rounded-full bg-[#1f1710] px-4 py-2 text-sm font-black text-amber-50 hover:bg-[#352719] disabled:opacity-50"
+                      >
+                        {sharing ? 'Sharing...' : 'Share'}
+                      </button>
+                      {shareMessage && <span className="text-sm text-stone-500">{shareMessage}</span>}
+                    </form>
+                    {shareToken ? (
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCopyShareLink}
+                          className="rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800 transition-colors hover:border-amber-300"
+                        >
+                          🔗 Copy public link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRevokeShareLink}
+                          disabled={revokingLink}
+                          className="rounded-full border border-stone-200 bg-white px-3 py-2 text-xs font-bold text-stone-500 transition-colors hover:text-stone-800 disabled:opacity-50"
+                        >
+                          {revokingLink ? 'Revoking...' : 'Revoke link'}
+                        </button>
+                        {copyLinkMsg && <span className="text-xs font-bold text-emerald-600">{copyLinkMsg}</span>}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleGenerateShareLink}
+                        disabled={generatingLink}
+                        className="rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-stone-600 transition-colors hover:border-amber-200 hover:text-amber-800 disabled:opacity-50"
+                      >
+                        {generatingLink ? 'Generating...' : '🔗 Generate public link'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-400">Readiness checklist</p>
+                  {conciergeReadiness.checklist.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`rounded-2xl border px-3 py-2 text-sm ${item.complete ? 'border-emerald-100 bg-emerald-50 text-emerald-800' : 'border-amber-100 bg-[#fffaf2] text-stone-500'}`}
+                      title={item.detail}
+                    >
+                      <span className="font-black">{item.complete ? '✓' : '○'} {item.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {trip.currentRole === 'owner' && (
+                  <button
+                    onClick={handleDeleteTrip}
+                    className="w-full rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-bold text-stone-500 transition-colors hover:text-stone-900"
+                  >
+                    Delete Trip
+                  </button>
+                )}
+              </div>
+            </details>
+          </aside>
+        </section>
+
+        <section data-testid="planning-pipeline" className="mb-6 rounded-[1.75rem] border border-amber-100 bg-white/88 p-4 shadow-lg shadow-amber-900/5 backdrop-blur">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-stone-400">Planning pipeline</p>
+            <div className="flex flex-wrap items-center gap-2 text-sm font-black text-stone-700">
+              <span>{activities.length} ideas</span>
+              <span className="text-amber-700">→</span>
+              <span>{approvedCount} approved</span>
+              <span className="text-amber-700">→</span>
+              <span>{itinerary.length} scheduled</span>
+              <span className="text-amber-700">→</span>
+              <span>{arrangedMapCount} mapped</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="mb-0 rounded-t-[1.75rem] border border-b-0 border-amber-100 bg-white/88 p-2 shadow-sm backdrop-blur">
+          <div className="flex flex-wrap gap-1">
+            {(['activities', 'itinerary', 'map', ...(canEdit ? (['ai'] as Tab[]) : [])] as Tab[]).map(tab => (
+              <button
+                key={tab}
+                onClick={() => handleTabChange(tab)}
+                className={`px-5 py-2 rounded-2xl text-sm font-bold capitalize transition-all ${
+                  activeTab === tab
+                    ? 'bg-[#1f1710] text-amber-50 shadow-sm'
+                    : 'text-stone-600 hover:bg-amber-50 hover:text-stone-900'
+                }`}
+              >
+                {tab === 'activities' ? (
+                  <span className="flex items-center gap-1.5">
+                    Activities
+                    {pendingCount > 0 && (
+                      <span data-testid="activities-tab-badge" className="bg-amber-200 text-amber-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </span>
+                ) : tab === 'itinerary' ? 'Itinerary' : tab === 'map' ? 'Map' : 'AI (Experimental)'}
+              </button>
             ))}
           </div>
         </div>
-      </section>
-
-      <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-2xl font-black text-slate-950">{activities.length}</p>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Curated ideas</p>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-2xl font-black text-emerald-600">{approvedCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Approved</p>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-2xl font-black text-indigo-600">{itinerary.length}</p>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Scheduled stops</p>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-2xl font-black text-amber-800">{arrangedMapCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Mapped route</p>
-        </div>
-      </section>
-
-      <div className="mb-6 flex w-fit gap-1 rounded-2xl border border-slate-200 bg-white/85 p-1 shadow-sm backdrop-blur">
-        {(['activities', 'itinerary', 'map', ...(canEdit ? (['ai'] as Tab[]) : [])] as Tab[]).map(tab => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`px-5 py-2 rounded-xl text-sm font-bold capitalize transition-all ${
-              activeTab === tab
-                ? 'bg-slate-950 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-            }`}
-          >
-            {tab === 'activities' ? (
-              <span className="flex items-center gap-1.5">
-                💡 Activities
-                {pendingCount > 0 && (
-                  <span data-testid="activities-tab-badge" className="bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
-                    {pendingCount}
-                  </span>
-                )}
-              </span>
-            ) : tab === 'itinerary' ? '📋 Itinerary' : tab === 'map' ? '🗺️ Map' : '🤖 AI (Experimental)'}
-          </button>
-        ))}
-      </div>
 
       {activeTab === 'activities' && (
         <div>
